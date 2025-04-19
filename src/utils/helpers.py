@@ -9,8 +9,21 @@ sys.path.append(os.path.abspath("../data"))
 
 def read_file(file_path):
     with open(file_path, encoding='utf-8') as file_csv:
-        reader = csv.reader(file_csv, delimiter=";")
-        return list(reader)
+        csv_reader = csv.reader(file_csv, delimiter=";")
+        return list(csv_reader)
+
+
+def read_file_dic(file_path):
+    """
+    Lee un archivo CSV y devuelve el encabezado y los datos como una lista de diccionarios.
+    Args:
+    param: file_path: Ruta del archivo CSV a leer.
+    Returns:
+    :return: Una lista con el encabezado y una lista de diccionarios con los datos.
+    """
+    with open(file_path, encoding='utf-8') as file_csv:
+        csv_reader = csv.DictReader(file_csv, delimiter=";")
+        return csv_reader.fieldnames, list(csv_reader)
 
 
 def process_file(source_path, category="hogar"):
