@@ -1,11 +1,19 @@
-import sys
-import os
-import csv
-
-
 
 # PROCESAMIENTO HOGARES
 def clasificar_hogar_hab(cant_personas):
+    """
+    Clasifica un hogar según la cantidad de personas que lo habitan.
+
+    Parameters:
+        cant_personas (int or str): Cantidad de personas en el hogar. Puede ser un entero o una cadena que represente un número.
+
+    Returns:
+        str: Tipo de hogar clasificado como:
+            - "Unipersonal": si hay 1 persona
+            - "Nuclear": si hay entre 2 y 4 personas
+            - "Extendido": si hay 5 o más personas
+    """
+
     personas = int(cant_personas)
     
     if personas == 1:
@@ -17,6 +25,20 @@ def clasificar_hogar_hab(cant_personas):
     return tipo
 
 def clasificar_hogar_techo(material_nro):
+
+    """
+    Clasifica el tipo de techo de un hogar según tipo de material.
+
+    Parameters:
+        material_nro (int or str): Número que representa el tipo de material del techo. 
+                                    .
+
+    Returns:
+        str: Tipo de techo clasificado como:
+            - "Material durable": si el número del material está entre 1 y 4.
+            - "Material precario": si el número del material está entre 5 y 7.
+            - "No aplica": si el número del material es 9.
+    """
     
     material_nro = int(material_nro)
     
@@ -29,9 +51,26 @@ def clasificar_hogar_techo(material_nro):
     return tipo
 
 def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
+    """
+    Clasifica la densidad del hogar según la cantidad de personas y habitaciones.
+
+    La clasificación se realiza dividiendo la cantidad de personas entre la cantidad de habitaciones,
+    y asignando una categoría de densidad según el valor obtenido.
+    Parameters:
+        cant_personas (int or str): Cantidad de personas en el hogar. Puede ser un número entero o una cadena.
+        cant_hab (int or str): Cantidad de habitaciones del hogar. Puede ser un número entero o una cadena.
+
+    Returns:
+        str: La clasificación de la densidad del hogar:
+            - "Bajo" si la densidad es menor a 1 persona por habitación.
+            - "Medio" si la densidad está entre 1 y 2 personas por habitación.
+            - "Alto" si la densidad es mayor a 2 personas por habitación.
+    """
+
     cant_hab=int(cant_hab)
     cant_personas=int(cant_personas)
-        # Intentamos dividir las variables
+
+    # Intentamos dividir las variables
     personas_por_hab = float(cant_personas / cant_hab)
 
         # Clasificación según la densidad
@@ -115,16 +154,3 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, baño, ubi_baño, tipo_ba�
     else:
         return "Buena"
 
-def proceso_hogar_fila(fila):        
-    #7. Se debe generar una nueva columna llamada TIPO_HOGAR en funcion de la cant hab
-    fila['TIPO_HOGAR']=clasificar_hogar_hab(fila['IX_TOT'])
-
-    #8. Se debe generar una nueva columna llamada MATERIAL_TECHUMBRE
-    fila['MATERIAL_TECHUMBRE']=clasificar_hogar_techo(fila['V4'])
-
-    #9. Se debe generar una nueva columna llamada DENSIDAD_HOGAR
-    fila['DENSIDAD_HOGAR']=clasificar_hogar_densidad_hab(fila['IX_TOT'],fila['IV2'])
-
-    #10. Condiciones de habitabilidad
-    fila['CONDICION_DE_HABITABILIDAD']=clasificar_hogar_habitabilidad(fila['IV6'],fila['IV7'],fila['IV8'],fila['IV9'],fila['IV10'],fila['IV11'],fila['MATERIAL_TECHUMBRE'],fila['IV3'])
-    return fila
