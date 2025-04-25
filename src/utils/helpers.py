@@ -36,7 +36,7 @@ def process_file(source_path, category="hogar"):
 
     for file in source_path.glob("*.txt"):
         print(file)
-        if category in file:
+        if category in file.name:
             row = read_file(file)
 
             if not row:
