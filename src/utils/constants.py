@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 # Dirección del proyecto
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
 
