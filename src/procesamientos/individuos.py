@@ -113,18 +113,30 @@ def cant_personas_alfabetizadas(data):
 
 
 def porc_extranjero_universitario(anio, trim, data):
+    """
+    Imprime el % de personas extranjeras que hayan cursado el nivel universitario o superior.
+
+    Args:
+    :anio: año a analizar.
+    :trim: trimestre a analizar.
+    :param data: lista de datos del dataset.
+    """
 
     count = {"argentino": 0, "extranjero": 0}
 
     for row in data:
         if row["ANO4"] == anio and row["TRIMESTRE"] == trim and row["NIVEL_ED_str"] == "Superior o universitario":
+            # CH15 donde nacio
             if int(row["CH15"]) in (4, 5):
                 count["extranjero"] += int(row["PONDERA"])
             else:
                 count["argentino"] += int(row["PONDERA"])
 
-    porcentaje = (count["extranjero"] /
-                  (count["argentino"] + count["extranjero"])) * 100
+    try:
+        porcentaje = (count["extranjero"] /
+                      (count["argentino"] + count["extranjero"])) * 100
+    except ZeroDivisionError:
+        porcentaje = 0
 
     print(
         f"El % de personas extranjeras que han cursado el nivel superior o universitario en el trimestre {trim} del año {anio} es del: {porcentaje:.2f}%")
