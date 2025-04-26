@@ -102,9 +102,8 @@ def cant_personas_alfabetizadas(data):
         if row["ANO4"] not in count:
             count[row["ANO4"]] = {"A": 0, "NA": 0}
 
-        # Analiza solo si está en el trimestre 4 y edad mayor a 2 años
-        # Se usa 3 para la prueba NO OLVIDAR DE CAMBIAR
-        if row["CH09"] != "3" and row["TRIMESTRE"] == "3":
+        # Analiza solo si está en el trimestre 4 y edad (CH06) mayor a 6 años
+        if row["CH06"] > "6" and row["TRIMESTRE"] == "4":
             if row["CH09"] == "1":
                 count[row["ANO4"]]["A"] += int(row["PONDERA"])
             else:
