@@ -2,11 +2,14 @@ import sys
 import os
 import csv
 from pathlib import Path
+from src.utils.constants import HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
 
 # Agregamos el path si se necesitan módulos de ../data
-sys.path.append(os.path.abspath("../data")) # --------------------->  esto es necesario?
+# --------------------->  esto es necesario?
+sys.path.append(os.path.abspath("../data"))
 
-#LEER  ARCHIVOS 
+# LEER  ARCHIVOS
+
 
 def read_file(file_path):
     """
@@ -23,7 +26,6 @@ def read_file(file_path):
         return list(csv_reader)
 
 
-
 def read_file_dic(file_path):
     """
     Lee un archivo CSV y devuelve el encabezado y los datos como una lista de diccionarios.
@@ -37,7 +39,7 @@ def read_file_dic(file_path):
         return csv_reader.fieldnames, list(csv_reader)
 
 
-# PROCESAR ARCHIVOS 
+# PROCESAR ARCHIVOS
 
 def process_file(source_path, category="hogar"):
     """
@@ -67,7 +69,6 @@ def process_file(source_path, category="hogar"):
             if not row:
                 continue
 
-            
             if header is None:
                 header = row[0]
                 unified_data.extend(row[1:])
@@ -83,7 +84,6 @@ def process_file(source_path, category="hogar"):
 # GUARDAR ARCHIVOS
 
 def save_to_txt(data, destination_path, file_name="hogares_unificados.txt"):
-
     """
     Guarda una lista de datos en un archivo de texto con formato CSV delimitado por punto y coma (;).
 
@@ -107,7 +107,8 @@ def save_to_txt(data, destination_path, file_name="hogares_unificados.txt"):
 
     print(f"✅ Archivo TXT guardado en: {destination_file}")
 
-def save_to_csv(file_path,header,data, delimiter=";"):
+
+def save_to_csv(file_path, header, data, delimiter=";"):
     """
     Guarda los datos en un archivo CSV en el formato especificado.
 
@@ -118,10 +119,65 @@ def save_to_csv(file_path,header,data, delimiter=";"):
     - delimiter: Delimitador de los campos en el CSV (por defecto ";").
     """
     file_path = Path(file_path)  # Aseguramos que la ruta sea un objeto Path
-    file_path.parent.mkdir(parents=True, exist_ok=True)  # Crea el directorio si no existe
+    # Crea el directorio si no existe
+    file_path.parent.mkdir(parents=True, exist_ok=True)
 
     with file_path.open(mode="w", encoding="UTF-8", newline="") as file:
-        csv_writer = csv.DictWriter(file, delimiter=delimiter, fieldnames=header)
+        csv_writer = csv.DictWriter(
+            file, delimiter=delimiter, fieldnames=header)
         csv_writer.writeheader()  # Escribe el encabezado
         csv_writer.writerows(data)  # Escribe los datos
 
+
+def max_min_date(data):
+    """
+    Calcula el rango de fechas (año y trimestre) a partir de los datos proporcionados.
+
+    Parameters:
+        data (list): Lista de diccionarios que contiene los datos con las claves "ANO4" y "TRIMESTRE".
+
+    Returns:
+        tuple: Una tupla que contiene la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
+    """
+    max_year = min_year = None
+    max_trim = min_trim = None
+
+    for row in data:
+        year = int(row["ANO4"])
+        trim = int(row["TRIMESTRE"])
+
+        if max_year is None or year > max_year:
+            max_year = year
+            max_trim = trim
+        elif year == max_year:
+            if trim > max_trim:
+                max_trim = trim
+
+        if min_year is None or year < min_year:
+            min_year = year
+            min_trim = trim
+        elif year == min_year:
+            if trim < min_trim:
+                min_trim = trim
+
+    max_date = f"{max_trim}/{max_year}"
+    min_date = f"{min_trim}/{min_year}"
+
+    return max_date, min_date
+
+
+def data_date_range():
+    """
+    Devuelve el rango de fechas (mínima y máxima) de los archivos de hogares e individuos procesados.
+    """
+    # Lee los archivos procesados de hogares e individuos
+    dataset_hog = read_file_dic(HOGARES_PROCESSED_DIR)
+    dataset_ind = read_file_dic(INDIVIDUOS_PROCESSED_DIR)
+
+    # Obtiene las fechas mínimas y máximas de ambos conjuntos de datos
+    # y las ordena
+    date_list = sorted(max_min_date(
+        dataset_hog[1]) + max_min_date(dataset_ind[1]))
+
+    # devuelve la fecha minima y maxima de los dos archivos
+    return date_list[0], date_list[-1]
