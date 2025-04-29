@@ -86,7 +86,7 @@ def imprimir_alfabetizadas(diccionario):
 def cant_personas_alfabetizadas(data):
     """
     Cuenta la cantidad de personas alfabetizadas en el archivo CSV por año.
-    Se clasifican a las personas que tengan 2 años o más.
+    Se clasifican a las personas que tengan 6 años o más.
 
     Args:
     :param data: lista de datos del dataset.
