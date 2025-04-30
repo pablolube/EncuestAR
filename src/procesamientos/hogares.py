@@ -154,3 +154,65 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, baño, ubi_baño, tipo_ba�
     else:
         return "Buena"
 
+# Funciones punto 8 analisis
+def imprimo_ranking_inquilinos_por_region(ranking):
+    """
+    Imprime el ranking de regiones según el porcentaje de inquilinos.
+    """
+    # Encabezado
+    print(f"{'Puesto':<8}{'Región':<30}{'Porcentaje de Inquilinos (%)':>30}")
+    print("-" * 70)
+    
+    # Imprimir el ranking
+    for i, (region, porcentaje) in enumerate(ranking, start=1):
+        print(f"{i:<8}{region:<30}{porcentaje:>30.2f}%")
+
+def ranking_inquilinos_por_region(data_hogares):
+    """
+    Calcula el ranking de regiones según el porcentaje de inquilinos, en orden descendente.
+
+    Parámetros:
+    data_hogar (list): Lista de registros EPH (diccionarios).
+
+    Retorna:
+    Lista de tuplas (REGION, porcentaje) ordenadas de mayor a menor.
+    """
+    # Inicializa un diccionario para almacenar el conteo de inquilinos y el total de hogares por región
+    conteo = {}
+
+    for row in data_hogares:
+
+        # Nombro variables para mejor legibilidad
+        region = row['REGION']
+        inquilino = row['II7']
+        pondera = row['PONDERA']
+
+         # Salteamos registros incompletos
+        if region is None or inquilino is None or pondera is None:
+            continue
+        
+        # Inicializa el conteo para la región si no existe
+        if region not in conteo:
+            conteo[region] = {'total': 0, 'inquilinos': 0}
+        # Acumulo total de hogares de la region 
+        conteo[region]['total'] += 1
+
+        # Acumulo total de inquilinos de la region
+        if inquilino == 3:  # código de inquilino
+            conteo[region]['inquilinos'] += pondera
+
+    ranking = []
+
+    # Itero sobre el conteo para calcular el porcentaje de inquilinos por región
+    for region, datos in conteo.items():
+        total = datos['total']
+        inqui = datos['inquilinos']
+        porcentaje = round((inqui / total) * 100, 2) if total > 0 else 0.0
+        # Agrego a la lista de ranking
+        ranking.append((region, porcentaje))
+
+    # Ordenar de mayor a menor porcentaje
+    ranking.sort(key=lambda x: x[1], reverse=True)
+
+    # Imprimo el ranking
+    imprimo_ranking_inquilinos_por_region(ranking)
