@@ -181,3 +181,15 @@ def data_date_range():
 
     # devuelve la fecha minima y maxima de los dos archivos
     return date_list[0], date_list[-1]
+
+# STREAMLIT 
+
+# ACTUALIZAR
+from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR,DATA_CLEAN_DIR,FILENAME_INDIVIDUOS_UNIFIED,FILENAME_HOGARES_UNIFIED
+def actualizar():
+#Reunifica Individuos y Hogares
+    hogares = process_file(DATA_SOURCE_DIR, category="hogar")
+    save_to_txt(hogares, DATA_CLEAN_DIR , FILENAME_HOGARES_UNIFIED)
+    individual=process_file(DATA_SOURCE_DIR, "individual")
+    save_to_txt(individual, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED)
+#Reprocesa Individuos y Hogares
