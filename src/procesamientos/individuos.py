@@ -35,7 +35,9 @@ AGLOMERADOS_NOMBRES = {
 }
 
 
-
+#-------------------------------------------------------------------------------------------------------------------------
+# PROCESADO DE INDIVIDUOS
+#-------------------------------------------------------------------------------------------------------------------------
 
 def add_data_ch04str(row):
     """
@@ -109,6 +111,12 @@ def add_data_universitario(row):
     row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
 
 
+
+#-------------------------------------------------------------------------------------------------------------------------
+# CONSULTAS 
+#-------------------------------------------------------------------------------------------------------------------------
+ 
+
 def imprimir_alfabetizadas(diccionario):
     """
     Imprime la cantidad de personas alfabetizadas por año.
@@ -122,10 +130,14 @@ def imprimir_alfabetizadas(diccionario):
         print(f"{key}\t{value['A']}\t\t{value['NA']}")
 
 
+#--------------------------------------------------------------------
+# PUNTO 1
+#--------------------------------------------------------------------
+ 
 def cant_personas_alfabetizadas(data):
     """
     Cuenta la cantidad de personas alfabetizadas en el archivo CSV por año.
-    Se clasifican a las personas que tengan 2 años o más.
+    Se clasifican a las personas que tengan 6 años o más.
 
     Args:
     :param data: lista de datos del dataset.
@@ -139,18 +151,21 @@ def cant_personas_alfabetizadas(data):
 
         # Si el año no existe, lo crea
         if row["ANO4"] not in count:
-            count[row["ANO4"]] = {"A": 0, "NA": 0}
+            count[row["ANO4"]] = {"A": 0, "NA": 0} # ----------------------- Crea un diccionario de diccionarios no?
 
         # Analiza solo si está en el trimestre 4 y edad (CH06) mayor a 6 años
-        if row["CH06"] > "6" and row["TRIMESTRE"] == "4":
+        if row["CH06"] > "6": # and  row["TRIMESTRE"] == "4":   # -------------------------------- porque 4to trimestre?? 
             if row["CH09"] == "1":
                 count[row["ANO4"]]["A"] += int(row["PONDERA"])
             else:
                 count[row["ANO4"]]["NA"] += int(row["PONDERA"])
+            
 
-    imprimir_alfabetizadas(count)
+    imprimir_alfabetizadas(count) #------------------------------------------------- Te lo pide en porcentajes el resultado
 
-
+#--------------------------------------------------------------------
+# PUNTO 2
+#--------------------------------------------------------------------
 def porc_extranjero_universitario(anio, trim, data):
     """
     Imprime el % de personas extranjeras que hayan cursado el nivel universitario o superior.
