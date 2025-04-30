@@ -35,9 +35,9 @@ AGLOMERADOS_NOMBRES = {
 }
 
 
-#-------------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------------
 # PROCESADO DE INDIVIDUOS
-#-------------------------------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------------------------------
 
 def add_data_ch04str(row):
     """
@@ -111,11 +111,10 @@ def add_data_universitario(row):
     row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
 
 
+# -------------------------------------------------------------------------------------------------------------------------
+# CONSULTAS
+# -------------------------------------------------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------------------------------------------------
-# CONSULTAS 
-#-------------------------------------------------------------------------------------------------------------------------
- 
 
 def imprimir_alfabetizadas(diccionario):
     """
@@ -130,10 +129,10 @@ def imprimir_alfabetizadas(diccionario):
         print(f"{key}\t{value['A']}\t\t{value['NA']}")
 
 
-#--------------------------------------------------------------------
+# --------------------------------------------------------------------
 # PUNTO 1
-#--------------------------------------------------------------------
- 
+# --------------------------------------------------------------------
+
 def cant_personas_alfabetizadas(data):
     """
     Cuenta la cantidad de personas alfabetizadas en el archivo CSV por año.
@@ -151,21 +150,24 @@ def cant_personas_alfabetizadas(data):
 
         # Si el año no existe, lo crea
         if row["ANO4"] not in count:
-            count[row["ANO4"]] = {"A": 0, "NA": 0} # ----------------------- Crea un diccionario de diccionarios no?
+            # ----------------------- Crea un diccionario de diccionarios no?
+            count[row["ANO4"]] = {"A": 0, "NA": 0}
 
         # Analiza solo si está en el trimestre 4 y edad (CH06) mayor a 6 años
-        if row["CH06"] > "6": # and  row["TRIMESTRE"] == "4":   # -------------------------------- porque 4to trimestre?? 
+        if row["CH06"] > "6":  # and  row["TRIMESTRE"] == "4":   # -------------------------------- porque 4to trimestre??
             if row["CH09"] == "1":
                 count[row["ANO4"]]["A"] += int(row["PONDERA"])
             else:
                 count[row["ANO4"]]["NA"] += int(row["PONDERA"])
-            
 
-    imprimir_alfabetizadas(count) #------------------------------------------------- Te lo pide en porcentajes el resultado
+    # ------------------------------------------------- Te lo pide en porcentajes el resultado
+    imprimir_alfabetizadas(count)
 
-#--------------------------------------------------------------------
+# --------------------------------------------------------------------
 # PUNTO 2
-#--------------------------------------------------------------------
+# --------------------------------------------------------------------
+
+
 def porc_extranjero_universitario(anio, trim, data):
     """
     Imprime el % de personas extranjeras que hayan cursado el nivel universitario o superior.
@@ -237,7 +239,7 @@ def info_menor_desocupacion(data):
         print(f"Año: {anio}, Trimestre: {trimestre}")
 
 
-# Funciones para el Ejercicio 4 de la Sección B 
+# Funciones para el Ejercicio 4 de la Sección B
 
 # Se espera que el archivo de individuos ya esté procesado y contenga las columnas necesarias.
 # Se asume que el archivo de individuos tiene las siguientes columnas:
@@ -246,7 +248,7 @@ def info_menor_desocupacion(data):
 def contar_universitarios_y_pondera_por_hogar(individuos):
     """
     Cuenta cuántas personas con UNIVERSITARIO == '1' hay por hogar y guarda el PONDERA de ese hogar.
-    
+
     Retorna dos diccionarios:
       - universitarios_por_hogar: clave = (CODUSU, NRO_HOGAR, ANO4, TRIMESTRE, AGLOMERADO), valor = cantidad de universitarios
       - pondera_por_hogar: misma clave, valor = PONDERA (una sola vez por hogar) 
@@ -280,47 +282,46 @@ def contar_universitarios_y_pondera_por_hogar(individuos):
     return universitarios_por_hogar, pondera_por_hogar
 
 
-
 def filtrar_hogares_con_min_universitarios(contador_universitarios, pondera_por_hogar, min_universitarios=2):
     """
     Filtra los hogares que tienen al menos 'min_universitarios' individuos con estudios universitarios o superiores
     y guarda el valor del PONDERA asociado a cada hogar.
-    
+
     Parámetros:
     contador_universitarios (dict): Clave = hogar_id, valor = cantidad de individuos universitarios.
     pondera_por_hogar (dict): Clave = hogar_id, valor = PONDERA.
     min_universitarios (int): Mínimo requerido para incluir el hogar.
-    
+
     Retorna:
     dict: Clave = hogar_id, valor = PONDERA del hogar.
     """
     hogares_filtrados = {}
-    
+
     for hogar_id, cantidad_universitarios in contador_universitarios.items():
         if cantidad_universitarios >= min_universitarios:
             hogares_filtrados[hogar_id] = pondera_por_hogar[hogar_id]
-            
+
     return hogares_filtrados
 
 
 def contar_hogares(hogares_ponderados):
     """
     Cuenta hogares ponderados por aglomerado. También se usa para contar hogares filtrados por aglomerado.
-    
+
     hogares_ponderados (dict): Clave = hogar_id, Valor = pondera del hogar.
-    
+
     Retorna:
     - dict: Clave = aglomerado, Valor = suma de pondera.
     """
     conteo_hogares_ponderados = {}
     for clave_hogar, pondera in hogares_ponderados.items():
         aglomerado = clave_hogar[-1]  # Último elemento de la clave
-        conteo_hogares_ponderados[aglomerado] = conteo_hogares_ponderados.get(aglomerado, 0) + pondera
+        conteo_hogares_ponderados[aglomerado] = conteo_hogares_ponderados.get(
+            aglomerado, 0) + pondera
     return conteo_hogares_ponderados
 
 
-
-# Obtención de porcentajes y ranking 
+# Obtención de porcentajes y ranking
 
 def obtener_top_n_porcentaje_hogares_universitarios(total_hogares, total_hogares_con_universitarios, top_n=5):
     """
@@ -338,9 +339,11 @@ def obtener_top_n_porcentaje_hogares_universitarios(total_hogares, total_hogares
     # Calcular los porcentajes
     porcentajes = []
     for aglomerado, total in total_hogares.items():
-        con_universitarios = total_hogares_con_universitarios.get(aglomerado, 0)
+        con_universitarios = total_hogares_con_universitarios.get(
+            aglomerado, 0)
         porcentaje = (con_universitarios / total) * 100 if total > 0 else 0
-        print(f"Procesando aglomerado: {aglomerado}, Total: {total}, Universitarios: {con_universitarios}")
+        print(
+            f"Procesando aglomerado: {aglomerado}, Total: {total}, Universitarios: {con_universitarios}")
         porcentajes.append({
             "AGLOMERADO": aglomerado,  # nro
             "PORCENTAJE": porcentaje
@@ -348,7 +351,6 @@ def obtener_top_n_porcentaje_hogares_universitarios(total_hogares, total_hogares
 
     # Ordenar y devolver el top N
     return sorted(porcentajes, key=lambda aglomerado: aglomerado["PORCENTAJE"], reverse=True)[:top_n]
-
 
 
 def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
@@ -359,19 +361,172 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
     - top_aglomerados (list of dict): Cada dict tiene "AGLOMERADO" (número) y "PORCENTAJE".
     - cantidad (int): Cuántos aglomerados mostrar. Por defecto 5.
     """
-    print(f"Ranking de los {cantidad} aglomerados con mayor porcentaje de hogares con 2 o más universitarios:")
+    print(
+        f"Ranking de los {cantidad} aglomerados con mayor porcentaje de hogares con 2 o más universitarios:")
     for i, aglomerado_info in enumerate(top_aglomerados[:cantidad], 1):
         aglomerado_num = aglomerado_info["AGLOMERADO"]
         porcentaje = aglomerado_info["PORCENTAJE"]
         # Aseguramos que sea un entero para buscar bien
         aglomerado_num_int = int(aglomerado_num)
-        nombre_aglomerado = AGLOMERADOS_NOMBRES.get(aglomerado_num_int, "Desconocido")
-        
-        print(f"{i}. Aglomerado {aglomerado_num} - {nombre_aglomerado}: {porcentaje:.2f}%")
-        
-        
+        nombre_aglomerado = AGLOMERADOS_NOMBRES.get(
+            aglomerado_num_int, "Desconocido")
+
+        print(
+            f"{i}. Aglomerado {aglomerado_num} - {nombre_aglomerado}: {porcentaje:.2f}%")
 
 
+# ---------------- Fin de funciones para el Ejercicio 4 de la Sección B ------------------
+
+# Funciones punto 7
+
+def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
+    """
+    Imprime el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
+    agrupado por aglomerado.
+
+    Parámetros:
+    :param resultado: dict con los resultados a imprimir.
+    """
+    # Imprimo encabezado
+    print(f"{'Aglomerado':<15}{'Porcentaje (%)':>20}")
+    print("-" * 35)
+
+    # Imprimo los resultados ordenados por porcentaje de mayor a menor
+    for aglo, porcentaje in sorted(resultado.items(), key=lambda x: x[1], reverse=True):
+        print(f"{str(aglo):<15}{porcentaje:>20.2f}%")
 
 
-#---------------- Fin de funciones para el Ejercicio 4 de la Sección B ------------------
+def info_porcentual_educacionsuperior_aglomerado(data):
+    """
+    Calcula el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
+    agrupado por aglomerado.
+
+    Parámetros:
+    :param data: lista de datos del dataset.
+
+    Genera:
+    dict: Claves son aglomerados, valores son porcentajes (float).
+    """
+    # Inicializa el diccionario para almacenar los resultados
+    resultado = {}
+    conteo = {}
+
+    # Itera sobre cada fila del lector CSV
+    for row in data:
+
+        # Nombro las variables para mayor legibilidad
+        edad = row['CH6']
+        nivel = row["NIVEL_ED_str"]
+        aglo = row['AGLOMERADO']
+        pondera = int(row["PONDERA"])
+
+        if edad is None or nivel is None or aglo is None or pondera is None:
+            continue  # salteamos registros incompletos
+
+        # Acumulo por aglomerado, si no existe lo inicializo
+        if aglo not in conteo:
+            conteo[aglo] = {'total_mayores': 0, 'universitarios': 0}
+
+        # Acumulo el total de mayores de edad sobre el cual se calculará el porcentaje
+        if edad >= 18:
+            conteo[aglo]['total_mayores'] += pondera
+            # Acumulo el total de universitarios
+            if nivel == "Superior o universitario":
+                conteo[aglo]['universitarios'] += pondera
+
+    # Calculo el porcentaje por aglomerado
+    for aglo in conteo:
+        total = conteo[aglo]['total_mayores']
+        nivel_sup = conteo[aglo]['universitarios']
+        resultado[aglo] = round((nivel_sup / total) *
+                                100, 2) if total > 0 else 0.0
+
+    # Imprimo resultados
+    imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
+
+# Funciones punto 8
+
+
+def imprimo_tabla_nivel_educativo(conteo):
+    """
+    Imprime la tabla con cantidad de personas mayores de 18 por nivel educativo,
+    agrupada por año y trimestre.
+
+    Parámetros:
+    conteo: dict con los resultados a imprimir.
+    """
+
+    # Definición de los niveles educativos
+    niveles_educativos = {
+        1: "Primario incompleto (incluye educación especial)",
+        2: "Primario completo",
+        3: "Secundario incompleto",
+        4: "Secundario completo",
+        5: "Superior universitario incompleto",
+        6: "Superior universitario completo",
+        7: "Sin instrucción"
+    }
+
+    # Imprimir tablas por aglomerado
+    for aglo, anios_trimestres in conteo.items():
+        # Encabezado por aglomerado
+        print(f"{'='*80}")
+        print(f"{'Aglomerado:':<20}{aglo}")
+        print(f"{'='*80}")
+
+        # Encabezado de la tabla con los niveles educativos
+        print(f"{'Año':<8}{'Trimestre':<12}", end="")
+        for nivel in range(1, 8):
+            print(f"{niveles_educativos[nivel]:<50}", end="")
+        print()
+        print("=" * 100)
+
+        # Imprimir los datos de cada aglomerado
+        for (anio, trimestre), niveles in anios_trimestres.items():
+            print(f"{anio:<8}{trimestre:<12}", end="")
+            for nivel in range(1, 8):
+                # Imprimir la ponderación de cada nivel educativo
+                print(f"{niveles[nivel]:<50.2f}", end="")
+            print()
+
+
+def tabla_nivel_educativo(data, aglomerado):
+    """
+    Genera una tabla con cantidad de personas mayores de 18 por nivel educativo,
+    agrupada por año y trimestre, para el aglomerado ingresado.
+
+    Parámetros:
+    data: Lista de registros EPH (diccionarios).
+    aglomerado: Código del aglomerado seleccionado.
+
+    """
+    conteo = {}
+
+    for row in data:
+
+        # Nombro variables para mejor legibilidad
+        aglo = row['AGLOMERADO']
+        edad = row['CH4']
+        pondera = row['PONDERA']
+        nivel_ed = row['NIVEL_ED']
+        anio = row['ANO4']
+        trimestre = row['TRIMESTRE']
+
+        # Verifico que la persona sea mayor de 18 años y que el nivel educativo esté en el rango esperado
+        if edad >= 18 and nivel_ed in range(1, 8):
+
+            # Si coincide el aglomerado, lo inicializo
+            if aglo == aglomerado:
+                if aglo not in conteo:
+                    conteo[aglo] = {}
+
+            # Si no existe el par (anio, trimestre), lo inicializo con los niveles educativos
+            if (anio, trimestre) not in conteo[aglo]:
+                conteo[aglo][(anio, trimestre)] = {
+                    nivel: 0 for nivel in range(1, 8)}
+
+            # Acumulo el ponderador en el nivel educativo correspondiente
+            conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
+
+    # Imprimo tabla final
+    imprimo_tabla_nivel_educativo(conteo)
