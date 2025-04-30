@@ -181,3 +181,69 @@ def info_menor_desocupacion(data):
         f"Valor mínimo de desocupación: {min_valor} en los siguientes años y trimestres:")
     for anio, trimestre in resultados:
         print(f"Año: {anio}, Trimestre: {trimestre}")
+
+# Funciones punto 7
+
+def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
+    """
+    Imprime el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
+    agrupado por aglomerado.
+
+    Parámetros:
+    :param resultado: dict con los resultados a imprimir.
+    """
+    # Imprimo encabezado
+    print(f"{'Aglomerado':<15}{'Porcentaje (%)':>20}")
+    print("-" * 35)
+    
+    # Imprimo los resultados ordenados por porcentaje de mayor a menor 
+    for aglo, porcentaje in sorted(resultado.items(), key=lambda x: x[1], reverse=True):
+        print(f"{str(aglo):<15}{porcentaje:>20.2f}%")
+
+def info_porcentual_educacionsuperior_aglomerado(data):
+    """
+    Calcula el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
+    agrupado por aglomerado.
+
+    Parámetros:
+    :param data: lista de datos del dataset.
+
+    Genera:
+    dict: Claves son aglomerados, valores son porcentajes (float).
+    """
+    # Inicializa el diccionario para almacenar los resultados
+    resultado = {}
+    conteo = {}
+
+    # Itera sobre cada fila del lector CSV
+    for row in data:
+        
+        # Nombro las variables para mayor legibilidad
+        edad = row['CH6']
+        nivel = row["NIVEL_ED_str"]
+        aglo = row['AGLOMERADO']
+        pondera = int(row["PONDERA"])
+
+        if edad is None or nivel is None or aglo is None or pondera is None:
+            continue  # salteamos registros incompletos
+
+        # Acumulo por aglomerado, si no existe lo inicializo
+        if aglo not in conteo:
+            conteo[aglo] = {'total_mayores': 0, 'universitarios': 0}
+
+        # Acumulo el total de mayores de edad sobre el cual se calculará el porcentaje
+        if edad >= 18:
+            conteo[aglo]['total_mayores'] += pondera 
+            # Acumulo el total de universitarios
+            if nivel == "Superior o universitario":
+                conteo[aglo]['universitarios'] += pondera 
+
+    # Calculo el porcentaje por aglomerado
+    for aglo in conteo:
+        total = conteo[aglo]['total_mayores']
+        nivel_sup = conteo[aglo]['universitarios']
+        resultado[aglo] = round((nivel_sup / total) * 100, 2) if total > 0 else 0.0
+
+    # Imprimo resultados
+    imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
+  
