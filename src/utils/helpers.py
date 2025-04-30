@@ -186,6 +186,8 @@ def data_date_range():
 
 # ACTUALIZAR
 from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR,DATA_CLEAN_DIR,FILENAME_INDIVIDUOS_UNIFIED,FILENAME_HOGARES_UNIFIED
+from src.procesamientos.hogares import procesar_hogares
+
 def actualizar():
 #Reunifica Individuos y Hogares
     hogares = process_file(DATA_SOURCE_DIR, category="hogar")
@@ -193,3 +195,5 @@ def actualizar():
     individual=process_file(DATA_SOURCE_DIR, "individual")
     save_to_txt(individual, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED)
 #Reprocesa Individuos y Hogares
+    procesar_hogares()
+

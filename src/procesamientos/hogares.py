@@ -216,3 +216,44 @@ def ranking_inquilinos_por_region(data_hogares):
 
     # Imprimo el ranking
     imprimo_ranking_inquilinos_por_region(ranking)
+
+
+from src.utils.helpers import read_file_dic
+from src.procesamientos.hogares import clasificar_hogar_hab,clasificar_hogar_techo,clasificar_hogar_densidad_hab,clasificar_hogar_habitabilidad
+from src.utils.helpers import save_to_csv
+
+
+from src.utils.constants import HOGARES_UNIFIED_DIR,HOGARES_PROCESSED_DIR
+def procesar_hogares():
+
+   #Leo el archivo de hogares unificiado y me guardo el encabezado y las filas en una columna
+   header,data=read_file_dic(HOGARES_UNIFIED_DIR)
+
+   # Agrego las nuevas columnas al header
+   header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE", "DENSIDAD_HOGAR", "CONDICION_DE_HABITABILIDAD"])
+
+   #Creo una lista para guardar mis filas procesadas
+   process_row = []
+
+   #Recorro las fila y realizo los procesos 
+   for row in data:
+      
+      # Clasifico el tipo de hogar según el número total de personas en Unipersonal,Nuclear o extendido
+      row['TIPO_HOGAR']=clasificar_hogar_hab(row['IX_TOT']) 
+      
+      # Clasifico  según el tipo de material del techo en Material durable,precario,no aplica
+      row['MATERIAL_TECHUMBRE']=clasificar_hogar_techo(row['V4'])
+      
+      # Clasifico segun la densidad por hogar bajo,medio,alto
+      row['DENSIDAD_HOGAR']=clasificar_hogar_densidad_hab(row['IX_TOT'],row['IV2'])
+      
+      # Clasifico la condición de habitabilidad del hogar basado en varios atributos relacionados con la vivienda
+      row['CONDICION_DE_HABITABILIDAD']=clasificar_hogar_habitabilidad(row['IV6'],row['IV7'],row['IV8'],row['IV9'],row['IV10'],row['IV11'],row['MATERIAL_TECHUMBRE'],row['IV3'])
+      
+      #Agrego la fila procesada a la lista.
+      process_row.append(row)
+
+
+   # Guardar el archivo procesado en la misma carpeta
+   save_to_csv(HOGARES_PROCESSED_DIR,header,process_row, delimiter=";")
+
