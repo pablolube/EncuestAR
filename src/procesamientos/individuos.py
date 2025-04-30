@@ -246,4 +246,89 @@ def info_porcentual_educacionsuperior_aglomerado(data):
 
     # Imprimo resultados
     imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
+
+# Funciones punto 8
+
+def imprimo_tabla_nivel_educativo(conteo):
+    """
+    Imprime la tabla con cantidad de personas mayores de 18 por nivel educativo,
+    agrupada por año y trimestre.
+
+    Parámetros:
+    conteo: dict con los resultados a imprimir.
+    """
+
+    # Definición de los niveles educativos
+    niveles_educativos = {
+    1: "Primario incompleto (incluye educación especial)",
+    2: "Primario completo",
+    3: "Secundario incompleto",
+    4: "Secundario completo",
+    5: "Superior universitario incompleto",
+    6: "Superior universitario completo",
+    7: "Sin instrucción"
+    }
+    
+    # Imprimir tablas por aglomerado
+    for aglo, anios_trimestres in conteo.items():
+        # Encabezado por aglomerado
+        print(f"{'='*80}")
+        print(f"{'Aglomerado:':<20}{aglo}")
+        print(f"{'='*80}")
+        
+        # Encabezado de la tabla con los niveles educativos
+        print(f"{'Año':<8}{'Trimestre':<12}", end="")
+        for nivel in range(1, 8):
+            print(f"{niveles_educativos[nivel]:<50}", end="")
+        print()
+        print("=" * 100)
+
+        # Imprimir los datos de cada aglomerado
+        for (anio, trimestre), niveles in anios_trimestres.items():
+            print(f"{anio:<8}{trimestre:<12}", end="")
+            for nivel in range(1, 8):
+                # Imprimir la ponderación de cada nivel educativo
+                print(f"{niveles[nivel]:<50.2f}", end="")
+            print()
+    
+        
+def tabla_nivel_educativo(data, aglomerado):
+    """
+    Genera una tabla con cantidad de personas mayores de 18 por nivel educativo,
+    agrupada por año y trimestre, para el aglomerado ingresado.
+
+    Parámetros:
+    data: Lista de registros EPH (diccionarios).
+    aglomerado (int): Código del aglomerado seleccionado.
+
+    """
+    conteo = {}
+
+    for row in data:
+
+        # Nombro variables para mejor legibilidad
+        aglo = row['AGLOMERADO']
+        edad = row['CH4']
+        pondera = row['PONDERA']
+        nivel_ed = row['NIVEL_ED']
+        anio = row['ANO4']
+        trimestre = row['TRIMESTRE']
+
+        # Verifico que la persona sea mayor de 18 años y que el nivel educativo esté en el rango esperado
+        if edad >= 18 and nivel_ed in range(1, 8):
+        
+            # Si coincide el aglomerado, lo inicializo
+            if aglo == aglomerado:
+                if aglo not in conteo:      
+                    conteo[aglo] = {}
+
+            # Si no existe el par (anio, trimestre), lo inicializo con los niveles educativos
+            if (anio, trimestre) not in conteo[aglo]:
+                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
+
+            # Acumulo el ponderador en el nivel educativo correspondiente
+            conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
+
+    # Imprimo tabla final
+    imprimo_tabla_nivel_educativo(conteo)
   
