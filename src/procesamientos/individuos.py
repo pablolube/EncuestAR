@@ -299,7 +299,7 @@ def tabla_nivel_educativo(data, aglomerado):
 
     Parámetros:
     data: Lista de registros EPH (diccionarios).
-    aglomerado (int): Código del aglomerado seleccionado.
+    aglomerado: Código del aglomerado seleccionado.
 
     """
     conteo = {}
