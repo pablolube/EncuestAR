@@ -42,27 +42,29 @@ def read_file_dic(file_path):
 
 
 def process_file(source_path, category="hogar"):
-    all_headers = set()
-    unified_data = []
+    
+    all_headers = [] # Aca voy  a acumular los headers
+    unified_data = [] # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
 
     # PRIMER FOR: recolectar todos los encabezados
     for file in source_path.glob("*.txt"):
-        if category in file.name:
+        if category in file.name:  # Condición si el archivo tiene la categoría elegida
             headers, _ = read_file_dic(file)  # solo me interesa el header
-            all_headers.update(headers)
-
-    all_headers = list(all_headers)  # convertir a lista para orden y uso posterior
-
-    # SEGUNDO FOR: normalizar y guardar filas
+            for header in headers:  # Recorro los encabezados del archivo
+                if header not in all_headers:  # Solo lo agrego si no está en la lista
+                    all_headers.append(header)
+                    
+     # SEGUNDO FOR: Unificar filas
     for file in source_path.glob("*.txt"):
         if category in file.name:
-            _, rows = read_file_dic(file)
+            _, rows = read_file_dic(file)  # Ahora solo me importan las filas
 
-            for row in rows:
-                normalized_row = {}
-                for key in all_headers:
-                    normalized_row[key] = row.get(key, None)
-                unified_data.append(normalized_row)
+            for row in rows:  # Recorro las filas
+                unified_row = {}
+                for key in all_headers:  # Para cada fila voy recorriendo por header
+                    unified_row[key] = row.get(key, None)  # Si no existe en el header agregar None, sino guarda el dato en esa key
+                
+                unified_data.append(unified_row)  # Este debe ir fuera del loop de las columnas, agregando toda la fila a unified_data
 
     return all_headers, unified_data
 
@@ -70,29 +72,31 @@ def process_file(source_path, category="hogar"):
 
 # GUARDAR ARCHIVOS
 
-def save_to_txt(data, destination_path, file_name="hogares_unificados.txt"):
+from pathlib import Path
+import csv
+
+def save_to_txt(headers, data, destination_path, file_name="hogares_unificados.txt"):
     """
-    Guarda una lista de datos en un archivo de texto con formato CSV delimitado por punto y coma (;).
+    Guarda una lista de diccionarios en un archivo de texto con formato CSV delimitado por punto y coma (;).
 
     Parameters:
-        data (list): Lista de listas que representa las filas a guardar en el archivo.
-        destination_path (str): Ruta del directorio donde se guardará el archivo.
-        file_name (str): Nombre del archivo de salida. Valor por defecto: "hogares_unificados.txt".
-
-    Notas :
-        - Crea el directorio de destino si no existe.
-        - Escribe un archivo de texto en la ubicación especificada.
-        - Imprime una confirmación con la ruta del archivo guardado.
+        headers (list): Lista de encabezados para las columnas.
+        data (list): Lista de diccionarios que representa las filas a guardar en el archivo.
+        destination_path (str | Path): Ruta del directorio donde se guardará el archivo.
+        file_name (str): Nombre del archivo de salida.
     """
 
-    destination_file = os.path.join(destination_path, file_name)
-    os.makedirs(destination_path, exist_ok=True)
+    file_path = Path(destination_path) / file_name
+    file_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(destination_file, mode='w', encoding='utf-8', newline='') as file_txt:
-        writer = csv.writer(file_txt, delimiter=";")
+    with file_path.open(mode='w', encoding='utf-8', newline='') as file_txt:
+        writer = csv.DictWriter(file_txt, fieldnames=headers, delimiter=";")
+        writer.writeheader()
         writer.writerows(data)
 
-    print(f"✅ Archivo TXT guardado en: {destination_file}")
+    print(f"✅ Archivo TXT guardado en: {file_path}")
+
+
 
 
 def save_to_csv(file_path, header, data, delimiter=";"):
