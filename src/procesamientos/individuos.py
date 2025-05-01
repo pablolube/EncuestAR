@@ -387,13 +387,16 @@ def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
     Parámetros:
     :param resultado: dict con los resultados a imprimir.
     """
+ 
     # Imprimo encabezado
-    print(f"{'Aglomerado':<15}{'Porcentaje (%)':>20}")
-    print("-" * 35)
+    print(f"{'Aglomerado':<40}{'Porcentaje (%)':>15}")
+    print("-" * 55)
 
     # Imprimo los resultados ordenados por porcentaje de mayor a menor
     for aglo, porcentaje in sorted(resultado.items(), key=lambda x: x[1], reverse=True):
-        print(f"{str(aglo):<15}{porcentaje:>20.2f}%")
+        nombre_aglo = AGLOMERADOS_NOMBRES.get(int(aglo), "Desconocido")
+        aglo_texto = f"{aglo} - {nombre_aglo}"
+        print(f"{aglo_texto:<40}{porcentaje:>15.2f}%")
 
 
 def info_porcentual_educacionsuperior_aglomerado(data):
@@ -414,35 +417,32 @@ def info_porcentual_educacionsuperior_aglomerado(data):
     # Itera sobre cada fila del lector CSV
     for row in data:
 
-        # Nombro las variables para mayor legibilidad
-        edad = row['CH6']
-        nivel = row["NIVEL_ED_str"]
-        aglo = row['AGLOMERADO']
-        pondera = int(row["PONDERA"])
-
-        if edad is None or nivel is None or aglo is None or pondera is None:
-            continue  # salteamos registros incompletos
+        #if row["CH06"] is None or row["NIVEL_ED_str"] is None or row["AGLOMERADO"] is None or int(row["PONDERA"]) is None:
+            #continue  # salteamos registros incompletos
 
         # Acumulo por aglomerado, si no existe lo inicializo
-        if aglo not in conteo:
-            conteo[aglo] = {'total_mayores': 0, 'universitarios': 0}
+        if row["AGLOMERADO"] not in conteo:
+            conteo[row["AGLOMERADO"]] = {'total_mayores': 0, 'universitarios': 0}
 
         # Acumulo el total de mayores de edad sobre el cual se calculará el porcentaje
-        if edad >= 18:
-            conteo[aglo]['total_mayores'] += pondera
+        if int(row["CH06"]) >= 18:
+            conteo[row["AGLOMERADO"]]['total_mayores'] += int(row["PONDERA"])
             # Acumulo el total de universitarios
-            if nivel == "Superior o universitario":
-                conteo[aglo]['universitarios'] += pondera
+            if row["NIVEL_ED_str"] == "Superior o universitario":
+                conteo[row["AGLOMERADO"]]['universitarios'] += int(row["PONDERA"])
 
     # Calculo el porcentaje por aglomerado
-    for aglo in conteo:
-        total = conteo[aglo]['total_mayores']
-        nivel_sup = conteo[aglo]['universitarios']
-        resultado[aglo] = round((nivel_sup / total) *
+    for row["AGLOMERADO"] in conteo:
+        total = conteo[row["AGLOMERADO"]]['total_mayores']
+        nivel_sup = conteo[row["AGLOMERADO"]]['universitarios']
+        resultado[row["AGLOMERADO"]] = round((nivel_sup / total) *
                                 100, 2) if total > 0 else 0.0
 
     # Imprimo resultados
     imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
+
+
+# ---------------- Fin de funciones para el Ejercicio 4 de la Sección B ------------------
 
 # Funciones punto 8
 
@@ -458,7 +458,7 @@ def imprimo_tabla_nivel_educativo(conteo):
 
     # Definición de los niveles educativos
     niveles_educativos = {
-        1: "Primario incompleto (incluye educación especial)",
+        1: "Primario incompleto / Ed. especial",
         2: "Primario completo",
         3: "Secundario incompleto",
         4: "Secundario completo",
@@ -470,27 +470,29 @@ def imprimo_tabla_nivel_educativo(conteo):
     # Imprimir tablas por aglomerado
     for aglo, anios_trimestres in conteo.items():
         # Encabezado por aglomerado
-        print(f"{'='*80}")
-        print(f"{'Aglomerado:':<20}{aglo}")
-        print(f"{'='*80}")
+        print(f"{'='*350}")
+        nombre_aglo = AGLOMERADOS_NOMBRES.get(int(aglo), "Desconocido")
+        print(f"{'Aglomerado ':<15}{aglo} - {nombre_aglo}")
+        print(f"{'*'*350}")
 
         # Encabezado de la tabla con los niveles educativos
         print(f"{'Año':<8}{'Trimestre':<12}", end="")
         for nivel in range(1, 8):
-            print(f"{niveles_educativos[nivel]:<50}", end="")
+            print(f"{niveles_educativos[nivel]:<40}", end="")
         print()
-        print("=" * 100)
+        print("*" * 350)
 
         # Imprimir los datos de cada aglomerado
         for (anio, trimestre), niveles in anios_trimestres.items():
             print(f"{anio:<8}{trimestre:<12}", end="")
             for nivel in range(1, 8):
                 # Imprimir la ponderación de cada nivel educativo
-                print(f"{niveles[nivel]:<50.2f}", end="")
+                print(f"{int(niveles[nivel]):<40}", end="")
             print()
 
 
 def tabla_nivel_educativo(data, aglomerado):
+
     """
     Genera una tabla con cantidad de personas mayores de 18 por nivel educativo,
     agrupada por año y trimestre, para el aglomerado ingresado.
@@ -500,33 +502,40 @@ def tabla_nivel_educativo(data, aglomerado):
     aglomerado: Código del aglomerado seleccionado.
 
     """
-    conteo = {}
+
+    # Inicializa el diccionario para almacenar los resultados 
+    conteo = {} 
+
+    # Verifica si el aglomerado existe en los datos
+    aglomerado_encontrado = False
 
     for row in data:
 
-        # Nombro variables para mejor legibilidad
-        aglo = row['AGLOMERADO']
-        edad = row['CH4']
-        pondera = row['PONDERA']
-        nivel_ed = row['NIVEL_ED']
-        anio = row['ANO4']
-        trimestre = row['TRIMESTRE']
+        # Asegúrate de que los valores sean enteros y no nulos
+        try:
+            aglo = int(row["AGLOMERADO"])
+            edad = int(row["CH06"])
+            nivel_ed = int(row["NIVEL_ED"])
+            anio = int(row["ANO4"])
+            trimestre = int(row["TRIMESTRE"])
+            pondera = int(row["PONDERA"])
+        except (ValueError, KeyError):
+            continue  # Ignorar filas con valores erróneos o incompletos
 
-        # Verifico que la persona sea mayor de 18 años y que el nivel educativo esté en el rango esperado
-        if edad >= 18 and nivel_ed in range(1, 8):
+        # Verificamos condiciones
+        if edad >= 18 and nivel_ed in range(1, 8) and aglo == int(aglomerado):
+            aglomerado_encontrado = True
+            if aglo not in conteo:
+                conteo[aglo] = {}
 
-            # Si coincide el aglomerado, lo inicializo
-            if aglo == aglomerado:
-                if aglo not in conteo:
-                    conteo[aglo] = {}
-
-            # Si no existe el par (anio, trimestre), lo inicializo con los niveles educativos
             if (anio, trimestre) not in conteo[aglo]:
-                conteo[aglo][(anio, trimestre)] = {
-                    nivel: 0 for nivel in range(1, 8)}
+                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
 
-            # Acumulo el ponderador en el nivel educativo correspondiente
             conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
 
-    # Imprimo tabla final
-    imprimo_tabla_nivel_educativo(conteo)
+    # Si no se encontró el aglomerado, imprimir un mensaje de advertencia
+    if not aglomerado_encontrado:
+        print(f"No se encontraron registros para el aglomerado {aglomerado}.")
+    else:
+        # Imprimo tabla final
+        imprimo_tabla_nivel_educativo(conteo)
