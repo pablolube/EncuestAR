@@ -39,10 +39,26 @@ def read_file_dic(file_path):
 
 
 # PROCESAR ARCHIVOS
-
-
 def process_file(source_path, category="hogar"):
     
+    """
+    Procesa archivos de texto en un path, filtrando por categoría, y unifica sus datos en una estructura común.
+
+    Esta función busca archivos `.txt` dentro del `source_path` cuyo nombre contenga la categoría especificada.
+    Primero recolecta todos los encabezados únicos presentes en los archivos filtrados. Luego, construye una lista
+    unificada de diccionarios fila por fila, asegurando que todas las filas tengan las mismas claves (encabezados),
+    completando con `None` si falta algún dato.
+
+    Args:
+        source_path (Path): Ruta al directorio que contiene los archivos `.txt` a procesar.
+        category (str, optional): Categoría a buscar dentro del nombre de los archivos. Por defecto es "hogar".
+
+    Returns:
+        tuple:
+            - all_headers (list): Lista con todos los encabezados únicos encontrados en los archivos.
+            - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada
+              según los encabezados recolectados.
+    """
     all_headers = [] # Aca voy  a acumular los headers
     unified_data = [] # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
 
@@ -71,7 +87,6 @@ def process_file(source_path, category="hogar"):
 
 
 # GUARDAR ARCHIVOS
-
 from pathlib import Path
 import csv
 
@@ -120,6 +135,9 @@ def save_to_csv(file_path, header, data, delimiter=";"):
         csv_writer.writerows(data)  # Escribe los datos
 
 
+
+# STREAMLIT 
+
 def max_min_date(data):
     """
     Calcula el rango de fechas (año y trimestre) a partir de los datos proporcionados.
@@ -157,6 +175,39 @@ def max_min_date(data):
     return max_date, min_date
 
 
+"""
+def max_min_date(data):
+   
+    Calcula la fecha mínima y máxima (año y trimestre) a partir de una lista de diccionarios.
+
+    Cada diccionario debe contener las claves "ANO4" (año) y "TRIMESTRE" (número de trimestre).
+
+    Args:
+        data (list of dict): Lista de diccionarios con claves "ANO4" y "TRIMESTRE".
+
+    Returns:
+        tuple: Una tupla con la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
+
+    Raises:
+        ValueError: Si la lista está vacía o los datos no contienen las claves requeridas.
+
+    if not data:
+        raise ValueError("La lista de datos está vacía.")
+
+    try:
+        fechas = [(int(row["ANO4"]), int(row["TRIMESTRE"])) for row in data]
+    except (KeyError, ValueError, TypeError) as e:
+        raise ValueError(f"Error al procesar las fechas: {e}")
+
+    max_fecha = max(fechas)
+    min_fecha = min(fechas)
+
+    max_date = f"{max_fecha[1]}/{max_fecha[0]}"
+    min_date = f"{min_fecha[1]}/{min_fecha[0]}"
+
+    return max_date, min_date
+"""
+
 def data_date_range():
     """
     Devuelve el rango de fechas (mínima y máxima) de los archivos de hogares e individuos procesados.
@@ -173,18 +224,33 @@ def data_date_range():
     # devuelve la fecha minima y maxima de los dos archivos
     return date_list[0], date_list[-1]
 
-# STREAMLIT 
 
 # ACTUALIZAR
 from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR,DATA_CLEAN_DIR,FILENAME_INDIVIDUOS_UNIFIED,FILENAME_HOGARES_UNIFIED
 from src.procesamientos.hogares import procesar_hogares
 
-def actualizar():
-#Reunifica Individuos y Hogares
-    hogares = process_file(DATA_SOURCE_DIR, category="hogar")
-    save_to_txt(hogares, DATA_CLEAN_DIR , FILENAME_HOGARES_UNIFIED)
-    individual=process_file(DATA_SOURCE_DIR, "individual")
-    save_to_txt(individual, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED)
-#Reprocesa Individuos y Hogares
-    procesar_hogares()
+import streamlit as st
+from src.utils.helpers import process_file, save_to_txt
 
+
+
+def actualizar():
+    """
+    Procesa y guarda archivos de hogares e individuos. Pensado para ser usado en una app de Streamlit.
+
+    Utiliza las rutas y nombres de archivo definidos en constantes globales. Muestra mensajes de éxito
+    o error según el resultado del procesamiento.
+    """
+    try:
+        # Procesar hogares
+        encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
+        save_to_txt(encabezados_h, hogares, DATA_CLEAN_DIR, FILENAME_HOGARES_UNIFIED)
+
+        # Procesar individuos
+        encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
+        save_to_txt(encabezados_i, individuos, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED)
+
+        st.success(f"✔ Archivos actualizados correctamente.\n")
+
+    except Exception as e:
+        st.error(f"❌ Error al actualizar archivos: {e}")
