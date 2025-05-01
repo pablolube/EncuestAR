@@ -5,7 +5,6 @@ from pathlib import Path
 from src.utils.constants import HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
 
 # Agregamos el path si se necesitan módulos de ../data
-# --------------------->  esto es necesario?
 sys.path.append(os.path.abspath("../data"))
 
 # LEER  ARCHIVOS
@@ -41,44 +40,32 @@ def read_file_dic(file_path):
 
 # PROCESAR ARCHIVOS
 
+
 def process_file(source_path, category="hogar"):
-    """
-    Procesa archivos de texto en una ruta dada, unificando datos de archivos que contienen una categoría específica en su nombre.
-
-    Parameters:
-        source_path (Path): Ruta al directorio que contiene los archivos.
-        category (str): Categoría a filtrar en los nombres de archivo. Solo se procesan archivos que incluyan esta cadena. Valor por defecto: "hogar".
-
-    Returns:
-        list: Una lista de listas, donde la primera sublista es la cabecera y las siguientes contienen los datos unificados
-              de los archivos coincidentes. Si no se encuentra ninguna cabecera, se devuelve una lista vacía.
-
-    Notas:
-        - Solo se procesan archivos con extensión `.txt`  y aquellos que coincide la categoria en el numero de archivo.
-        - Se imprime un aviso si la cabecera de un archivo difiere de la primera encontrada.
-    """
-
+    all_headers = set()
     unified_data = []
-    header = None
 
+    # PRIMER FOR: recolectar todos los encabezados
     for file in source_path.glob("*.txt"):
-        print(file)
         if category in file.name:
-            row = read_file(file)
+            headers, _ = read_file_dic(file)  # solo me interesa el header
+            all_headers.update(headers)
 
-            if not row:
-                continue
+    all_headers = list(all_headers)  # convertir a lista para orden y uso posterior
 
-            if header is None:
-                header = row[0]
-                unified_data.extend(row[1:])
-            else:
-                if row[0] == header:
-                    unified_data.extend(row[1:])
-                else:
-                    print(f"⚠️ Cabecera diferente en: {file}")
+    # SEGUNDO FOR: normalizar y guardar filas
+    for file in source_path.glob("*.txt"):
+        if category in file.name:
+            _, rows = read_file_dic(file)
 
-    return [header] + unified_data if header else []
+            for row in rows:
+                normalized_row = {}
+                for key in all_headers:
+                    normalized_row[key] = row.get(key, None)
+                unified_data.append(normalized_row)
+
+    return all_headers, unified_data
+
 
 
 # GUARDAR ARCHIVOS
