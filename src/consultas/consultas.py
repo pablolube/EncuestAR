@@ -1,58 +1,5 @@
-# Este diccionario contiene los nombres de los aglomerados según su número
-AGLOMERADOS_NOMBRES = {
-    2: "Gran La Plata",
-    3: "Bahía Blanca - Cerri",
-    4: "Gran Rosario",
-    5: "Gran Santa Fe",
-    6: "Gran Paraná",
-    7: "Posadas",
-    8: "Gran Resistencia",
-    9: "Comodoro Rivadavia - Rada Tilly",
-    10: "Gran Mendoza",
-    12: "Corrientes",
-    13: "Gran Córdoba",
-    14: "Concordia",
-    15: "Formosa",
-    17: "Neuquén - Plottier",
-    18: "Santiago del Estero - La Banda",
-    19: "Jujuy - Palpalá",
-    20: "Río Gallegos",
-    22: "Gran Catamarca",
-    23: "Gran Salta",
-    25: "La Rioja",
-    26: "Gran San Luis",
-    27: "Gran San Juan",
-    29: "Gran Tucumán - Tafí Viejo",
-    30: "Santa Rosa - Toay",
-    31: "Ushuaia - Río Grande",
-    32: "Ciudad Autónoma de Buenos Aires",
-    33: "Partidos del GBA",
-    34: "Mar del Plata",
-    36: "Río Cuarto",
-    38: "San Nicolás - Villa Constitución",
-    91: "Rawson - Trelew",
-    93: "Viedma - Carmen de Patagones",
-}
+from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
 
-# Este diccionario contiene los nombres de los aglomerados según su número
-REGIONES_NOMBRES = {
-    1: "Gran Buenos Aires",
-    40: "Noroeste",
-    41: "Noreste",
-    42: "Cuyo",
-    43: "Pampeana",
-    44: "Patagonia"}
-
-# Definición de los niveles educativos
-niveles_educativos = {
-    1: "Primario incompleto / Ed. especial",
-    2: "Primario completo",
-    3: "Secundario incompleto",
-    4: "Secundario completo",
-    5: "Superior universitario incompleto",
-    6: "Superior universitario completo",
-    7: "Sin instrucción"
-}
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 1 (ANÁLISIS) - INDIVIDUOS
@@ -508,7 +455,7 @@ def imprimo_tabla_nivel_educativo(conteo):
         # Encabezado de la tabla con los niveles educativos
         print(f"{'Año':<8}{'Trimestre':<12}", end="")
         for nivel in range(1, 8):
-            print(f"{niveles_educativos[nivel]:<40}", end="")
+            print(f"{NIVELES_EDUCATIVOS[nivel]:<40}", end="")
         print()
         print("*" * 350)
 
