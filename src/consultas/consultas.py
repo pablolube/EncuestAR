@@ -60,6 +60,8 @@ niveles_educativos = {
 
 def imprimir_alfabetizadas(diccionario):
     """
+    Realiza calculos porcentuales 
+
     Imprime la cantidad de personas alfabetizadas por año.
 
     Args:
