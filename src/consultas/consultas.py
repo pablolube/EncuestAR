@@ -523,6 +523,106 @@ def tabla_nivel_educativo(data, aglomerado):
 # FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS Nota: podes usar la funcion PUNTO 9!
 # -----------------------------------------------------------------------------------
 
+def crear_estructura_datos():
+    return {
+        "Cumplen_aglom_1": 0,
+        "Todos_aglom1_18": 0,
+        "Cumplen_aglom_2": 0,
+        "Todos_aglom2_18": 0
+    }
+
+def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  data):
+
+    dats = {}
+    """
+
+    """
+    
+    for row in data: 
+        # guardo el aglomerado y nivel educativo de la persona actual
+        try:
+            aglo = int(row['AGLOMERADO'])
+            nivel_ed = str(row['NIVEL_ED_str'])
+            
+            # creamos una clave anio trimestre que los vaya guardando en su respectivo bloque
+            clave = (row['ANO4'], row['TRIMESTRE'])
+            
+            # cargamos el pondera de cada individuo
+            Pondera = int(row['PONDERA'])
+            
+        except (ValueError, KeyError):
+            continue # ignora filas con valores erroneos o incompletos
+        
+        try:
+            aglo = int(row['AGLOMERADO'])
+            nivel_ed = str(row['NIVEL_ED_str'])
+            
+            # creamos una clave anio trimestre que los vaya guardando en su respectivo bloque
+            clave = (row['ANO4'], row['TRIMESTRE'])
+            
+            Pondera = int(row['PONDERA'])  
+            edad = int(row['CH06'])         
+        except (ValueError, KeyError):
+            continue  # Saltar la fila si algo falló
+        
+        
+        # para ir generando el archivo dats usamos 
+        
+        if clave not in dats:
+            dats[clave] = crear_estructura_datos()
+        
+        if aglo == aglomerado1:
+            # revisamos si es mayor de edad
+            if int(edad) >= 18:
+                # y su nivel educativo
+                if nivel_ed == "Secundario incompleto":
+                    dats[clave]["Cumplen_aglom_1"] += Pondera
+                
+                # lo guarda para tener el general de individuos > 18
+                dats[clave]['Todos_aglom1_18'] += Pondera
+        elif aglo == aglomerado2:
+            # revisamos si es mayor de edad
+            if int(edad) >= 18:
+                # y su nivel educativo
+                if nivel_ed == "Secundario incompleto":
+                    dats[clave]['Cumplen_aglom_2'] += Pondera
+                    
+                # lo guarda para tener el general de individuos > 18
+                dats[clave]['Todos_aglom2_18'] += Pondera
+        
+    return dats
+    
+def imprimir_porcentaje_secundario_incompleto(datos):
+    
+    # Encabezado
+        
+    print(f"{'Año':^8} {'Trimestre':^8} {'Aglomerado A':^20} {'Aglomerado B':^20}")
+    print("-" * 60)
+    
+    # sorted lo usa para ir imprimendo ordenando por el par anio, trimestre
+    for (anio, trimestre), valores in sorted(datos.items()):
+        
+        # guardamos los valores de cada anio trimestre
+        cumplen1 = valores["Cumplen_aglom_1"]
+        total1 = valores["Todos_aglom1_18"]
+        cumplen2 = valores["Cumplen_aglom_2"]
+        total2 = valores["Todos_aglom2_18"]
+        
+        # Calculamos porcentaje
+        
+        porcentaje1 = (cumplen1 / total1) * 100 if total1 > 0 else 0
+        porcentaje2 = (cumplen2 / total2) * 100 if total2 > 0 else 0
+        
+        # Mejoramos el formato para la impresion
+        
+        porcentaje1 = f"{porcentaje1:.2f} %"
+        porcentaje2 = f"{porcentaje2:.2f} %"
+        
+        # Imprimimos fila
+        
+        print(f"{anio:^8} {trimestre:^8} {porcentaje1:^20} {porcentaje2:^20}")
+        
+
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
