@@ -1,3 +1,6 @@
+from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED, FILENAME_HOGARES_UNIFIED
+from src.utils.helpers import process_file, save_to_txt
+import streamlit as st
 import sys
 import os
 import csv
@@ -20,9 +23,13 @@ def read_file(file_path):
     Returns:
         list: Una lista de listas, donde cada sublista representa una fila del archivo CSV.
     """
-    with open(file_path, encoding='utf-8') as file_csv:
-        csv_reader = csv.reader(file_csv, delimiter=";")
-        return list(csv_reader)
+    try:
+        with open(file_path, encoding='utf-8') as file_csv:
+            csv_reader = csv.reader(file_csv, delimiter=";")
+            return list(csv_reader)
+    except FileNotFoundError:
+        print(f"❌ Error: El archivo {file_path} no existe.")
+        return []
 
 
 def read_file_dic(file_path):
@@ -33,14 +40,17 @@ def read_file_dic(file_path):
     Returns:
     :return: Una lista con el encabezado y una lista de diccionarios con los datos.
     """
-    with open(file_path, encoding='utf-8') as file_csv:
-        csv_reader = csv.DictReader(file_csv, delimiter=";")
-        return csv_reader.fieldnames, list(csv_reader)
+    try:
+        with open(file_path, encoding='utf-8') as file_csv:
+            csv_reader = csv.DictReader(file_csv, delimiter=";")
+            return csv_reader.fieldnames, list(csv_reader)
+    except FileNotFoundError:
+        print(f"❌ Error: El archivo {file_path} no existe.")
+        return [], []
 
 
 # PROCESAR ARCHIVOS
 def process_file(source_path, category="hogar"):
-    
     """
     Procesa archivos de texto en un path, filtrando por categoría, y unifica sus datos en una estructura común.
 
@@ -59,8 +69,9 @@ def process_file(source_path, category="hogar"):
             - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada
               según los encabezados recolectados.
     """
-    all_headers = [] # Aca voy  a acumular los headers
-    unified_data = [] # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
+    all_headers = []  # Aca voy  a acumular los headers
+    # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
+    unified_data = []
 
     # PRIMER FOR: recolectar todos los encabezados
     for file in source_path.glob("*.txt"):
@@ -69,7 +80,7 @@ def process_file(source_path, category="hogar"):
             for header in headers:  # Recorro los encabezados del archivo
                 if header not in all_headers:  # Solo lo agrego si no está en la lista
                     all_headers.append(header)
-                    
+
      # SEGUNDO FOR: Unificar filas
     for file in source_path.glob("*.txt"):
         if category in file.name:
@@ -78,17 +89,45 @@ def process_file(source_path, category="hogar"):
             for row in rows:  # Recorro las filas
                 unified_row = {}
                 for key in all_headers:  # Para cada fila voy recorriendo por header
-                    unified_row[key] = row.get(key, None)  # Si no existe en el header agregar None, sino guarda el dato en esa key
-                
-                unified_data.append(unified_row)  # Este debe ir fuera del loop de las columnas, agregando toda la fila a unified_data
+                    # Si no existe en el header agregar None, sino guarda el dato en esa key
+                    unified_row[key] = row.get(key, None)
+
+                # Este debe ir fuera del loop de las columnas, agregando toda la fila a unified_data
+                unified_data.append(unified_row)
 
     return all_headers, unified_data
 
 
-
 # GUARDAR ARCHIVOS
-from pathlib import Path
-import csv
+
+# PROPUESTA -  Esta funcion puede unificar a save_to_txt y save_to_csv
+def save_to_file(file_path, file_name, header, data, separator=";"):
+    """
+    Guarda los datos en un archivo CSV en el formato especificado.
+
+    Parameters:
+    - data: Lista de diccionarios con los datos a guardar.
+    - file_path: Ruta del archivo donde se guardarán los datos.
+    - file_name: Nombre del archivo a guardar.
+    - header: Lista de nombres de las columnas (encabezado) para el CSV.
+    - delimiter: Delimitador de los campos en el CSV (por defecto ";").
+    """
+    # Crea la ruta completa del archivo
+    file_path = Path(file_path) / file_name
+
+    # Crea el directorio si no existe
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with file_path.open(mode="w", encoding="UTF-8", newline="") as file:
+        csv_writer = csv.DictWriter(
+            file, delimiter=separator, fieldnames=header)
+
+        # Escribe el encabezado y los datos en el archivo CSV
+        csv_writer.writeheader()
+        csv_writer.writerows(data)
+
+    print(f"✅ Archivo guardado en: {file_path}")
+
 
 def save_to_txt(headers, data, destination_path, file_name="hogares_unificados.txt"):
     """
@@ -112,8 +151,6 @@ def save_to_txt(headers, data, destination_path, file_name="hogares_unificados.t
     print(f"✅ Archivo TXT guardado en: {file_path}")
 
 
-
-
 def save_to_csv(file_path, header, data, delimiter=";"):
     """
     Guarda los datos en un archivo CSV en el formato especificado.
@@ -124,7 +161,7 @@ def save_to_csv(file_path, header, data, delimiter=";"):
     - header: Lista de nombres de las columnas (encabezado) para el CSV.
     - delimiter: Delimitador de los campos en el CSV (por defecto ";").
     """
-    file_path = Path(file_path)  
+    file_path = Path(file_path)
     # Crea el directorio si no existe
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -135,8 +172,7 @@ def save_to_csv(file_path, header, data, delimiter=";"):
         csv_writer.writerows(data)  # Escribe los datos
 
 
-
-# STREAMLIT 
+# STREAMLIT
 
 def max_min_date(data):
     """
@@ -208,6 +244,7 @@ def max_min_date(data):
     return max_date, min_date
 """
 
+
 def data_date_range():
     """
     Devuelve el rango de fechas (mínima y máxima) de los archivos de hogares e individuos procesados.
@@ -226,11 +263,6 @@ def data_date_range():
 
 
 # ACTUALIZAR
-from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR,DATA_CLEAN_DIR,FILENAME_INDIVIDUOS_UNIFIED,FILENAME_HOGARES_UNIFIED
-
-import streamlit as st
-from src.utils.helpers import process_file, save_to_txt
-
 
 
 def actualizar():
@@ -242,12 +274,16 @@ def actualizar():
     """
     try:
         # Procesar hogares
-        encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
-        save_to_txt(encabezados_h, hogares, DATA_CLEAN_DIR, FILENAME_HOGARES_UNIFIED)
+        encabezados_h, hogares = process_file(
+            DATA_SOURCE_DIR, category="hogar")
+        save_to_txt(encabezados_h, hogares, DATA_CLEAN_DIR,
+                    FILENAME_HOGARES_UNIFIED)
 
         # Procesar individuos
-        encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
-        save_to_txt(encabezados_i, individuos, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED)
+        encabezados_i, individuos = process_file(
+            DATA_SOURCE_DIR, category="individual")
+        save_to_txt(encabezados_i, individuos, DATA_CLEAN_DIR,
+                    FILENAME_INDIVIDUOS_UNIFIED)
 
         st.success(f"✔ Archivos actualizados correctamente.\n")
 
