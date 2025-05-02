@@ -1,5 +1,5 @@
 import streamlit as st
-from src.utils.helpers import data_date_range
+from src.utils.helpers import data_date_range, actualizar
 from src.utils.constants import DATA_SOURCE_DIR
 from pathlib import Path
 
@@ -36,4 +36,4 @@ if uploaded_files:
 
 st.subheader("Actualización de Datos")
 st.write("Si desea actualizar los datos, haga clic en el botón de abajo.")
-st.button("Actualizar datos")
+st.button("Actualizar", key="b_actualizar", on_click=actualizar, icon="🔄")

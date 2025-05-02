@@ -283,6 +283,9 @@ def actualizar():
         save_to_txt(encabezados_i, individuos, DATA_CLEAN_DIR,
                     FILENAME_INDIVIDUOS_UNIFIED)
 
+        # Sirve para que se resetee el rango de fechas en la app
+        st.session_state.date_range = None
+
         st.success(f"✔ Archivos actualizados correctamente.\n")
 
     except Exception as e:
