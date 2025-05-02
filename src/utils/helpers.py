@@ -124,7 +124,7 @@ def save_to_csv(file_path, header, data, delimiter=";"):
     - header: Lista de nombres de las columnas (encabezado) para el CSV.
     - delimiter: Delimitador de los campos en el CSV (por defecto ";").
     """
-    file_path = Path(file_path)  # Aseguramos que la ruta sea un objeto Path
+    file_path = Path(file_path)  
     # Crea el directorio si no existe
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -227,7 +227,6 @@ def data_date_range():
 
 # ACTUALIZAR
 from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR,DATA_CLEAN_DIR,FILENAME_INDIVIDUOS_UNIFIED,FILENAME_HOGARES_UNIFIED
-from src.procesamientos.hogares import procesar_hogares
 
 import streamlit as st
 from src.utils.helpers import process_file, save_to_txt
