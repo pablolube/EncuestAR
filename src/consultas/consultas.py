@@ -153,11 +153,12 @@ def porc_extranjero_universitario(anio, trim, data):
     try:
         porcentaje = (count["extranjero"] /
                       (count["argentino"] + count["extranjero"])) * 100
-    except ZeroDivisionError:
-        porcentaje = 0
+        print(
+            f"El % de personas extranjeras que han cursado el nivel superior o universitario en el trimestre {trim} del año {anio} es del: {porcentaje:.2f}%")
 
-    print(
-        f"El % de personas extranjeras que han cursado el nivel superior o universitario en el trimestre {trim} del año {anio} es del: {porcentaje:.2f}%")
+    except ZeroDivisionError:
+        print(f"No hay datos para el trimestre {trim} del año {anio}")
+
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 3 (ANÁLISIS) - INDIVIDUOS
