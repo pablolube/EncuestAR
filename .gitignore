@@ -174,4 +174,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-data/
+#ignorar todos los .txt en la carpeta data y subcarpetas
+data/**/*.txt
