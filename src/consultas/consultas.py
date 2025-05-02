@@ -428,25 +428,24 @@ def ranking_inquilinos_por_region(data_hogares):
     conteo = {}
 
     for row in data_hogares:
+        try:
+            region = row["REGION"]
+            inquilino = row["II7"]
+            pondera = int(row["PONDERA"])
 
-        # Nombro variables para mejor legibilidad
-        region = row["REGION"]
-        inquilino = row["II7"]
-        pondera = int(row["PONDERA"])
+            if region is None or inquilino is None:
+                raise ValueError("Campos nulos")
 
-         # Salteamos registros incompletos
-        if region is None or inquilino is None or pondera is None:
+            if region not in conteo:
+                conteo[region] = {'total': 0, 'inquilinos': 0}
+
+            conteo[region]['total'] += pondera
+
+            if int(inquilino) == 3:
+                conteo[region]['inquilinos'] += pondera
+
+        except (ValueError, TypeError) as e:
             continue
-        
-        # Inicializa el conteo para la región si no existe
-        if region not in conteo:
-            conteo[region] = {'total': 0, 'inquilinos': 0}
-        # Acumulo total de hogares de la region 
-        conteo[region]['total'] += pondera
-
-        # Acumulo total de inquilinos de la region
-        if int(inquilino) == 3:  # código de inquilino
-            conteo[region]['inquilinos'] += pondera
 
     ranking = []
 
