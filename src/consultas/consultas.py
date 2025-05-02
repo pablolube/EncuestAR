@@ -141,12 +141,14 @@ def info_menor_desocupacion(data):
     min_valor = min(valor for trimestres in total_trim.values()
                     for valor in trimestres.values())
 
+    # Se guarda si hubo otros años y trimestres con el mismo valor que el minimo.
     resultados = []
     for anio, trimestres in total_trim.items():
         for trimestre, valor in trimestres.items():
             if valor == min_valor:
                 resultados.append((anio, trimestre))
 
+    # Se imprime resultado
     print(
         f"Valor mínimo de desocupación: {min_valor} en los siguientes años y trimestres:")
     for anio, trimestre in resultados:
