@@ -116,53 +116,6 @@ def add_data_universitario(row):
 # -------------------------------------------------------------------------------------------------------------------------
 
 
-def imprimir_alfabetizadas(diccionario):
-    """
-    Imprime la cantidad de personas alfabetizadas por año.
-
-    Args:
-    :param diccionario: Diccionario con los datos de alfabetización.
-    """
-
-    print("Año\tAlfabetizados\tNo alfabetizados")
-    for key, value in diccionario.items():
-        print(f"{key}\t{value['A']}\t\t{value['NA']}")
-
-
-# --------------------------------------------------------------------
-# PUNTO 1
-# --------------------------------------------------------------------
-
-def cant_personas_alfabetizadas(data):
-    """
-    Cuenta la cantidad de personas alfabetizadas en el archivo CSV por año.
-    Se clasifican a las personas que tengan 6 años o más.
-
-    Args:
-    :param data: lista de datos del dataset.
-    """
-
-    # Inicializa el contador
-    count = {}
-
-    # Itera sobre cada fila del lector CSV
-    for row in data:
-
-        # Si el año no existe, lo crea
-        if row["ANO4"] not in count:
-            # ----------------------- Crea un diccionario de diccionarios no?
-            count[row["ANO4"]] = {"A": 0, "NA": 0}
-
-        # Analiza solo si está en el trimestre 4 y edad (CH06) mayor a 6 años
-        if row["CH06"] > "6":  # and  row["TRIMESTRE"] == "4":   # -------------------------------- porque 4to trimestre??
-            if row["CH09"] == "1":
-                count[row["ANO4"]]["A"] += int(row["PONDERA"])
-            else:
-                count[row["ANO4"]]["NA"] += int(row["PONDERA"])
-
-    # ------------------------------------------------- Te lo pide en porcentajes el resultado
-    imprimir_alfabetizadas(count)
-
 # --------------------------------------------------------------------
 # PUNTO 2
 # --------------------------------------------------------------------
@@ -387,7 +340,7 @@ def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
     Parámetros:
     :param resultado: dict con los resultados a imprimir.
     """
- 
+
     # Imprimo encabezado
     print(f"{'Aglomerado':<40}{'Porcentaje (%)':>15}")
     print("-" * 55)
@@ -417,26 +370,28 @@ def info_porcentual_educacionsuperior_aglomerado(data):
     # Itera sobre cada fila del lector CSV
     for row in data:
 
-        #if row["CH06"] is None or row["NIVEL_ED_str"] is None or row["AGLOMERADO"] is None or int(row["PONDERA"]) is None:
-            #continue  # salteamos registros incompletos
+        # if row["CH06"] is None or row["NIVEL_ED_str"] is None or row["AGLOMERADO"] is None or int(row["PONDERA"]) is None:
+        # continue  # salteamos registros incompletos
 
         # Acumulo por aglomerado, si no existe lo inicializo
         if row["AGLOMERADO"] not in conteo:
-            conteo[row["AGLOMERADO"]] = {'total_mayores': 0, 'universitarios': 0}
+            conteo[row["AGLOMERADO"]] = {
+                'total_mayores': 0, 'universitarios': 0}
 
         # Acumulo el total de mayores de edad sobre el cual se calculará el porcentaje
         if int(row["CH06"]) >= 18:
             conteo[row["AGLOMERADO"]]['total_mayores'] += int(row["PONDERA"])
             # Acumulo el total de universitarios
             if row["NIVEL_ED_str"] == "Superior o universitario":
-                conteo[row["AGLOMERADO"]]['universitarios'] += int(row["PONDERA"])
+                conteo[row["AGLOMERADO"]
+                       ]['universitarios'] += int(row["PONDERA"])
 
     # Calculo el porcentaje por aglomerado
     for row["AGLOMERADO"] in conteo:
         total = conteo[row["AGLOMERADO"]]['total_mayores']
         nivel_sup = conteo[row["AGLOMERADO"]]['universitarios']
         resultado[row["AGLOMERADO"]] = round((nivel_sup / total) *
-                                100, 2) if total > 0 else 0.0
+                                             100, 2) if total > 0 else 0.0
 
     # Imprimo resultados
     imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
@@ -492,7 +447,6 @@ def imprimo_tabla_nivel_educativo(conteo):
 
 
 def tabla_nivel_educativo(data, aglomerado):
-
     """
     Genera una tabla con cantidad de personas mayores de 18 por nivel educativo,
     agrupada por año y trimestre, para el aglomerado ingresado.
@@ -503,8 +457,8 @@ def tabla_nivel_educativo(data, aglomerado):
 
     """
 
-    # Inicializa el diccionario para almacenar los resultados 
-    conteo = {} 
+    # Inicializa el diccionario para almacenar los resultados
+    conteo = {}
 
     # Verifica si el aglomerado existe en los datos
     aglomerado_encontrado = False
@@ -529,7 +483,8 @@ def tabla_nivel_educativo(data, aglomerado):
                 conteo[aglo] = {}
 
             if (anio, trimestre) not in conteo[aglo]:
-                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
+                conteo[aglo][(anio, trimestre)] = {
+                    nivel: 0 for nivel in range(1, 8)}
 
             conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
 

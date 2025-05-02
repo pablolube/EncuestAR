@@ -36,12 +36,12 @@ AGLOMERADOS_NOMBRES = {
 
 # Este diccionario contiene los nombres de los aglomerados según su número
 REGIONES_NOMBRES = {
-    1 : "Gran Buenos Aires",
-    40 : "Noroeste", 
-    41 : "Noreste", 
-    42 : "Cuyo", 
-    43 : "Pampeana", 
-    44 : "Patagonia" }
+    1: "Gran Buenos Aires",
+    40: "Noroeste",
+    41: "Noreste",
+    42: "Cuyo",
+    43: "Pampeana",
+    44: "Patagonia"}
 
 # Definición de los niveles educativos
 niveles_educativos = {
@@ -52,17 +52,18 @@ niveles_educativos = {
     5: "Superior universitario incompleto",
     6: "Superior universitario completo",
     7: "Sin instrucción"
- }
+}
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 1 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
+
 def imprimir_alfabetizadas(diccionario):
     """
     Realiza calculos porcentuales 
 
-    Imprime la cantidad de personas alfabetizadas por año.
+    Imprime el % de personas alfabetizadas por año.
 
     Args:
     :param diccionario: Diccionario con los datos de alfabetización.
@@ -71,51 +72,63 @@ def imprimir_alfabetizadas(diccionario):
     print("-" * 45)
 
     # Calculo resultados porcentuales por año
-    for anio in sorted(diccionario.keys()):
-        valor_alf = diccionario[anio]["A"]
-        valor_nalf = diccionario[anio]["NA"]
-        total = valor_alf + valor_nalf
+    for anio in sorted(diccionario.keys(), reverse=True):
 
-        porcentaje_alf = round((valor_alf / total) * 100, 2) if total > 0 else 0.0
-        porcentaje_Nalf = round((valor_nalf / total) * 100, 2) if total > 0 else 0.0
+        # Recorro los trimestres de mayor a menor
+        for trimestre in sorted(diccionario[anio].keys(), reverse=True):
+            # Si hay personas alfabetizadas o no alfabetizadas, calculo los porcentajes
+            if diccionario[anio][trimestre]["A"] > 0 or diccionario[anio][trimestre]["NA"] > 0:
+                valor_alf = diccionario[anio][trimestre]["A"]
+                valor_nalf = diccionario[anio][trimestre]["NA"]
 
-        # Imprimo resultados
-        print(f"{anio:<10}{porcentaje_alf:>15.2f}%{porcentaje_Nalf:>20.2f}%")
+                # Calculo el total de personas
+                total = valor_alf + valor_nalf
+
+                # Calculo los porcentajes
+                porcentaje_alf = round((valor_alf / total) * 100, 2)
+                porcentaje_Nalf = round((valor_nalf / total) * 100, 2)
+
+                # Imprimo resultados
+                print(f"{anio:<10}{porcentaje_alf:>15.2f}{porcentaje_Nalf:>20.2f}")
+
+                # Paso al siguiente año
+                break
+
 
 def cant_personas_alfabetizadas(data):
     """
-    Cuenta la cantidad de personas alfabetizadas en el archivo CSV por año.
+    Cuenta la cantidad de personas alfabetizadas en el archivo CSV por el último trimestre de cada año.
     Se clasifican a las personas que tengan 6 años o más.
 
     Args:
     :param data: lista de datos del dataset.
     """
 
-    # Inicializa el contador
     count = {}
 
-    # Itera sobre cada fila del lector CSV
     for row in data:
-
         # Si el año no existe, lo crea
         if row["ANO4"] not in count:
-            # ----------------------- Crea un diccionario de diccionarios no?
-            count[row["ANO4"]] = {"A": 0, "NA": 0}
+            count[row["ANO4"]] = {"1": {"A": 0, "NA": 0}, "2": {
+                "A": 0, "NA": 0}, "3": {"A": 0, "NA": 0}, "4": {"A": 0, "NA": 0}}
 
-        # Analiza solo si la edad (CH06) mayor a 6 años
-        if row["CH06"] > "6" :
+        # Analiza si la edad (CH06) mayor a 6 años y que la persona no sea menor de 2 años (CH09=3)
+        if row["CH06"] > "6" and row["CH09"] != "3":
             # Si la persona es alfabetizada (CH09 == 1), suma al contador de alfabetizados
             if row["CH09"] == "1":
-                count[row["ANO4"]]["A"] += int(row["PONDERA"])
+                count[row["ANO4"]][row["TRIMESTRE"]
+                                   ]["A"] += int(row["PONDERA"])
             # Si la persona no es alfabetizada (CH09 == 2), suma al contador de no alfabetizados
-            else:
-                count[row["ANO4"]]["NA"] += int(row["PONDERA"])
+            elif row["CH09"] == "2":
+                count[row["ANO4"]][row["TRIMESTRE"]
+                                   ]["NA"] += int(row["PONDERA"])
 
     imprimir_alfabetizadas(count)
 
 # --------------------------------------------------------------------
 # FUNCIONES PUNTO 2 (ANÁLISIS) - INDIVIDUOS
 # --------------------------------------------------------------------
+
 
 def porc_extranjero_universitario(anio, trim, data):
     """
@@ -149,6 +162,7 @@ def porc_extranjero_universitario(anio, trim, data):
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 3 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
+
 
 def info_menor_desocupacion(data):
     """
@@ -193,6 +207,7 @@ def info_menor_desocupacion(data):
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 4 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
+
 
 def contar_universitarios_y_pondera_por_hogar(individuos):
     """
@@ -333,6 +348,7 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 # FUNCIONES PUNTO 7 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
+
 def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
     """
     Imprime el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
@@ -341,7 +357,7 @@ def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
     Parámetros:
     :param resultado: dict con los resultados a imprimir.
     """
- 
+
     # Imprimo encabezado
     print(f"{'Aglomerado':<40}{'Porcentaje (%)':>15}")
     print("-" * 55)
@@ -371,26 +387,28 @@ def info_porcentual_educacionsuperior_aglomerado(data):
     # Itera sobre cada fila del lector CSV
     for row in data:
 
-        #if row["CH06"] is None or row["NIVEL_ED_str"] is None or row["AGLOMERADO"] is None or int(row["PONDERA"]) is None:
-            #continue  # salteamos registros incompletos
+        # if row["CH06"] is None or row["NIVEL_ED_str"] is None or row["AGLOMERADO"] is None or int(row["PONDERA"]) is None:
+        # continue  # salteamos registros incompletos
 
         # Acumulo por aglomerado, si no existe lo inicializo
         if row["AGLOMERADO"] not in conteo:
-            conteo[row["AGLOMERADO"]] = {'total_mayores': 0, 'universitarios': 0}
+            conteo[row["AGLOMERADO"]] = {
+                'total_mayores': 0, 'universitarios': 0}
 
         # Acumulo el total de mayores de edad sobre el cual se calculará el porcentaje
         if int(row["CH06"]) >= 18:
             conteo[row["AGLOMERADO"]]['total_mayores'] += int(row["PONDERA"])
             # Acumulo el total de universitarios
             if row["NIVEL_ED_str"] == "Superior o universitario":
-                conteo[row["AGLOMERADO"]]['universitarios'] += int(row["PONDERA"])
+                conteo[row["AGLOMERADO"]
+                       ]['universitarios'] += int(row["PONDERA"])
 
     # Calculo el porcentaje por aglomerado
     for row["AGLOMERADO"] in conteo:
         total = conteo[row["AGLOMERADO"]]['total_mayores']
         nivel_sup = conteo[row["AGLOMERADO"]]['universitarios']
         resultado[row["AGLOMERADO"]] = round((nivel_sup / total) *
-                                100, 2) if total > 0 else 0.0
+                                             100, 2) if total > 0 else 0.0
 
     # Imprimo resultados
     imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
@@ -407,7 +425,7 @@ def imprimo_ranking_inquilinos_por_region(ranking):
     # Encabezado
     print(f"{'Puesto':<8}{'Región':<30}{'Porcentaje de Inquilinos (%)':>30}")
     print("-" * 70)
-    
+
     # Imprimir el ranking
     for i, (region, porcentaje) in enumerate(ranking, start=1):
         nombre_reg = REGIONES_NOMBRES.get(int(region))
@@ -468,6 +486,7 @@ def ranking_inquilinos_por_region(data_hogares):
 # FUNCIONES PUNTO 9 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
+
 def imprimo_tabla_nivel_educativo(conteo):
     """
     Imprime la tabla con cantidad de personas mayores de 18 por nivel educativo,
@@ -502,7 +521,6 @@ def imprimo_tabla_nivel_educativo(conteo):
 
 
 def tabla_nivel_educativo(data, aglomerado):
-
     """
     Genera una tabla con cantidad de personas mayores de 18 por nivel educativo,
     agrupada por año y trimestre, para el aglomerado ingresado.
@@ -513,8 +531,8 @@ def tabla_nivel_educativo(data, aglomerado):
 
     """
 
-    # Inicializa el diccionario para almacenar los resultados 
-    conteo = {} 
+    # Inicializa el diccionario para almacenar los resultados
+    conteo = {}
 
     # Verifica si el aglomerado existe en los datos
     aglomerado_encontrado = False
@@ -539,7 +557,8 @@ def tabla_nivel_educativo(data, aglomerado):
                 conteo[aglo] = {}
 
             if (anio, trimestre) not in conteo[aglo]:
-                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
+                conteo[aglo][(anio, trimestre)] = {
+                    nivel: 0 for nivel in range(1, 8)}
 
             conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
 
