@@ -4,7 +4,7 @@ from src.utils.helpers import data_date_range
 # Guarda el rango de fechas en la session state
 if "date_range" not in st.session_state:
     st.session_state.date_range = data_date_range()
-elif st.session_state.max_date is None:
+elif st.session_state.date_range is None:
     st.session_state.date_range = data_date_range()
 
 

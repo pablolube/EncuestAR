@@ -172,9 +172,9 @@ def save_to_csv(file_path, header, data, delimiter=";"):
 
 
 # STREAMLIT
-
+"""
 def max_min_date(data):
-    """
+    
     Calcula el rango de fechas (año y trimestre) a partir de los datos proporcionados.
 
     Parameters:
@@ -182,7 +182,7 @@ def max_min_date(data):
 
     Returns:
         tuple: Una tupla que contiene la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
-    """
+    
     max_year = min_year = None
     max_trim = min_trim = None
 
@@ -208,24 +208,20 @@ def max_min_date(data):
     min_date = f"{min_trim}/{min_year}"
 
     return max_date, min_date
-
-
 """
+
+
 def max_min_date(data):
-   
+    """
     Calcula la fecha mínima y máxima (año y trimestre) a partir de una lista de diccionarios.
-
     Cada diccionario debe contener las claves "ANO4" (año) y "TRIMESTRE" (número de trimestre).
-
     Args:
         data (list of dict): Lista de diccionarios con claves "ANO4" y "TRIMESTRE".
-
     Returns:
         tuple: Una tupla con la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
-
     Raises:
         ValueError: Si la lista está vacía o los datos no contienen las claves requeridas.
-
+    """
     if not data:
         raise ValueError("La lista de datos está vacía.")
 
@@ -241,7 +237,6 @@ def max_min_date(data):
     min_date = f"{min_fecha[1]}/{min_fecha[0]}"
 
     return max_date, min_date
-"""
 
 
 def data_date_range():
@@ -254,8 +249,12 @@ def data_date_range():
 
     # Obtiene las fechas mínimas y máximas de ambos conjuntos de datos
     # y las ordena
-    date_list = sorted(max_min_date(
-        dataset_hog[1]) + max_min_date(dataset_ind[1]))
+    try:
+        date_list = sorted(max_min_date(
+            dataset_hog[1]) + max_min_date(dataset_ind[1]))
+    except ValueError:
+        st.error("❌ Error: No se encontraron datos en los archivos procesados.")
+        return None, None
 
     # devuelve la fecha minima y maxima de los dos archivos
     return date_list[0], date_list[-1]
