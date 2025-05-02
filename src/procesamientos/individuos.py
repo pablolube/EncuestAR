@@ -73,3 +73,17 @@ def add_data_universitario(row):
         return
 
     row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
+
+
+def add_extra_data(header, data):
+
+    # Agrego las nuevas columnas al header
+    header.extend(["CH04_str", "NIVEL_ED_str",
+                  "CONDICION_LABORAL", "UNIVERSITARIO"])
+
+    # Proceso las nuevas columnas por cada fila
+    for row in data:
+        add_data_ch04str(row)
+        add_data_nivel_ed_str(row)
+        add_data_cond_lab(row)
+        add_data_universitario(row)
