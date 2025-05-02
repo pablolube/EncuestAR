@@ -104,8 +104,10 @@ def cant_personas_alfabetizadas(data):
 
         # Analiza solo si la edad (CH06) mayor a 6 años
         if row["CH06"] > "6" :
+            # Si la persona es alfabetizada (CH09 == 1), suma al contador de alfabetizados
             if row["CH09"] == "1":
                 count[row["ANO4"]]["A"] += int(row["PONDERA"])
+            # Si la persona no es alfabetizada (CH09 == 2), suma al contador de no alfabetizados
             else:
                 count[row["ANO4"]]["NA"] += int(row["PONDERA"])
 
@@ -319,7 +321,14 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 
         print(
             f"{i}. Aglomerado {aglomerado_num} - {nombre_aglomerado}: {porcentaje:.2f}%")
-        
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 6 (ANÁLISIS) - HOGAR
+# -----------------------------------------------------------------------------------
+
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 7 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
@@ -513,7 +522,7 @@ def tabla_nivel_educativo(data, aglomerado):
 
     for row in data:
 
-        # Asegúrate de que los valores sean enteros y no nulos
+        # Aseguramos que los valores sean enteros y no nulos
         try:
             aglo = int(row["AGLOMERADO"])
             edad = int(row["CH06"])
@@ -542,5 +551,18 @@ def tabla_nivel_educativo(data, aglomerado):
         # Imprimo tabla final
         imprimo_tabla_nivel_educativo(conteo)
 
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS Nota: podes usar la funcion PUNTO 9!
+# -----------------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
+# -----------------------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR
+# -----------------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------------
+# FUNCIONES PUNTO 13 (ANÁLISIS) - INDIVIDUOS Nota: se puede usar la funciones del PUNTO 9 y 12!
+# -----------------------------------------------------------------------------------
