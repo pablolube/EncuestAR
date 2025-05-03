@@ -154,6 +154,7 @@ def info_menor_desocupacion(data):
     for anio, trimestre in resultados:
         print(f"Año: {anio}, Trimestre: {trimestre}")
 
+
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 4 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
@@ -289,6 +290,127 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
+
+def contar_viviendas_propietarias(datos_hogares):
+    """
+    Procesa una lista de diccionarios de hogares y cuenta, para cada aglomerado:
+      - El total ponderado de viviendas.
+      - El total ponderado de viviendas ocupadas por sus propietarios
+        (régimen de tenencia 1 o 2).
+
+    Args:
+        datos_hogares (list of dict): Cada dict representa un hogar con claves:
+            - "AGLOMERADO": código del aglomerado (string convertible a int)
+            - "II7": régimen de tenencia (string convertible a int)
+            - "PONDERA": valor ponderado de ese hogar (string convertible a int)
+
+    Returns:
+        dict[int, list[float, float]]: Mapeo de:
+            aglomerado → [viviendas_propietarias, viviendas_totales]
+    """
+    # Definimos los valores válidos que indican "propietario"
+    VALORES_VALIDOS_PROPIETARIOS = {1, 2}
+
+    # Aquí guardaremos los resultados por aglomerado:
+    # resultados[aglomerado] = [suma_propietarias, suma_totales]
+    resultados = {}
+
+    # Recorremos cada fila (hogar) de la lista de datos
+    for fila in datos_hogares:
+        try:
+            # Convertimos los campos clave a enteros
+            aglomerado = int(fila["AGLOMERADO"])
+            tenencia     = int(fila["II7"].strip())
+            pondera      = int(fila["PONDERA"])
+        except (ValueError, KeyError):
+            # Si falta algún campo o no se puede convertir, saltamos la fila
+            continue
+
+        # Solo consideramos regímenes de tenencia 1, 2 (propietarios) o 3 (inquilinos)
+        if tenencia not in VALORES_VALIDOS_PROPIETARIOS and tenencia != 3:
+            continue
+
+        # Si es la primera vez que vemos este aglomerado, lo inicializamos
+        if aglomerado not in resultados:
+            resultados[aglomerado] = [0.0, 0.0]
+
+        # Sumamos siempre al total de viviendas ponderadas
+        resultados[aglomerado][1] += pondera
+
+        # Si es régimen 1 ó 2, sumamos también al contador de propietarios
+        if tenencia in VALORES_VALIDOS_PROPIETARIOS:
+            resultados[aglomerado][0] += pondera
+
+    return resultados
+
+def calcular_porcentajes(resultados):
+    """
+    Dado el diccionario de resultados, devuelve una lista de tuplas:
+    (aglomerado, nombre, porcentaje), ordenada en forma descendente.
+    """
+    lista = []
+    for aglomerado, (propietarias, total) in resultados.items():
+        if total > 0:
+            porcentaje = (propietarias / total) * 100
+        else:
+            porcentaje = 0.0
+        nombre = AGLOMERADOS_NOMBRES.get(aglomerado, "Nombre no disponible")
+        lista.append((aglomerado, nombre, porcentaje))
+    
+    lista_ordenada = sorted(lista, key=lambda x: x[2], reverse=True)
+    return lista_ordenada
+
+
+        
+def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
+    """
+    Imprime el ranking de aglomerados en formato de tabla con columnas alineadas.
+
+    Args:
+        porcentajes_por_aglomerado (list of tuple): Lista de tuplas
+            (aglomerado, nombre, porcentaje) ordenada de mayor a menor porcentaje.
+        cantidad (int, opcional): Número de filas a mostrar. Si es None, muestra todas.
+    """
+    # Definir encabezados y calcular ancho dinámico
+    encabezados = ["Puesto", "Código", "Aglomerado", "% Propietarios"]
+    formatos = ["{:<6}", "{:<6}", "{:<35}", "{:>15}"]
+    header = "  ".join(fmt.format(txt) for fmt, txt in zip(formatos, encabezados))
+    separator = "-" * len(header)
+
+    # Determinar filas a mostrar
+    filas = porcentajes_por_aglomerado if cantidad is None else porcentajes_por_aglomerado[:cantidad]
+
+    # Imprimir encabezado y separador
+    print(header)
+    print(separator)
+
+    # Imprimir cada fila con el mismo formato
+    for i, (aglomerado, nombre, porcentaje) in enumerate(filas, start=1):
+        print(
+            f"{i:<6}  "
+            f"{aglomerado:<6}  "
+            f"{nombre:<35}  "
+            f"{porcentaje:>14.2f}%"
+        )
+
+        
+def procesar_y_mostrar_porcentajes(datos_hogares):
+    """
+    Ejecuta todo el procesamiento y la impresión del ranking de
+    porcentajes de viviendas ocupadas por propietarios.
+
+    Args:
+        datos_hogares (list of dict): Lista de registros de hogares.
+    """
+    # 1) Cuenta viviendas propietarias y totales por aglomerado
+    resultados = contar_viviendas_propietarias(datos_hogares)
+
+    # 2) Calcula el porcentaje de viviendas propietarias
+    porcentajes = calcular_porcentajes(resultados)
+
+    # 3) Imprime el ranking
+    imprimir_tabla_ranking(porcentajes, cantidad=None)
+
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 6 (ANÁLISIS) - HOGAR
