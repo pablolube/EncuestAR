@@ -65,7 +65,7 @@ Linux/Mac: bash source venv/bin/activate
 
 pip install -r requirements.txt
 
-## 3. **Ejecutar la aplicación STREAMLIT**
+### 3. **Ejecutar la aplicación STREAMLIT**
 streamlit run Inicio.py
 
 Para cargar uno o más archivos que requieran procesarse, navegar por el menú de la web hasta la sección "Carga de Datos".
