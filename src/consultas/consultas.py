@@ -1,4 +1,4 @@
-# from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
+from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
 
 
 # -----------------------------------------------------------------------------------
@@ -76,13 +76,6 @@ def cant_personas_alfabetizadas(data):
                                    ]["NA"] += int(row["PONDERA"])
 
     imprimir_alfabetizadas(count)
-
-
-# data = []
-# cant_personas_alfabetizadas(data)
-data = [{"ANO4": 2024, "TRIMESTRE": "3",
-         "CH06": "7", "CH09": "1", "PONDERA": "200"}]
-cant_personas_alfabetizadas(data)
 
 # --------------------------------------------------------------------
 # FUNCIONES PUNTO 2 (ANÁLISIS) - INDIVIDUOS
