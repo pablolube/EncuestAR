@@ -1,7 +1,7 @@
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # PROCESAMIENTO HOGARES
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 def clasificar_hogar_hab(cant_personas):
     """
     Clasifica un hogar según la cantidad de personas que lo habitan.
@@ -17,7 +17,7 @@ def clasificar_hogar_hab(cant_personas):
     """
 
     personas = int(cant_personas)
-    
+
     if personas == 1:
         tipo = "Unipersonal"
     elif 2 <= personas <= 4:
@@ -26,6 +26,10 @@ def clasificar_hogar_hab(cant_personas):
         tipo = "Extendido"
     return tipo
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 def clasificar_hogar_techo(material_nro):
     """
     Clasifica el tipo de techo de un hogar según tipo de material.
@@ -39,6 +43,7 @@ def clasificar_hogar_techo(material_nro):
             - "Material precario": si el número del material está entre 5 y 7.
             - "No aplica": si el número del material es 9 o si hay un error en el dato.
     """
+<<<<<<< HEAD
     try:
         material_nro = int(material_nro)
 
@@ -51,12 +56,25 @@ def clasificar_hogar_techo(material_nro):
     except (ValueError, TypeError):
         return "No aplica"  # Para errores de conversión o tipo de dato
 
+=======
+
+    material_nro = int(material_nro)
+
+    if 1 <= material_nro <= 4:
+        tipo = "Material durable"
+    elif 5 <= material_nro <= 7:
+        tipo = "Material precario"
+    elif material_nro == 9:
+        tipo = "No aplica"
+    return tipo
+>>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
+
 
 def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
     try:
         cant_personas = int(cant_personas)
         cant_hab = int(cant_hab)
-        
+
         if cant_hab == 0:
             return "Desconocido"  # Evitar división por cero
 
@@ -75,113 +93,112 @@ def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
 
 def clasificar_hogar_habitabilidad(agua, origen_agua, baño, ubi_baño, tipo_baño, desague, techo_material, piso_material):
     try:
-            agua=int(agua)
-            origen_agua=int(origen_agua)
-            baño=int(baño)
-            tipo_baño=int(tipo_baño)
-            desague=int(desague)
-            piso_material=int(piso_material)
-            
-            problemas = 0
-            
-            # 1. Agua 
-            if agua == 2:  # Agua fuera de la vivienda, pero dentro del terreno
-                problemas += 2
-            elif agua == 3:  # Agua fuera del terreno
-                problemas += 3
+        agua = int(agua)
+        origen_agua = int(origen_agua)
+        baño = int(baño)
+        tipo_baño = int(tipo_baño)
+        desague = int(desague)
+        piso_material = int(piso_material)
 
-            # 2. Origen del agua
-            if origen_agua == 2:  # Perforación con bomba a motor
-                problemas += 1
-            elif origen_agua == 3:  # Perforación con bomba manual
-                problemas += 2
-            elif origen_agua == 4:  # Otra fuente
-                problemas += 3
+        problemas = 0
 
-            # 3. Baño
-            if baño == 2:
-                return 'Insuficiente'
+        # 1. Agua
+        if agua == 2:  # Agua fuera de la vivienda, pero dentro del terreno
+            problemas += 2
+        elif agua == 3:  # Agua fuera del terreno
+            problemas += 3
 
-            # 4. Ubicación del baño
-            if  ubi_baño == 2:  # Baño fuera de la vivienda, pero dentro del terreno
-                problemas += 1
-            elif ubi_baño == 3:   # Baño fuera del terreno
-                problemas += 2
+        # 2. Origen del agua
+        if origen_agua == 2:  # Perforación con bomba a motor
+            problemas += 1
+        elif origen_agua == 3:  # Perforación con bomba manual
+            problemas += 2
+        elif origen_agua == 4:  # Otra fuente
+            problemas += 3
 
-            # 5. Tipo de baño
-            if tipo_baño == 1:  # Inodoro con arrastre de agua
-                problemas += 0
-            elif tipo_baño == 2:  # Inodoro sin arrastre de agua
-                problemas += 3
-            else:  # Letrina
-                problemas += 4
+        # 3. Baño
+        if baño == 2:
+            return 'Insuficiente'
 
-            # 6. Desagüe del baño
-            if desague == 2:  # Desagüe a cámara séptica o pozo ciego
-                problemas += 1
-            elif desague == 3:  # Desagüe solo a pozo ciego
-                problemas += 2
-            elif desague == 4:  # Desagüe a hoyo/excavación
-                problemas += 3
+        # 4. Ubicación del baño
+        if ubi_baño == 2:  # Baño fuera de la vivienda, pero dentro del terreno
+            problemas += 1
+        elif ubi_baño == 3:   # Baño fuera del terreno
+            problemas += 2
 
-            # 7. Material del techo
-            if techo_material == "Material precario":
-                problemas += 6
+        # 5. Tipo de baño
+        if tipo_baño == 1:  # Inodoro con arrastre de agua
+            problemas += 0
+        elif tipo_baño == 2:  # Inodoro sin arrastre de agua
+            problemas += 3
+        else:  # Letrina
+            problemas += 4
 
-            # 8. Material del piso
-            if piso_material == 2:
-                problemas += 1
-            else:  # Material precario
-                problemas += 2
+        # 6. Desagüe del baño
+        if desague == 2:  # Desagüe a cámara séptica o pozo ciego
+            problemas += 1
+        elif desague == 3:  # Desagüe solo a pozo ciego
+            problemas += 2
+        elif desague == 4:  # Desagüe a hoyo/excavación
+            problemas += 3
 
-            # Clasificación final según los problemas
-            if problemas >= 10:
-                return "Insuficiente"
-            elif 6 <= problemas < 10:
-                return "Regular"
-            elif 4 <= problemas < 6:
-                return "Saludable"
-            else:
-                return "Buena"
+        # 7. Material del techo
+        if techo_material == "Material precario":
+            problemas += 6
+
+        # 8. Material del piso
+        if piso_material == 2:
+            problemas += 1
+        else:  # Material precario
+            problemas += 2
+
+        # Clasificación final según los problemas
+        if problemas >= 10:
+            return "Insuficiente"
+        elif 6 <= problemas < 10:
+            return "Regular"
+        elif 4 <= problemas < 6:
+            return "Saludable"
+        else:
+            return "Buena"
     except ValueError:
         return None  # Guarda este valor cuando hay error
 
+<<<<<<< HEAD
 from src.utils.helpers import read_file_dic
 from src.procesamientos.hogares import clasificar_hogar_hab,clasificar_hogar_techo,clasificar_hogar_densidad_hab,clasificar_hogar_habitabilidad
 from src.utils.helpers import save_to_csv
 from src.utils.constants import HOGARES_PROCESSED_DIR
+=======
+>>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 
-def procesar_hogares():
+def procesar_hogares(header, data):
+    """
+    Procesa los datos de los hogares y agrega nuevas columnas con clasificaciones.
+    """
 
+<<<<<<< HEAD
    #Leo el archivo de hogares unificiado y me guardo el encabezado y las filas en una columna
    header,data=read_file_dic(HOGARES_PROCESSED_DIR)
+=======
+    # Agrego las nuevas columnas al header
+    header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE",
+                  "DENSIDAD_HOGAR", "CONDICION_DE_HABITABILIDAD"])
+>>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 
-   # Agrego las nuevas columnas al header
-   header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE", "DENSIDAD_HOGAR", "CONDICION_DE_HABITABILIDAD"])
+    # Recorro las fila y realizo los procesos
+    for row in data:
 
-   #Creo una lista para guardar mis filas procesadas
-   process_row = []
+        # Clasifico el tipo de hogar según el número total de personas en Unipersonal,Nuclear o extendido
+        row['TIPO_HOGAR'] = clasificar_hogar_hab(row['IX_TOT'])
 
-   #Recorro las fila y realizo los procesos 
-   for row in data:
-      
-      # Clasifico el tipo de hogar según el número total de personas en Unipersonal,Nuclear o extendido
-      row['TIPO_HOGAR']=clasificar_hogar_hab(row['IX_TOT']) 
-      
-      # Clasifico  según el tipo de material del techo en Material durable,precario,no aplica
-      row['MATERIAL_TECHUMBRE']=clasificar_hogar_techo(row['IV4'])
-      
-      # Clasifico segun la densidad por hogar bajo,medio,alto
-      row['DENSIDAD_HOGAR']=clasificar_hogar_densidad_hab(row['IX_TOT'],row['IV2'])
-      
-      # Clasifico la condición de habitabilidad del hogar basado en varios atributos relacionados con la vivienda
-      row['CONDICION_DE_HABITABILIDAD']=clasificar_hogar_habitabilidad(row['IV6'],row['IV7'],row['IV8'],row['IV9'],row['IV10'],row['IV11'],row['MATERIAL_TECHUMBRE'],row['IV3'])
-      
-      #Agrego la fila procesada a la lista.
-      process_row.append(row)
+        # Clasifico  según el tipo de material del techo en Material durable,precario,no aplica
+        row['MATERIAL_TECHUMBRE'] = clasificar_hogar_techo(row['IV4'])
 
+        # Clasifico segun la densidad por hogar bajo,medio,alto
+        row['DENSIDAD_HOGAR'] = clasificar_hogar_densidad_hab(
+            row['IX_TOT'], row['IV2'])
 
-   # Guardar el archivo procesado en la misma carpeta
-   save_to_csv(HOGARES_PROCESSED_DIR,header,process_row, delimiter=";")
-
-
+        # Clasifico la condición de habitabilidad del hogar basado en varios atributos relacionados con la vivienda
+        row['CONDICION_DE_HABITABILIDAD'] = clasificar_hogar_habitabilidad(
+            row['IV6'], row['IV7'], row['IV8'], row['IV9'], row['IV10'], row['IV11'], row['MATERIAL_TECHUMBRE'], row['IV3'])
