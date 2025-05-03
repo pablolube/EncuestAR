@@ -1,13 +1,10 @@
-from src.utils.constants import  DATA_SOURCE_DIR,  DATA_PROCESSED_DIR,FILENAME_HOGARES_PROCESSED,FILENAME_INDIVIDUOS_PROCESSED
+from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
 import streamlit as st
-import sys
-import os
 import csv
 from pathlib import Path
-from src.utils.constants import HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
+from src.procesamientos.individuos import add_extra_data
+from src.procesamientos.hogares import procesar_hogares
 
-# Agregamos el path si se necesitan módulos de ../data
-sys.path.append(os.path.abspath("../data"))
 
 # LEER  ARCHIVOS
 
@@ -278,19 +275,44 @@ def actualizar():
         # Procesar hogares
         encabezados_h, hogares = process_file(
             DATA_SOURCE_DIR, category="hogar")
-        save_to_txt(encabezados_h, hogares, DATA_PROCESSED_DIR,
-                    FILENAME_HOGARES_PROCESSED)
+        procesar_hogares(encabezados_h, hogares)
+        save_to_file(DATA_PROCESSED_DIR,
+                     FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
 
         # Procesar individuos
         encabezados_i, individuos = process_file(
             DATA_SOURCE_DIR, category="individual")
-        save_to_txt(encabezados_i, individuos, DATA_PROCESSED_DIR,
-                    FILENAME_INDIVIDUOS_PROCESSED)
+        add_extra_data(encabezados_i, individuos)
+        save_to_file(DATA_PROCESSED_DIR,
+                     FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
 
         # Sirve para que se resetee el rango de fechas en la app
         st.session_state.date_range = None
 
-        st.success(f"✔ Archivos actualizados correctamente.\n")
+        st.success(f"✅ Archivos actualizados correctamente.\n")
 
     except Exception as e:
         st.error(f"❌ Error al actualizar archivos: {e}")
+
+
+def cargar_archivos(archivos):
+    """
+    Carga archivos en el directorio de datos especificado. Si el archivo ya existe, muestra un mensaje de advertencia.
+    Args:
+        archivos (list): Lista de archivos subidos por el usuario.
+    """
+    if archivos:
+        for uploaded_file in archivos:
+            file_name = uploaded_file.name
+            file_path = Path(DATA_SOURCE_DIR) / file_name
+
+            if file_path.exists():
+                st.warning(
+                    f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
+                continue
+
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"✅ {file_name} guardado en {file_path}")
+    else:
+        st.warning("⚠️ No se seleccionaron archivos para cargar.")
