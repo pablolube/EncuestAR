@@ -122,8 +122,13 @@ def info_menor_desocupacion(data):
     """
 
     # Filtra los datos para obtener solo los desocupados
-    desocupados = filter(
-        lambda x: x["CONDICION_LABORAL"] == "Desocupado", data)
+    desocupados = list(filter(
+        lambda x: x["CONDICION_LABORAL"] == "Desocupado", data))
+
+    # Si no hay desocupados en los datos, imprime un mensaje y retorna
+    if not desocupados:
+        print("No hay datos de desocupación disponibles.")
+        return
 
     # Inicializa un diccionario para almacenar la cantidad de desocupados por año y trimestre
     total_trim = {}
@@ -153,6 +158,10 @@ def info_menor_desocupacion(data):
         f"Valor mínimo de desocupación: {min_valor} en los siguientes años y trimestres:")
     for anio, trimestre in resultados:
         print(f"Año: {anio}, Trimestre: {trimestre}")
+
+
+data = []
+info_menor_desocupacion(data)
 
 
 # -----------------------------------------------------------------------------------
@@ -291,6 +300,7 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
+
 def contar_viviendas_propietarias(datos_hogares):
     """
     Procesa una lista de diccionarios de hogares y cuenta, para cada aglomerado:
@@ -320,8 +330,8 @@ def contar_viviendas_propietarias(datos_hogares):
         try:
             # Convertimos los campos clave a enteros
             aglomerado = int(fila["AGLOMERADO"])
-            tenencia     = int(fila["II7"].strip())
-            pondera      = int(fila["PONDERA"])
+            tenencia = int(fila["II7"].strip())
+            pondera = int(fila["PONDERA"])
         except (ValueError, KeyError):
             # Si falta algún campo o no se puede convertir, saltamos la fila
             continue
@@ -343,6 +353,7 @@ def contar_viviendas_propietarias(datos_hogares):
 
     return resultados
 
+
 def calcular_porcentajes(resultados):
     """
     Dado el diccionario de resultados, devuelve una lista de tuplas:
@@ -356,12 +367,11 @@ def calcular_porcentajes(resultados):
             porcentaje = 0.0
         nombre = AGLOMERADOS_NOMBRES.get(aglomerado, "Nombre no disponible")
         lista.append((aglomerado, nombre, porcentaje))
-    
+
     lista_ordenada = sorted(lista, key=lambda x: x[2], reverse=True)
     return lista_ordenada
 
 
-        
 def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
     """
     Imprime el ranking de aglomerados en formato de tabla con columnas alineadas.
@@ -374,11 +384,13 @@ def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
     # Definir encabezados y calcular ancho dinámico
     encabezados = ["Puesto", "Código", "Aglomerado", "% Propietarios"]
     formatos = ["{:<6}", "{:<6}", "{:<35}", "{:>15}"]
-    header = "  ".join(fmt.format(txt) for fmt, txt in zip(formatos, encabezados))
+    header = "  ".join(fmt.format(txt)
+                       for fmt, txt in zip(formatos, encabezados))
     separator = "-" * len(header)
 
     # Determinar filas a mostrar
-    filas = porcentajes_por_aglomerado if cantidad is None else porcentajes_por_aglomerado[:cantidad]
+    filas = porcentajes_por_aglomerado if cantidad is None else porcentajes_por_aglomerado[
+        :cantidad]
 
     # Imprimir encabezado y separador
     print(header)
@@ -393,7 +405,7 @@ def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
             f"{porcentaje:>14.2f}%"
         )
 
-        
+
 def procesar_y_mostrar_porcentajes(datos_hogares):
     """
     Ejecuta todo el procesamiento y la impresión del ranking de
@@ -434,16 +446,19 @@ def aglomerado_con_mayor_porcentaje_viviendas_precarias(lista_hogares):
     for hogar in lista_hogares:
         try:
             aglomerado = int(hogar["AGLOMERADO"])
-            ocupantes = int(hogar["IX_TOT"])     # Total de ocupantes en la vivienda
+            # Total de ocupantes en la vivienda
+            ocupantes = int(hogar["IX_TOT"])
             tiene_banio = int(hogar["IV8"])      # 2 = no posee baño
             pondera = int(hogar["PONDERA"])      # Peso estadístico del hogar
 
             # Acumula la cantidad total de viviendas ponderadas por aglomerado
-            total_por_aglomerado[aglomerado] = total_por_aglomerado.get(aglomerado, 0) + pondera
+            total_por_aglomerado[aglomerado] = total_por_aglomerado.get(
+                aglomerado, 0) + pondera
 
             # Si es una vivienda precaria (más de 2 ocupantes y sin baño)
             if ocupantes > 2 and tiene_banio == 2:
-                precarias_por_aglomerado[aglomerado] = precarias_por_aglomerado.get(aglomerado, 0) + pondera
+                precarias_por_aglomerado[aglomerado] = precarias_por_aglomerado.get(
+                    aglomerado, 0) + pondera
 
         except (KeyError, ValueError):
             continue  # Ignora filas con datos incorrectos o ausentes
@@ -655,9 +670,11 @@ def tabla_nivel_educativo(data, aglomerado):
     if aglomerado.isdigit():
         clave_aglo = int(aglomerado)
     else:
-        clave_aglo = next((cod for cod, nombre in AGLOMERADOS_NOMBRES.items() if nombre.lower() == aglomerado_normalizado), None)
+        clave_aglo = next((cod for cod, nombre in AGLOMERADOS_NOMBRES.items(
+        ) if nombre.lower() == aglomerado_normalizado), None)
         if clave_aglo is None:
-            raise ValueError(f"No se encontró un aglomerado con el nombre '{aglomerado}'.")
+            raise ValueError(
+                f"No se encontró un aglomerado con el nombre '{aglomerado}'.")
 
     # Inicializa el diccionario para almacenar los resultados
     conteo = {}
@@ -682,18 +699,21 @@ def tabla_nivel_educativo(data, aglomerado):
                 conteo[aglo] = {}
 
             if (anio, trimestre) not in conteo[aglo]:
-                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
+                conteo[aglo][(anio, trimestre)] = {
+                    nivel: 0 for nivel in range(1, 8)}
 
             conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
 
     if not aglomerado_encontrado:
-        print(f"No se encontraron registros para el aglomerado '{aglomerado}'.")
+        print(
+            f"No se encontraron registros para el aglomerado '{aglomerado}'.")
     else:
         imprimo_tabla_nivel_educativo(conteo)
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS Nota: podes usar la funcion PUNTO 9!
 # -----------------------------------------------------------------------------------
+
 
 def crear_estructura_datos():
     return {
@@ -703,53 +723,53 @@ def crear_estructura_datos():
         "Todos_aglom2_18": 0
     }
 
+
 def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  data):
 
     dats = {}
     """
 
     """
-    
-    for row in data: 
+
+    for row in data:
         # guardo el aglomerado y nivel educativo de la persona actual
         try:
             aglo = int(row['AGLOMERADO'])
             nivel_ed = str(row['NIVEL_ED_str'])
-            
+
             # creamos una clave anio trimestre que los vaya guardando en su respectivo bloque
             clave = (row['ANO4'], row['TRIMESTRE'])
-            
+
             # cargamos el pondera de cada individuo
             Pondera = int(row['PONDERA'])
-            
+
         except (ValueError, KeyError):
-            continue # ignora filas con valores erroneos o incompletos
-        
+            continue  # ignora filas con valores erroneos o incompletos
+
         try:
             aglo = int(row['AGLOMERADO'])
             nivel_ed = str(row['NIVEL_ED_str'])
-            
+
             # creamos una clave anio trimestre que los vaya guardando en su respectivo bloque
             clave = (row['ANO4'], row['TRIMESTRE'])
-            
-            Pondera = int(row['PONDERA'])  
-            edad = int(row['CH06'])         
+
+            Pondera = int(row['PONDERA'])
+            edad = int(row['CH06'])
         except (ValueError, KeyError):
             continue  # Saltar la fila si algo falló
-        
-        
-        # para ir generando el archivo dats usamos 
-        
+
+        # para ir generando el archivo dats usamos
+
         if clave not in dats:
             dats[clave] = crear_estructura_datos()
-        
+
         if aglo == aglomerado1:
             # revisamos si es mayor de edad
             if int(edad) >= 18:
                 # y su nivel educativo
                 if nivel_ed == "Secundario incompleto":
                     dats[clave]["Cumplen_aglom_1"] += Pondera
-                
+
                 # lo guarda para tener el general de individuos > 18
                 dats[clave]['Todos_aglom1_18'] += Pondera
         elif aglo == aglomerado2:
@@ -758,42 +778,43 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
                 # y su nivel educativo
                 if nivel_ed == "Secundario incompleto":
                     dats[clave]['Cumplen_aglom_2'] += Pondera
-                    
+
                 # lo guarda para tener el general de individuos > 18
                 dats[clave]['Todos_aglom2_18'] += Pondera
-        
+
     return dats
-    
+
+
 def imprimir_porcentaje_secundario_incompleto(datos):
-    
+
     # Encabezado
-        
+
     print(f"{'Año':^8} {'Trimestre':^8} {'Aglomerado A':^20} {'Aglomerado B':^20}")
     print("-" * 60)
-    
+
     # sorted lo usa para ir imprimendo ordenando por el par anio, trimestre
     for (anio, trimestre), valores in sorted(datos.items()):
-        
+
         # guardamos los valores de cada anio trimestre
         cumplen1 = valores["Cumplen_aglom_1"]
         total1 = valores["Todos_aglom1_18"]
         cumplen2 = valores["Cumplen_aglom_2"]
         total2 = valores["Todos_aglom2_18"]
-        
+
         # Calculamos porcentaje
-        
+
         porcentaje1 = (cumplen1 / total1) * 100 if total1 > 0 else 0
         porcentaje2 = (cumplen2 / total2) * 100 if total2 > 0 else 0
-        
+
         # Mejoramos el formato para la impresion
-        
+
         porcentaje1 = f"{porcentaje1:.2f} %"
         porcentaje2 = f"{porcentaje2:.2f} %"
-        
+
         # Imprimimos fila
-        
+
         print(f"{anio:^8} {trimestre:^8} {porcentaje1:^20} {porcentaje2:^20}")
-        
+
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
@@ -829,11 +850,14 @@ def buscar_ultimo_trimestre_disponible(anio: int, filas_csv: list[dict], tipo_ar
             continue
 
     if trimestres:
-        print(f"Trimestres disponibles en el archivo de {tipo_archivo} para el {anio}: {trimestres}")
+        print(
+            f"Trimestres disponibles en el archivo de {tipo_archivo} para el {anio}: {trimestres}")
         return max(trimestres)
     else:
-        print(f"No hay trimestres disponibles en el archivo de {tipo_archivo} para el {anio}.")
+        print(
+            f"No hay trimestres disponibles en el archivo de {tipo_archivo} para el {anio}.")
         return None
+
 
 def armar_diccionario(datos: list[dict], tipo: str, anio: int, trimestre: int) -> dict:
     """
@@ -885,6 +909,8 @@ def armar_diccionario(datos: list[dict], tipo: str, anio: int, trimestre: int) -
             continue
 
     return resultado
+
+
 def contar_personas_en_viviendas_insuficientes(dic_indiv: dict, dic_hogares: dict) -> int:
     """
     Cuenta personas con educación superior/universitaria en viviendas insuficientes.
@@ -913,19 +939,25 @@ def informe_personas_en_viviendas_insuficientes(data_indiv: list[dict], data_hog
     Muestra un informe de personas con estudios superiores viviendo en viviendas insuficientes.
     """
     # Buscar trimestres disponibles
-    trimestre_indiv = buscar_ultimo_trimestre_disponible(anio, data_indiv, "individuos")
-    trimestre_hog = buscar_ultimo_trimestre_disponible(anio, data_hog, "hogares")
+    trimestre_indiv = buscar_ultimo_trimestre_disponible(
+        anio, data_indiv, "individuos")
+    trimestre_hog = buscar_ultimo_trimestre_disponible(
+        anio, data_hog, "hogares")
 
     if trimestre_indiv is None or trimestre_hog is None:
-        print(f"No hay información suficiente para el año {anio} en ambos archivos.")
+        print(
+            f"No hay información suficiente para el año {anio} en ambos archivos.")
         return
 
     # Construir diccionarios filtrados
-    personas = armar_diccionario(data_indiv, "individuos", anio, trimestre_indiv)
+    personas = armar_diccionario(
+        data_indiv, "individuos", anio, trimestre_indiv)
     hogares = armar_diccionario(data_hog, "hogares", anio, trimestre_hog)
 
     # Calcular resultado
-    cantidad_ponderada = contar_personas_en_viviendas_insuficientes(personas, hogares)
+    cantidad_ponderada = contar_personas_en_viviendas_insuficientes(
+        personas, hogares)
 
     # Mostrar resultado
-    print(f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
+    print(
+        f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
