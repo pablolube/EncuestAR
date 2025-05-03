@@ -72,7 +72,7 @@ Para cargar uno o más archivos que requieran procesarse, navegar por el menú d
 
 Luego, actualizar.
 
-### 4. **Ejecutar notebooks **
+### 4. **Ejecutar notebooks**
 
 Ejecutar los notebooks:     
 bash jupyter notebook
