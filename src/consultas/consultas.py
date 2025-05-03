@@ -294,6 +294,53 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 # FUNCIONES PUNTO 6 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
+def aglomerado_con_mayor_porcentaje_viviendas_precarias(lista_hogares):
+    """
+    Esta función recibe una lista de diccionarios con datos de hogares (formato EPH)
+    y calcula, para cada aglomerado, el porcentaje de viviendas consideradas precarias,
+    es decir, aquellas que tienen más de dos ocupantes y no poseen baño.
+
+    Retorna una tupla con:
+    - El código del aglomerado con mayor porcentaje de viviendas precarias,
+    - La cantidad ponderada de estas viviendas,
+    - El porcentaje que representan sobre el total de viviendas del aglomerado.
+    """
+
+    total_por_aglomerado = {}
+    precarias_por_aglomerado = {}
+
+    for hogar in lista_hogares:
+        try:
+            aglomerado = int(hogar["AGLOMERADO"])
+            ocupantes = int(hogar["IX_TOT"])     # Total de ocupantes en la vivienda
+            tiene_banio = int(hogar["IV8"])      # 2 = no posee baño
+            pondera = int(hogar["PONDERA"])      # Peso estadístico del hogar
+
+            # Acumula la cantidad total de viviendas ponderadas por aglomerado
+            total_por_aglomerado[aglomerado] = total_por_aglomerado.get(aglomerado, 0) + pondera
+
+            # Si es una vivienda precaria (más de 2 ocupantes y sin baño)
+            if ocupantes > 2 and tiene_banio == 2:
+                precarias_por_aglomerado[aglomerado] = precarias_por_aglomerado.get(aglomerado, 0) + pondera
+
+        except (KeyError, ValueError):
+            continue  # Ignora filas con datos incorrectos o ausentes
+
+    # Calcula porcentajes
+    porcentajes = {}
+    for aglo in precarias_por_aglomerado:
+        total = total_por_aglomerado.get(aglo, 0)
+        if total > 0:
+            porcentaje = (precarias_por_aglomerado[aglo] / total) * 100
+            porcentajes[aglo] = porcentaje
+
+    if not porcentajes:
+        return None, 0, 0
+
+    aglo_max = max(porcentajes, key=porcentajes.get)
+    return aglo_max, precarias_por_aglomerado[aglo_max], porcentajes[aglo_max]
+
+
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 7 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
