@@ -169,7 +169,7 @@ def procesar_hogares():
       row['TIPO_HOGAR']=clasificar_hogar_hab(row['IX_TOT']) 
       
       # Clasifico  según el tipo de material del techo en Material durable,precario,no aplica
-      row['MATERIAL_TECHUMBRE']=clasificar_hogar_techo(row['V4'])
+      row['MATERIAL_TECHUMBRE']=clasificar_hogar_techo(row['IV4'])
       
       # Clasifico segun la densidad por hogar bajo,medio,alto
       row['DENSIDAD_HOGAR']=clasificar_hogar_densidad_hab(row['IX_TOT'],row['IV2'])
