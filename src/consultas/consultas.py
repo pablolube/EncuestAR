@@ -1,5 +1,5 @@
 from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
-
+from collections import Counter
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 1 (ANÁLISIS) - INDIVIDUOS
@@ -820,6 +820,94 @@ def imprimir_porcentaje_secundario_incompleto(datos):
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
+
+def obtener_dats_ultimo_trimestre(anio, data):
+    
+    # A partir de un anio tomamos la data del ultimo trimestre
+
+    # estructura a guardar datos
+    
+    resultado = []
+    ultimo_trimestre = -1
+    anio_encontrado = False 
+    try:
+        anio = int(anio)
+    except:
+        return None
+    
+    # se anade este booleano en caso que no exista el anio en el data set
+    
+    for row in data:
+        
+        try:
+            anio_row_actual = int(row['ANO4'])
+            trimestre_actual = int(row['TRIMESTRE'])
+        except:
+            continue # si contiene valores no normativos pasa al siguiente
+        
+        if anio_row_actual == anio :
+            anio_encontrado = True
+            if trimestre_actual > ultimo_trimestre:
+                ultimo_trimestre = trimestre_actual
+                resultado = [row]
+            elif trimestre_actual == ultimo_trimestre:
+                resultado.append(row)
+    
+    if not anio_encontrado:
+        return None
+    return resultado
+                
+def aglomerado_mayor_menor_vivienda_precario(anio, data):
+    """
+    Se ingresa un anio y se busca el ultimo semestre en ese anio, del cual obtendremos 
+    el aglomerado con mayor y menor porcentaje de viviendas con 'Material precario'
+    """
+
+    dats_ultimo_trimestre = obtener_dats_ultimo_trimestre(anio, data)
+    
+    # si el data set no tiene datos de ese anio o directamente no hay anio
+    if not dats_ultimo_trimestre:
+        return None, None
+    
+    # estructura donde se guardaran los aglomerados y su porcentaje
+    result = {}
+    
+    conteo_total = Counter()
+    conteo_precario = Counter()
+    for row in dats_ultimo_trimestre:
+        try:
+            aglomerado = int(row['AGLOMERADO'])
+            material = str(row['MATERIAL_TECHUMBRE'])
+        except:
+            continue # si no hay la columna o datos erroneos
+        
+        conteo_total[aglomerado] += 1
+        
+        if material == 'Material precario':
+            conteo_precario[aglomerado] += 1
+            
+    # Calcular porcentajes
+    porcentajes = {
+        aglo: round((conteo_precario[aglo]/conteo_total[aglo])*100, 2) for aglo in conteo_total
+    }
+    
+    if not porcentajes:
+        return None, None # si no hay datos validos
+    
+    # con .get max y min se basan en el valor de cada aglomerado
+    aglo_max = max(porcentajes, key=porcentajes.get)
+    aglo_min = min(porcentajes, key=porcentajes.get)
+    
+    return (aglo_max, porcentajes[aglo_max]), (aglo_min, porcentajes[aglo_min])
+    
+def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
+    
+    if not aglo_porcentaje_max or not aglo_porcentaje_min:
+        print("No se encontraron datos de viviendas con material precario para ese año.")
+    else:
+        print('-'*50)
+        print('El aglomerado con mayor porcentaje de vivientas de material precario es: ',aglo_porcentaje_max[0],'con',aglo_porcentaje_max[1])
+        print('El aglomerado con menor porcentaje de vivientas de material precario es: ',aglo_porcentaje_min[0],'con',aglo_porcentaje_min[1])
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR

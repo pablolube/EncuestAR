@@ -40,8 +40,10 @@ def clasificar_hogar_techo(material_nro):
             - "Material precario": si el número del material está entre 5 y 7.
             - "No aplica": si el número del material es 9 o si hay un error en el dato.
     """
-
-    material_nro = int(material_nro)
+    try:
+        material_nro = int(material_nro)
+    except (ValueError, TypeError):
+        return 'No aplica'
 
     if 1 <= material_nro <= 4:
         tipo = "Material durable"
