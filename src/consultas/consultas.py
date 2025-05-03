@@ -160,10 +160,6 @@ def info_menor_desocupacion(data):
         print(f"Año: {anio}, Trimestre: {trimestre}")
 
 
-data = []
-info_menor_desocupacion(data)
-
-
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 4 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
