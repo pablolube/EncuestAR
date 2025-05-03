@@ -18,30 +18,28 @@ Organización (estructura):
 
 code/
 ├── data/
-│   ├── raw/                   # Archivos de datos originales en formato .txt.
-│   └── processed/             # Archivos de datos procesados en formato .txt.
-├── notebooks/                 # Carpeta para almacenar notebooks Jupyter para análisis exploratorio.
-│   ├── individuos.ipynb       # Análisis y exploración de datos relacionados con individuos.
-│   └── hogares.ipynb          # Análisis y exploración de datos relacionados con hogares.
+│ ├── raw/ # Archivos de datos originales en formato .txt.
+│ └── processed/ # Archivos de datos procesados en formato .txt.
+├── notebooks/ # Notebooks Jupyter para análisis exploratorio.
+│ ├── individuos.ipynb # Análisis de datos individuales.
+│ └── hogares.ipynb # Análisis de datos de hogares.
 ├── pages/
-│   ├── carga.py               # Interfaz para cargar y procesar los datos.
-│   ├── busqueda.py            # Página para realizar búsquedas sobre los datos procesados.
-│   └── visualizacion.py       # Página para visualizar los resultados.
+│ ├── 01_Carga de Datos.py # Carga y procesamiento de archivos.
+│ ├── busqueda.py # Página para búsquedas.
+│ └── visualizacion.py # Página de visualización.
 ├── src/
-│   ├── consultas/             # Funciones para realizar consultas sobre los datos.
-│   │   └── consultas.py       # Contiene las funciones para realizar consultas sobre los datos de la EPH.
-│   ├── utils/                 # Funciones auxiliares para tareas comunes (e.g., limpieza de datos, formateo).
-│   │   ├── constants.py       # Contiene las constantes necesarias para el proyecto, datos de uso común.
-│   │   └── helpers.py         # Funciones auxiliares reutilizables para tareas comunes.
-│   └── procesamientos/        # Archivos con scripts para procesar y transformar los datos.
-│       ├── individuos.py      # Funciones específicas para procesar datos de individuos.
-│       └── hogares.py         # Funciones específicas para procesar datos de hogares.
-├── .gitignore                 # Archivos y carpetas que deben ser ignorados por Git.
-├── LICENSE                    # Licencia de uso del código fuente del proyecto.
-├── README.md                  # Descripción general del proyecto, cómo instalarlo y ejecutarlo.
-└── requirements.txt           # Lista de dependencias del proyecto (librerías de Python necesarias).
-
-
+│ ├── consultas/
+│ │ └── consultas.py # Funciones para consultas.
+│ ├── utils/
+│ │ ├── constants.py # Constantes del proyecto.
+│ │ └── helpers.py # Funciones auxiliares.
+│ └── procesamientos/
+│ ├── individuos.py # Procesamiento de datos individuales.
+│ └── hogares.py # Procesamiento de datos de hogares.
+├── .gitignore # Exclusiones de Git.
+├── LICENSE # Licencia del proyecto.
+├── README.md # Instrucciones generales.
+└── requirements.txt # Dependencias del proyecto.
 ---
 
 ## 🚀 Cómo abrir y ejecutar el proyecto
@@ -74,7 +72,7 @@ Luego, actualizar.
 
 ### 4. **Ejecutar notebooks **
 
-Ejecutar los notebooks
+Ejecutar los notebooks:     
 bash jupyter notebook
 
 Esto abrirá una interfaz web en tu navegador, donde podrás ver todos los notebooks en la carpeta notebooks/.
