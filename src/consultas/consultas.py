@@ -301,56 +301,42 @@ def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
-
 def contar_viviendas_propietarias(datos_hogares):
     """
     Procesa una lista de diccionarios de hogares y cuenta, para cada aglomerado:
-      - El total ponderado de viviendas.
-      - El total ponderado de viviendas ocupadas por sus propietarios
-        (régimen de tenencia 1 o 2).
+      - El total ponderado de viviendas habitadas (tenencia entre 1 y 8).
+      - El total ponderado de viviendas ocupadas por propietarios (tenencia 1 o 2).
 
     Args:
-        datos_hogares (list of dict): Cada dict representa un hogar con claves:
-            - "AGLOMERADO": código del aglomerado (string convertible a int)
-            - "II7": régimen de tenencia (string convertible a int)
-            - "PONDERA": valor ponderado de ese hogar (string convertible a int)
+        datos_hogares (list of dict): Lista de registros de hogares.
 
     Returns:
-        dict[int, list[float, float]]: Mapeo de:
-            aglomerado → [viviendas_propietarias, viviendas_totales]
+        dict[int, list[float, float]]: aglomerado → [propietarias, totales]
     """
-    # Definimos los valores válidos que indican "propietario"
-    VALORES_VALIDOS_PROPIETARIOS = {1, 2}
+    PROPIETARIOS = {1, 2}
+    TENENCIAS_VALIDAS = set(range(1, 9))  # 1 a 8 inclusive
 
-    # Aquí guardaremos los resultados por aglomerado:
-    # resultados[aglomerado] = [suma_propietarias, suma_totales]
     resultados = {}
 
-    # Recorremos cada fila (hogar) de la lista de datos
     for fila in datos_hogares:
         try:
-            # Convertimos los campos clave a enteros
             aglomerado = int(fila["AGLOMERADO"])
             tenencia = int(fila["II7"].strip())
             pondera = int(fila["PONDERA"])
         except (ValueError, KeyError):
-            # Si falta algún campo o no se puede convertir, saltamos la fila
             continue
 
-        # Solo consideramos regímenes de tenencia 1, 2 (propietarios) o 3 (inquilinos)
-        if tenencia not in VALORES_VALIDOS_PROPIETARIOS and tenencia != 3:
+        # Saltar registros con tenencia inválida
+        if tenencia not in TENENCIAS_VALIDAS:
             continue
 
-        # Si es la primera vez que vemos este aglomerado, lo inicializamos
         if aglomerado not in resultados:
             resultados[aglomerado] = [0.0, 0.0]
 
-        # Sumamos siempre al total de viviendas ponderadas
-        resultados[aglomerado][1] += pondera
+        resultados[aglomerado][1] += pondera  # Total viviendas
 
-        # Si es régimen 1 ó 2, sumamos también al contador de propietarios
-        if tenencia in VALORES_VALIDOS_PROPIETARIOS:
-            resultados[aglomerado][0] += pondera
+        if tenencia in PROPIETARIOS:
+            resultados[aglomerado][0] += pondera  # Viviendas propietarias
 
     return resultados
 
