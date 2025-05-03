@@ -245,58 +245,53 @@ def contar_hogares(hogares_ponderados):
             aglomerado, 0) + pondera
     return conteo_hogares_ponderados
 
-
-# Obtención de porcentajes y ranking
-def obtener_top_n_porcentaje_hogares_universitarios(total_hogares, total_hogares_con_universitarios, top_n=5):
+def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top_n=5):
     """
-    Calcula el porcentaje de hogares con al menos 2 universitarios por aglomerado,
-    ordena los resultados y devuelve el top N aglomerados con mayor porcentaje.
+    Genera y muestra un ranking de aglomerados según el porcentaje de hogares
+    con al menos 'min_universitarios' personas con estudios universitarios.
 
     Parámetros:
-    - total_hogares (dict): Clave = (nro_aglomerado, nombre), valor = total de hogares (ponderado).
-    - hogares_con_universitarios (dict): Clave = (nro_aglomerado, nombre), valor = hogares con 2+ universitarios (ponderado).
-    - top_n (int): El número de aglomerados a devolver en el ranking (por defecto 5).
-
-    Retorna:
-    - list of dict: Los N primeros aglomerados con mayor porcentaje de hogares con al menos 2 universitarios.
+    - individuos: lista de diccionarios con datos individuales.
+    - min_universitarios: mínimo de personas con estudios universitarios por hogar.
+    - top_n: cantidad de aglomerados a mostrar en el ranking.
     """
-    # Calcular los porcentajes
-    porcentajes = []
-    for aglomerado, total in total_hogares.items():
-        con_universitarios = total_hogares_con_universitarios.get(
-            aglomerado, 0)
-        porcentaje = (con_universitarios / total) * 100 if total > 0 else 0
-        print(
-            f"Procesando aglomerado: {aglomerado}, Total: {total}, Universitarios: {con_universitarios}")
-        porcentajes.append({
-            "AGLOMERADO": aglomerado,  # nro
-            "PORCENTAJE": porcentaje
-        })
+    # Paso 1: Contar universitarios por hogar y obtener PONDERA por hogar
+    universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(individuos)
 
-    # Ordenar y devolver el top N
-    return sorted(porcentajes, key=lambda aglomerado: aglomerado["PORCENTAJE"], reverse=True)[:top_n]
+    # Paso 2: Contar hogares totales por aglomerado
+    total_hogares_por_aglomerado = contar_hogares(pondera_por_hogar)
+
+    # Paso 3: Filtrar hogares con al menos min_universitarios y contarlos por aglomerado
+    hogares_filtrados = filtrar_hogares_con_min_universitarios(universitarios_por_hogar, pondera_por_hogar, min_universitarios)
+    hogares_filtrados_por_aglomerado = contar_hogares(hogares_filtrados)
+
+    # Paso 4: Armar resultados para cada aglomerado con (hogares_filtrados, total_hogares)
+    resultados = {
+        aglomerado: (hogares_filtrados_por_aglomerado.get(aglomerado, 0), total)
+    for aglomerado, total in total_hogares_por_aglomerado.items()
+    
+    }
 
 
-def imprimir_ranking_aglomerados(top_aglomerados, cantidad=5):
+    # Paso 5: Calcular porcentajes y mostrar el ranking
+    ranking = calcular_porcentajes(resultados)
+    imprimir_tabla_ranking(ranking, cantidad=top_n)
+
+
+def ranking_aglomerados_con_mas_hogares_universitarios(individuos):
     """
-    Imprime el ranking de aglomerados con su número, nombre y porcentaje de hogares con al menos 2 universitarios.
+    Devuelve y muestra el ranking de los 5 aglomerados con mayor porcentaje de hogares 
+    que tienen al menos 2 personas con estudios universitarios o superiores.
 
-    Parámetros:
-    - top_aglomerados (list of dict): Cada dict tiene "AGLOMERADO" (número) y "PORCENTAJE".
-    - cantidad (int): Cuántos aglomerados mostrar. Por defecto 5.
+    Parámetro:
+    - individuos: lista de diccionarios procesados del archivo de individuos.
     """
-    print(
-        f"Ranking de los {cantidad} aglomerados con mayor porcentaje de hogares con 2 o más universitarios:")
-    for i, aglomerado_info in enumerate(top_aglomerados[:cantidad], 1):
-        aglomerado_num = aglomerado_info["AGLOMERADO"]
-        porcentaje = aglomerado_info["PORCENTAJE"]
-        # Aseguramos que sea un entero para buscar bien
-        aglomerado_num_int = int(aglomerado_num)
-        nombre_aglomerado = AGLOMERADOS_NOMBRES.get(
-            aglomerado_num_int, "Desconocido")
+    generar_ranking_hogares_universitarios(
+        individuos=individuos,
+        min_universitarios=2,
+        top_n=5
+    )
 
-        print(
-            f"{i}. Aglomerado {aglomerado_num} - {nombre_aglomerado}: {porcentaje:.2f}%")
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
