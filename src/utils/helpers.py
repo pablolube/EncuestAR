@@ -111,6 +111,10 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
     - header: Lista de nombres de las columnas (encabezado) para el CSV.
     - delimiter: Delimitador de los campos en el CSV (por defecto ";").
     """
+    if not data:
+        print("❌ Error: No hay datos para guardar.")
+        return
+
     # Crea la ruta completa del archivo
     file_path = Path(file_path) / file_name
 
