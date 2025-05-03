@@ -481,15 +481,21 @@ def tabla_nivel_educativo(data, aglomerado):
 
     """
 
+    # Convertimos el aglomerado una sola vez
+    aglomerado_normalizado = aglomerado.strip().lower()
+    if aglomerado.isdigit():
+        clave_aglo = int(aglomerado)
+    else:
+        clave_aglo = next((cod for cod, nombre in AGLOMERADOS_NOMBRES.items() if nombre.lower() == aglomerado_normalizado), None)
+        if clave_aglo is None:
+            raise ValueError(f"No se encontró un aglomerado con el nombre '{aglomerado}'.")
+
     # Inicializa el diccionario para almacenar los resultados
     conteo = {}
 
-    # Verifica si el aglomerado existe en los datos
+    # Procesamos los datos
     aglomerado_encontrado = False
-
     for row in data:
-
-        # Aseguramos que los valores sean enteros y no nulos
         try:
             aglo = int(row["AGLOMERADO"])
             edad = int(row["CH06"])
@@ -498,25 +504,22 @@ def tabla_nivel_educativo(data, aglomerado):
             trimestre = int(row["TRIMESTRE"])
             pondera = int(row["PONDERA"])
         except (ValueError, KeyError):
-            continue  # Ignorar filas con valores erróneos o incompletos
+            continue
 
-        # Verificamos condiciones
-        if edad >= 18 and nivel_ed in range(1, 8) and aglo == int(aglomerado):
+        # Condiciones de filtrado
+        if edad >= 18 and nivel_ed in range(1, 8) and aglo == clave_aglo:
             aglomerado_encontrado = True
             if aglo not in conteo:
                 conteo[aglo] = {}
 
             if (anio, trimestre) not in conteo[aglo]:
-                conteo[aglo][(anio, trimestre)] = {
-                    nivel: 0 for nivel in range(1, 8)}
+                conteo[aglo][(anio, trimestre)] = {nivel: 0 for nivel in range(1, 8)}
 
             conteo[aglo][(anio, trimestre)][nivel_ed] += pondera
 
-    # Si no se encontró el aglomerado, imprimir un mensaje de advertencia
     if not aglomerado_encontrado:
-        print(f"No se encontraron registros para el aglomerado {aglomerado}.")
+        print(f"No se encontraron registros para el aglomerado '{aglomerado}'.")
     else:
-        # Imprimo tabla final
         imprimo_tabla_nivel_educativo(conteo)
 
 # -----------------------------------------------------------------------------------
