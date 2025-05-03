@@ -16,30 +16,7 @@ Este proyecto permite:
 
 Organización (estructura):
 
-code/
-├── data/
-│ ├── raw/ # Archivos de datos originales en formato .txt.
-│ └── processed/ # Archivos de datos procesados en formato .txt.
-├── notebooks/ # Notebooks Jupyter para análisis exploratorio.
-│ ├── individuos.ipynb # Análisis de datos individuales.
-│ └── hogares.ipynb # Análisis de datos de hogares.
-├── pages/
-│ ├── 01_Carga de Datos.py # Carga y procesamiento de archivos.
-│ ├── busqueda.py # Página para búsquedas.
-│ └── visualizacion.py # Página de visualización.
-├── src/
-│ ├── consultas/
-│ │ └── consultas.py # Funciones para consultas.
-│ ├── utils/
-│ │ ├── constants.py # Constantes del proyecto.
-│ │ └── helpers.py # Funciones auxiliares.
-│ └── procesamientos/
-│ ├── individuos.py # Procesamiento de datos individuales.
-│ └── hogares.py # Procesamiento de datos de hogares.
-├── .gitignore # Exclusiones de Git.
-├── LICENSE # Licencia del proyecto.
-├── README.md # Instrucciones generales.
-└── requirements.txt # Dependencias del proyecto.
+<pre> ``` code/ ├── data/ │ ├── raw/ # Archivos de datos originales en formato .txt. │ └── processed/ # Archivos de datos procesados en formato .txt. ├── notebooks/ # Notebooks Jupyter para análisis exploratorio. │ ├── individuos.ipynb # Análisis de datos individuales. │ └── hogares.ipynb # Análisis de datos de hogares. ├── pages/ │ ├── 01_Carga de Datos.py # Carga y procesamiento de archivos. │ ├── busqueda.py # Página para búsquedas. │ └── visualizacion.py # Página de visualización. ├── src/ │ ├── consultas/ │ │ └── consultas.py # Funciones para consultas. │ ├── utils/ │ │ ├── constants.py # Constantes del proyecto. │ │ └── helpers.py # Funciones auxiliares. │ └── procesamientos/ │ ├── individuos.py # Procesamiento de datos individuales. │ └── hogares.py # Procesamiento de datos de hogares. ├── .gitignore # Exclusiones de Git. ├── LICENSE # Licencia del proyecto. ├── README.md # Instrucciones generales. └── requirements.txt # Dependencias del proyecto. ``` </pre>
 ---
 
 ## 🚀 Cómo abrir y ejecutar el proyecto
