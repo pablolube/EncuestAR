@@ -1,4 +1,4 @@
-from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
+# from src.utils.constants import AGLOMERADOS_NOMBRES, REGIONES_NOMBRES, NIVELES_EDUCATIVOS
 
 
 # -----------------------------------------------------------------------------------
@@ -15,6 +15,10 @@ def imprimir_alfabetizadas(diccionario):
     Args:
     :param diccionario: Diccionario con los datos de alfabetización.
     """
+    if not diccionario:
+        print("No hay datos para mostrar.")
+        return
+
     print(f"{'Año':<10}{'% Alfabetos':>15}{'% No Alfabetos':>20}")
     print("-" * 45)
 
@@ -54,13 +58,14 @@ def cant_personas_alfabetizadas(data):
     count = {}
 
     for row in data:
-        # Si el año no existe, lo crea
-        if row["ANO4"] not in count:
-            count[row["ANO4"]] = {"1": {"A": 0, "NA": 0}, "2": {
-                "A": 0, "NA": 0}, "3": {"A": 0, "NA": 0}, "4": {"A": 0, "NA": 0}}
-
         # Analiza si la edad (CH06) mayor a 6 años y que la persona no sea menor de 2 años (CH09=3)
-        if row["CH06"] > "6" and row["CH09"] != "3":
+        if row["CH06"] > "6" and row["CH09"] != "3" and row["PONDERA"].isdigit():
+
+            # Si el año no existe, lo crea
+            if row["ANO4"] not in count:
+                count[row["ANO4"]] = {"1": {"A": 0, "NA": 0}, "2": {
+                    "A": 0, "NA": 0}, "3": {"A": 0, "NA": 0}, "4": {"A": 0, "NA": 0}}
+
             # Si la persona es alfabetizada (CH09 == 1), suma al contador de alfabetizados
             if row["CH09"] == "1":
                 count[row["ANO4"]][row["TRIMESTRE"]
@@ -71,6 +76,13 @@ def cant_personas_alfabetizadas(data):
                                    ]["NA"] += int(row["PONDERA"])
 
     imprimir_alfabetizadas(count)
+
+
+# data = []
+# cant_personas_alfabetizadas(data)
+data = [{"ANO4": 2024, "TRIMESTRE": "3",
+         "CH06": "7", "CH09": "1", "PONDERA": "200"}]
+cant_personas_alfabetizadas(data)
 
 # --------------------------------------------------------------------
 # FUNCIONES PUNTO 2 (ANÁLISIS) - INDIVIDUOS
@@ -92,7 +104,7 @@ def porc_extranjero_universitario(anio, trim, data):
     for row in data:
         if row["ANO4"] == anio and row["TRIMESTRE"] == trim and row["NIVEL_ED_str"] == "Superior o universitario":
             # CH15 donde nacio
-            if int(row["CH15"]) in (4, 5):
+            if row["CH15"] in ("4", "5") and row["PONDERA"].isdigit():
                 count["extranjero"] += int(row["PONDERA"])
             else:
                 count["argentino"] += int(row["PONDERA"])
