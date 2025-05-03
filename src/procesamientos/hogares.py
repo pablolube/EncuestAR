@@ -27,30 +27,30 @@ def clasificar_hogar_hab(cant_personas):
     return tipo
 
 def clasificar_hogar_techo(material_nro):
-
     """
     Clasifica el tipo de techo de un hogar según tipo de material.
 
     Parameters:
-        material_nro (int or str): Número que representa el tipo de material del techo. 
-                                    .
+        material_nro (int or str): Número que representa el tipo de material del techo.
 
     Returns:
         str: Tipo de techo clasificado como:
             - "Material durable": si el número del material está entre 1 y 4.
             - "Material precario": si el número del material está entre 5 y 7.
-            - "No aplica": si el número del material es 9.
+            - "No aplica": si el número del material es 9 o si hay un error en el dato.
     """
-    
-    material_nro = int(material_nro)
-    
-    if 1 <= material_nro <= 4:
-        tipo = "Material durable"
-    elif 5 <= material_nro <= 7:
-        tipo = "Material precario"
-    elif material_nro == 9:
-        tipo = "No aplica"
-    return tipo
+    try:
+        material_nro = int(material_nro)
+
+        if 1 <= material_nro <= 4:
+            return "Material durable"
+        elif 5 <= material_nro <= 7:
+            return "Material precario"
+        elif material_nro == 9:
+            return "No aplica"
+    except (ValueError, TypeError):
+        return "No aplica"  # Para errores de conversión o tipo de dato
+
 
 def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
     try:
@@ -149,12 +149,12 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, baño, ubi_baño, tipo_ba�
 from src.utils.helpers import read_file_dic
 from src.procesamientos.hogares import clasificar_hogar_hab,clasificar_hogar_techo,clasificar_hogar_densidad_hab,clasificar_hogar_habitabilidad
 from src.utils.helpers import save_to_csv
-from src.utils.constants import HOGARES_UNIFIED_DIR,HOGARES_PROCESSED_DIR
+from src.utils.constants import HOGARES_PROCESSED_DIR
 
 def procesar_hogares():
 
    #Leo el archivo de hogares unificiado y me guardo el encabezado y las filas en una columna
-   header,data=read_file_dic(HOGARES_UNIFIED_DIR)
+   header,data=read_file_dic(HOGARES_PROCESSED_DIR)
 
    # Agrego las nuevas columnas al header
    header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE", "DENSIDAD_HOGAR", "CONDICION_DE_HABITABILIDAD"])

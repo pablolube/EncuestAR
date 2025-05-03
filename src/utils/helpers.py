@@ -1,4 +1,4 @@
-from src.utils.constants import PROJECT_ROOT, DATA_SOURCE_DIR, DATA_CLEAN_DIR, FILENAME_INDIVIDUOS_UNIFIED, FILENAME_HOGARES_UNIFIED
+from src.utils.constants import  DATA_SOURCE_DIR,  DATA_PROCESSED_DIR,FILENAME_HOGARES_PROCESSED,FILENAME_INDIVIDUOS_PROCESSED
 import streamlit as st
 import sys
 import os
@@ -274,14 +274,14 @@ def actualizar():
         # Procesar hogares
         encabezados_h, hogares = process_file(
             DATA_SOURCE_DIR, category="hogar")
-        save_to_txt(encabezados_h, hogares, DATA_CLEAN_DIR,
-                    FILENAME_HOGARES_UNIFIED)
+        save_to_txt(encabezados_h, hogares, DATA_PROCESSED_DIR,
+                    FILENAME_HOGARES_PROCESSED)
 
         # Procesar individuos
         encabezados_i, individuos = process_file(
             DATA_SOURCE_DIR, category="individual")
-        save_to_txt(encabezados_i, individuos, DATA_CLEAN_DIR,
-                    FILENAME_INDIVIDUOS_UNIFIED)
+        save_to_txt(encabezados_i, individuos, DATA_PROCESSED_DIR,
+                    FILENAME_INDIVIDUOS_PROCESSED)
 
         # Sirve para que se resetee el rango de fechas en la app
         st.session_state.date_range = None
