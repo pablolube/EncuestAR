@@ -26,10 +26,7 @@ def clasificar_hogar_hab(cant_personas):
         tipo = "Extendido"
     return tipo
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 def clasificar_hogar_techo(material_nro):
     """
     Clasifica el tipo de techo de un hogar según tipo de material.
@@ -43,20 +40,6 @@ def clasificar_hogar_techo(material_nro):
             - "Material precario": si el número del material está entre 5 y 7.
             - "No aplica": si el número del material es 9 o si hay un error en el dato.
     """
-<<<<<<< HEAD
-    try:
-        material_nro = int(material_nro)
-
-        if 1 <= material_nro <= 4:
-            return "Material durable"
-        elif 5 <= material_nro <= 7:
-            return "Material precario"
-        elif material_nro == 9:
-            return "No aplica"
-    except (ValueError, TypeError):
-        return "No aplica"  # Para errores de conversión o tipo de dato
-
-=======
 
     material_nro = int(material_nro)
 
@@ -67,7 +50,6 @@ def clasificar_hogar_techo(material_nro):
     elif material_nro == 9:
         tipo = "No aplica"
     return tipo
->>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 
 
 def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
@@ -164,27 +146,15 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, baño, ubi_baño, tipo_ba�
     except ValueError:
         return None  # Guarda este valor cuando hay error
 
-<<<<<<< HEAD
-from src.utils.helpers import read_file_dic
-from src.procesamientos.hogares import clasificar_hogar_hab,clasificar_hogar_techo,clasificar_hogar_densidad_hab,clasificar_hogar_habitabilidad
-from src.utils.helpers import save_to_csv
-from src.utils.constants import HOGARES_PROCESSED_DIR
-=======
->>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 
 def procesar_hogares(header, data):
     """
     Procesa los datos de los hogares y agrega nuevas columnas con clasificaciones.
     """
 
-<<<<<<< HEAD
-   #Leo el archivo de hogares unificiado y me guardo el encabezado y las filas en una columna
-   header,data=read_file_dic(HOGARES_PROCESSED_DIR)
-=======
     # Agrego las nuevas columnas al header
     header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE",
                   "DENSIDAD_HOGAR", "CONDICION_DE_HABITABILIDAD"])
->>>>>>> 641066cb6d733f0aa361a0094036dcbb6392a1dd
 
     # Recorro las fila y realizo los procesos
     for row in data:
