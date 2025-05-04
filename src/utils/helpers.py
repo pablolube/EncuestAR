@@ -275,6 +275,7 @@ def actualizar():
         # Verificar si hay archivos para procesar
         archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
         if not archivos_existentes:
+            # Si no hay archivos, guardo el mensaje de advertencia
             st.session_state["mensaje_actualizacion"] = (
                 "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
             return
@@ -296,9 +297,11 @@ def actualizar():
         # Sirve para que se resetee el rango de fechas en la app
         st.session_state.date_range = None
 
+        # Mensaje de éxito
         st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
 
     except Exception as e:
+            # Si ocurre un error, guardo el mensaje de error
             st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
 
 
