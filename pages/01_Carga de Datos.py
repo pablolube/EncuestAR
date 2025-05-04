@@ -21,10 +21,10 @@ st.subheader("Carga de Archivos")
 uploaded_files = st.file_uploader(
     "Seleccione uno o más archivos", accept_multiple_files=True, type=["txt"]
 )
-st.button("Cargar Archivos", key="b_cargar_archivos",
-          on_click=cargar_archivos, args=(uploaded_files,), icon="📤")
+st.button("📤 Cargar Archivos", key="b_cargar_archivos",
+          on_click=cargar_archivos, args=(uploaded_files,))
 
 # Actualización de Datos
 st.subheader("Actualización de Datos")
 st.write("Si desea actualizar los datos, haga clic en el botón de abajo.")
-st.button("Actualizar", key="b_actualizar", on_click=actualizar, icon="🔄")
+st.button("🔄 Actualizar", key="b_actualizar", on_click=actualizar)
