@@ -2,8 +2,7 @@ import streamlit as st
 
 # Cargar Font Awesome desde CDN
 st.markdown("""
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 """, unsafe_allow_html=True)
 # Título principal
