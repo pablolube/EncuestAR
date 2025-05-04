@@ -270,7 +270,11 @@ def actualizar():
 
     Utiliza las rutas y nombres de archivo definidos en constantes globales. Muestra mensajes de éxito
     o error según el resultado del procesamiento.
+     
     """
+    if "mensajes" in st.session_state:
+        del st.session_state["mensajes"]
+    
     try:
         # Verificar si hay archivos para procesar
         archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
@@ -311,6 +315,9 @@ def cargar_archivos(archivos):
     Args:
         archivos (list): Lista de archivos subidos por el usuario.
     """
+    if "mensajes" in st.session_state:
+        del st.session_state["mensajes"]
+    
     mensajes = []
     
     if archivos:
@@ -338,9 +345,13 @@ def eliminar_archivos():
     """
     Elimina todos los archivos cargados previamente en el directorio de origen de datos.
     """
+     # Limpiar los mensajes de éxito previos
+    if "mensajes" in st.session_state:
+        del st.session_state["mensajes"]
+
     try:
         carpeta = Path(DATA_SOURCE_DIR)
-        archivos = list(carpeta.glob("*"))
+        archivos = list(carpeta.glob("*.txt")) 
 
         if not archivos:
             st.session_state["mensaje_eliminacion"] = ("warning", "⚠️ No hay archivos para eliminar.")
@@ -349,7 +360,7 @@ def eliminar_archivos():
         for archivo in archivos:
             archivo.unlink()  # Elimina el archivo
 
-        st.session_state["mensaje_eliminacion"] = ("success", "🗑️ Archivos eliminados correctamente.")
+        st.session_state["mensaje_eliminacion"] = ("success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
 
     except Exception as e:
         st.session_state["mensaje_eliminacion"] = ("error", f"❌ Error al eliminar archivos: {e}")
