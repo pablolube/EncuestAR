@@ -38,6 +38,7 @@ code/
 │       ├── individuos.py      # Funciones específicas para procesar datos de individuos.
 │       └── hogares.py         # Funciones específicas para procesar datos de hogares.
 ├── .gitignore                 # Archivos y carpetas que deben ser ignorados por Git.
+├── Inicio.py                  # Interfaz de inicio para app streamlit
 ├── LICENSE                    # Licencia de uso del código fuente del proyecto.
 ├── README.md                  # Descripción general del proyecto, cómo instalarlo y ejecutarlo.
 └── requirements.txt           # Lista de dependencias del proyecto (librerías de Python necesarias).
@@ -73,6 +74,8 @@ Para cargar uno o más archivos que requieran procesarse, navegar por el menú d
 Luego, actualizar.
 
 ### 4. **Ejecutar notebooks**
+
+Cargar los archivos que se quieran analizar dentro de la carpeta: Data/raw
 
 Ejecutar los notebooks:     
 bash jupyter notebook
