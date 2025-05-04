@@ -894,6 +894,122 @@ def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
 # FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
+def buscar_ultimo_anio_disponible(data):
+    """
+    Busca el último año disponible en los datos cargados.
+    """
+    anios = set()
+
+    for fila in data:
+        try:
+            anio = int(fila["ANO4"])
+            anios.add(anio)
+        except (KeyError, ValueError):
+            continue
+
+    if anios:
+        return max(anios)  # Retorna el último año (máximo)
+    else:
+        return None  # Si no hay años disponibles, retorna None
+    
+def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
+    
+    # Busco el ultimo anio disponible para reutilizar 
+    # la funcion de obtener_dats_ultimo_trimestre
+    
+    """
+    Calcula el porcentaje de jubilados que viven en un hogar con habitabilidad insuficiente
+    por cada aglomerado del ultimo trimestre del año disponible
+    
+    Return:
+        Dict: diccionario con aglomerados como claves y porcentajes de jubilados
+        en hogares con habitabilidad insuficiente 
+    """
+    
+    anio_max = buscar_ultimo_anio_disponible(data_ind)
+    
+    if not anio_max:
+        return None
+    else:
+        datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
+        datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
+        
+        # estructura donde guardaremos los hogares con habitabilidad insuficiente
+        
+        hogares_habitabilidad_insuficiente = set()
+        # lo hacemos set para evitar datos repetidos
+        
+        # generamos un diccionario de par codosu, hogar y valor cantidad de miembros del hogar
+        for row in datos_proc_hog:
+            try:
+                if row['CONDICION_DE_HABITABILIDAD'] == 'Insuficiente':
+                    clave = (row['CODUSU'], row['NRO_HOGAR'])
+                    hogares_habitabilidad_insuficiente.add(clave)
+            except(KeyError, ValueError):
+                continue # ante cualquier dato mal ingresado o vacio
+            
+        # ahora con el diccionario de hogares de habitabilidad insuficientes
+        
+        # estructura para calcular % de jubilados
+        
+        datos_jubilados = {}
+        
+        # recorremos individuos
+        
+        for fila in datos_proc_ind:
+            
+            # sabemos que jubilados en CAT_INAC corresponde a 1
+            
+            try:
+                clave = (fila['CODUSU'], fila['NRO_HOGAR'])
+                
+                if int(fila['CAT_INAC']) == 1: 
+                
+                    #obtener el aglomerado actual
+                    aglomerado = fila['AGLOMERADO']
+                
+                    if aglomerado not in datos_jubilados:
+                        datos_jubilados[aglomerado] = {
+                            'total': 0,
+                            'habitabilidad_insuficiente': 0
+                        }
+                    datos_jubilados[aglomerado]['total'] += int(fila['PONDERA'])
+                    
+                    # si el jubilado esta en un hogar de habitabilidad insuficiente
+                    if clave in hogares_habitabilidad_insuficiente:  
+                        datos_jubilados[aglomerado]['habitabilidad_insuficiente'] += int(fila['PONDERA'])
+                                      
+            except (KeyError, ValueError):
+                continue   
+            
+        resultado = {}
+        
+        for aglomerado, valores in datos_jubilados.items():
+            total = valores['total']
+            insuficiente = valores['habitabilidad_insuficiente']
+            if total > 0:
+                porcentaje = (insuficiente / total) * 100
+            else:
+                porcentaje = 0.0
+            resultado[aglomerado] = round(porcentaje, 2)
+
+    return resultado   
+
+def imprimir_datos_jubilados(resultados):
+    """
+        Imprime de forma ordenada por aglomerados el porcentaje de jubilados
+        en viviendas de habitabilidad insuficiente
+    """
+    
+    print("-" * 32)
+    print(f"{'Aglomerado':<10} | {'% Jubilados en Hab. Insuf.':>21}")
+    print("-" * 32)
+    
+    for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
+        print(f"{aglomerado:<10} | {porcentaje:>20.2f}%")
+    
+    print("-" * 32)
+
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 13 (ANÁLISIS) - INDIVIDUOS Nota: se puede usar la funciones del PUNTO 9 y 12!
 # -----------------------------------------------------------------------------------
