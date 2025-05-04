@@ -272,6 +272,13 @@ def actualizar():
     o error según el resultado del procesamiento.
     """
     try:
+        # Verificar si hay archivos para procesar
+        archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
+        if not archivos_existentes:
+            st.session_state["mensaje_actualizacion"] = (
+                "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
+            return
+        
         # Procesar hogares
         encabezados_h, hogares = process_file(
             DATA_SOURCE_DIR, category="hogar")
@@ -289,10 +296,10 @@ def actualizar():
         # Sirve para que se resetee el rango de fechas en la app
         st.session_state.date_range = None
 
-        st.success(f"✅ Archivos actualizados correctamente.\n")
+        st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
 
     except Exception as e:
-        st.error(f"❌ Error al actualizar archivos: {e}")
+            st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
 
 
 def cargar_archivos(archivos):
@@ -301,18 +308,46 @@ def cargar_archivos(archivos):
     Args:
         archivos (list): Lista de archivos subidos por el usuario.
     """
+    mensajes = []
+    
     if archivos:
         for uploaded_file in archivos:
             file_name = uploaded_file.name
             file_path = Path(DATA_SOURCE_DIR) / file_name
 
             if file_path.exists():
-                st.warning(
-                    f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
+                # Si el archivo ya existe, guardo el mensaje de advertencia
+                mensajes.append(("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó."))
                 continue
 
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            st.success(f"✅ {file_name} guardado en {file_path}")
+            # Guardo el mensaje de éxito
+            mensajes.append(("success", f"✅ {file_name} guardado en {file_path}"))
     else:
-        st.warning("⚠️ No se seleccionaron archivos para cargar.")
+        # Si no se seleccionaron archivos, guardo el mensaje de advertencia
+        mensajes.append(("warning", "⚠️ No se seleccionaron archivos para cargar."))
+
+    st.session_state["mensajes_carga"] = mensajes
+
+
+def eliminar_archivos():
+    """
+    Elimina todos los archivos cargados previamente en el directorio de origen de datos.
+    """
+    try:
+        carpeta = Path(DATA_SOURCE_DIR)
+        archivos = list(carpeta.glob("*"))
+
+        if not archivos:
+            st.session_state["mensaje_eliminacion"] = ("warning", "⚠️ No hay archivos para eliminar.")
+            return
+
+        for archivo in archivos:
+            archivo.unlink()  # Elimina el archivo
+
+        st.session_state["mensaje_eliminacion"] = ("success", "🗑️ Archivos eliminados correctamente.")
+
+    except Exception as e:
+        st.session_state["mensaje_eliminacion"] = ("error", f"❌ Error al eliminar archivos: {e}")
+
