@@ -11,26 +11,34 @@ st.markdown("""
 # Guarda el rango de fechas en la session state
 if "date_range" not in st.session_state:
     st.session_state.date_range = data_date_range()
-elif st.session_state.date_range is None:
+elif not st.session_state.date_range:
     st.session_state.date_range = data_date_range()
 
 
 # Sección principal
-st.markdown('<h2 style="color:#D35400;">🗂️ Carga de Datos</h2>', unsafe_allow_html=True)
+st.markdown('<h2 style="color:#D35400;">🗂️ Carga de Datos</h2>',
+            unsafe_allow_html=True)
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Información del Dataset
-st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Información del Dataset</h4>', unsafe_allow_html=True)
-st.markdown(
-    f"El sistema contiene información desde el <strong>{st.session_state.date_range[0]}</strong> hasta el <strong>{st.session_state.date_range[1]}</strong> (trimestre/año).", unsafe_allow_html=True)
+st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Información del Dataset</h4>',
+            unsafe_allow_html=True)
+
+if not st.session_state.date_range:
+    st.warning(
+        "No se encontraron archivos procesados. Inteta cargarlos primero, y luego actualizar", icon="⚠️")
+else:
+    st.markdown(
+        f"El sistema contiene información desde el **{st.session_state.date_range[0]}** hasta el **{st.session_state.date_range[1]}** (trimestre/año).")
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Carga de Archivos
-st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga de Archivos</h4>', unsafe_allow_html=True)
+st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga de Archivos</h4>',
+            unsafe_allow_html=True)
 
 # Complemento de carga de archivos
 uploaded_files = st.file_uploader(
@@ -47,7 +55,8 @@ if "mensajes_carga" in st.session_state:
     del st.session_state["mensajes_carga"]
 
 # Botón para eliminar archivos cargados
-st.button("🗑️ Eliminar Todos los Archivos Cargados", key="b_eliminar", on_click=eliminar_archivos)
+st.button("🗑️ Eliminar Todos los Archivos Cargados",
+          key="b_eliminar", on_click=eliminar_archivos)
 
 # Mensaje de eliminación
 if "mensaje_eliminacion" in st.session_state:
@@ -60,7 +69,8 @@ if "mensaje_eliminacion" in st.session_state:
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Actualización de Datos
-st.markdown('<h4><i class="fas fa-sync-alt" style="color:#CA6F1E;"></i> Actualización de Datos</h4>', unsafe_allow_html=True)
+st.markdown('<h4><i class="fas fa-sync-alt" style="color:#CA6F1E;"></i> Actualización de Datos</h4>',
+            unsafe_allow_html=True)
 st.write("Haga clic en el botón para sincronizar y procesar los archivos cargados.")
 st.button("🔄 Actualizar", key="b_actualizar", on_click=actualizar)
 
@@ -69,4 +79,3 @@ if "mensaje_actualizacion" in st.session_state:
     tipo, texto = st.session_state["mensaje_actualizacion"]
     getattr(st, tipo)(texto)
     del st.session_state["mensaje_actualizacion"]
-

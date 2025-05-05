@@ -49,6 +49,7 @@ def read_file_dic(file_path):
 # PROCESAR ARCHIVOS
 # -------------------------------------------------------------------------------
 
+
 def process_file(source_path, category="hogar"):
     """
     Procesa archivos de texto en un path, filtrando por categoría, y unifica sus datos en una estructura común.
@@ -100,7 +101,7 @@ def process_file(source_path, category="hogar"):
 # GUARDAR ARCHIVOS
 # -------------------------------------------------------------------------------
 
-# PROPUESTA -  Esta funcion puede unificar a save_to_txt y save_to_csv
+
 def save_to_file(file_path, file_name, header, data, separator=";"):
     """
     Guarda los datos en un archivo CSV en el formato especificado.
@@ -132,90 +133,9 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
 
     print(f"✅ Archivo guardado en: {file_path}")
 
-
-def save_to_txt(headers, data, destination_path, file_name="hogares_unificados.txt"):
-    """
-    Guarda una lista de diccionarios en un archivo de texto con formato CSV delimitado por punto y coma (;).
-
-    Parameters:
-        headers (list): Lista de encabezados para las columnas.
-        data (list): Lista de diccionarios que representa las filas a guardar en el archivo.
-        destination_path (str | Path): Ruta del directorio donde se guardará el archivo.
-        file_name (str): Nombre del archivo de salida.
-    """
-
-    file_path = Path(destination_path) / file_name
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with file_path.open(mode='w', encoding='utf-8', newline='') as file_txt:
-        writer = csv.DictWriter(file_txt, fieldnames=headers, delimiter=";")
-        writer.writeheader()
-        writer.writerows(data)
-
-    print(f"✅ Archivo TXT guardado en: {file_path}")
-
-
-def save_to_csv(file_path, header, data, delimiter=";"):
-    """
-    Guarda los datos en un archivo CSV en el formato especificado.
-
-    Parameters:
-    - data: Lista de diccionarios con los datos a guardar.
-    - file_path: Ruta del archivo donde se guardarán los datos.
-    - header: Lista de nombres de las columnas (encabezado) para el CSV.
-    - delimiter: Delimitador de los campos en el CSV (por defecto ";").
-    """
-    file_path = Path(file_path)
-    # Crea el directorio si no existe
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with file_path.open(mode="w", encoding="UTF-8", newline="") as file:
-        csv_writer = csv.DictWriter(
-            file, delimiter=delimiter, fieldnames=header)
-        csv_writer.writeheader()  # Escribe el encabezado
-        csv_writer.writerows(data)  # Escribe los datos
-
 # -------------------------------------------------------------------------------
 # STREAMLIT
 # -------------------------------------------------------------------------------
-
-def max_min_date(data):
-    """
-    Calcula el rango de fechas (año y trimestre) a partir de los datos proporcionados.
-
-    Parameters:
-        data (list): Lista de diccionarios que contiene los datos con las claves "ANO4" y "TRIMESTRE".
-
-    Returns:
-        tuple: Una tupla que contiene la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
-    """
-
-    max_year = min_year = None
-    max_trim = min_trim = None
-
-    for row in data:
-        year = int(row["ANO4"])
-        trim = int(row["TRIMESTRE"])
-
-        if max_year is None or year > max_year:
-            max_year = year
-            max_trim = trim
-        elif year == max_year:
-            if trim > max_trim:
-                max_trim = trim
-
-        if min_year is None or year < min_year:
-            min_year = year
-            min_trim = trim
-        elif year == min_year:
-            if trim < min_trim:
-                min_trim = trim
-
-    max_date = f"{max_trim}/{max_year}"
-    min_date = f"{min_trim}/{min_year}"
-
-    return max_date, min_date
-
 
 
 def max_min_date(data):
@@ -252,8 +172,7 @@ def data_date_range():
     """
     # Verifica si los archivos procesados existen
     if not Path(HOGARES_PROCESSED_DIR).exists() or not Path(INDIVIDUOS_PROCESSED_DIR).exists():
-        st.session_state["mensaje_sinarchivos"] = ("warning", "⚠️ No se encontraron archivos procesados. Inteta cargarlos primero, y luego actualizar")
-        return None, None
+        return False
 
     # Lee los archivos procesados de hogares e individuos
     dataset_hog = read_file_dic(HOGARES_PROCESSED_DIR)
@@ -262,11 +181,12 @@ def data_date_range():
     # Obtiene las fechas mínimas y máximas de ambos conjuntos de datos
     # y las ordena
     try:
+        # Se vacia lista para evitar que se acumulen fechas de otras ejecuciones
+        date_list = []
         date_list = sorted(max_min_date(
             dataset_hog[1]) + max_min_date(dataset_ind[1]))
     except ValueError:
-        st.session_state["mensaje_sinarchivos"] = ("warning","⚠️ No se pudieron validar los datos en los archivos procesados.")
-        return None, None
+        return False
 
     # devuelve la fecha minima y maxima de los dos archivos
     return date_list[0], date_list[-1]
@@ -281,11 +201,11 @@ def actualizar():
 
     Utiliza las rutas y nombres de archivo definidos en constantes globales. Muestra mensajes de éxito
     o error según el resultado del procesamiento.
-     
+
     """
     if "mensajes_actualizacion" in st.session_state:
         del st.session_state["mensajes_actualizacion"]
-    
+
     try:
         # Verificar si hay archivos para procesar
         archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
@@ -294,7 +214,7 @@ def actualizar():
             st.session_state["mensaje_actualizacion"] = (
                 "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
             return
-        
+
         # Procesar hogares
         encabezados_h, hogares = process_file(
             DATA_SOURCE_DIR, category="hogar")
@@ -310,14 +230,16 @@ def actualizar():
                      FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
 
         # Sirve para que se resetee el rango de fechas en la app
-        st.session_state.date_range = None
+        st.session_state.date_range = False
 
         # Mensaje de éxito
-        st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
+        st.session_state["mensaje_actualizacion"] = (
+            "success", "✅ Archivos actualizados correctamente.")
 
     except Exception as e:
-            # Si ocurre un error, guardo el mensaje de error
-            st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
+        # Si ocurre un error, guardo el mensaje de error
+        st.session_state["mensaje_actualizacion"] = (
+            "error", f"❌ Error al actualizar archivos: {e}")
 
 
 def cargar_archivos(archivos):
@@ -328,9 +250,9 @@ def cargar_archivos(archivos):
     """
     if "mensajes_carga" in st.session_state:
         del st.session_state["mensajes_carga"]
-    
+
     mensajes = []
-    
+
     if archivos:
         for uploaded_file in archivos:
             file_name = uploaded_file.name
@@ -338,16 +260,19 @@ def cargar_archivos(archivos):
 
             if file_path.exists():
                 # Si el archivo ya existe, guardo el mensaje de advertencia
-                mensajes.append(("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó."))
+                mensajes.append(
+                    ("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó."))
                 continue
 
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             # Guardo el mensaje de éxito
-            mensajes.append(("success", f"✅ {file_name} guardado en {file_path}"))
+            mensajes.append(
+                ("success", f"✅ {file_name} guardado en {file_path}"))
     else:
         # Si no se seleccionaron archivos, guardo el mensaje de advertencia
-        mensajes.append(("warning", "⚠️ No se seleccionaron archivos para cargar."))
+        mensajes.append(
+            ("warning", "⚠️ No se seleccionaron archivos para cargar."))
 
     st.session_state["mensajes_carga"] = mensajes
 
@@ -356,23 +281,25 @@ def eliminar_archivos():
     """
     Elimina todos los archivos cargados previamente en el directorio de origen de datos.
     """
-     # Limpiar los mensajes de éxito previos
+    # Limpiar los mensajes de éxito previos
     if "mensajes_eliminacion" in st.session_state:
         del st.session_state["mensajes_eliminacion"]
 
     try:
         carpeta = Path(DATA_SOURCE_DIR)
-        archivos = list(carpeta.glob("*.txt")) 
+        archivos = list(carpeta.glob("*.txt"))
 
         if not archivos:
-            st.session_state["mensaje_eliminacion"] = ("warning", "⚠️ No hay archivos para eliminar.")
+            st.session_state["mensaje_eliminacion"] = (
+                "warning", "⚠️ No hay archivos para eliminar.")
             return
 
         for archivo in archivos:
             archivo.unlink()  # Elimina el archivo
 
-        st.session_state["mensaje_eliminacion"] = ("success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
+        st.session_state["mensaje_eliminacion"] = (
+            "success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
 
     except Exception as e:
-        st.session_state["mensaje_eliminacion"] = ("error", f"❌ Error al eliminar archivos: {e}")
-
+        st.session_state["mensaje_eliminacion"] = (
+            "error", f"❌ Error al eliminar archivos: {e}")

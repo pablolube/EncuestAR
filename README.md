@@ -19,29 +19,30 @@ Organización (estructura):
 ```plaintext
 code/
 ├── data/
-│   ├── raw/                   # Archivos de datos originales en formato .txt.
-│   └── processed/             # Archivos de datos procesados en formato .txt.
-├── notebooks/                 # Carpeta para almacenar notebooks Jupyter para análisis exploratorio.
-│   ├── individuos.ipynb       # Análisis y exploración de datos relacionados con individuos.
-│   └── hogares.ipynb          # Análisis y exploración de datos relacionados con hogares.
+│   ├── raw/                      # Archivos de datos originales en formato .txt.
+│   └── processed/                # Archivos de datos procesados en formato .txt.
+├── notebooks/                    # Carpeta para almacenar notebooks Jupyter para análisis exploratorio.
+│   ├── hogares-individuos.ipynb  # Análisis y exploración de datos relacionados con hogares e individuos.                
+│   ├── individuos.ipynb          # Análisis y exploración de datos relacionados con individuos.
+│   └── hogares.ipynb             # Análisis y exploración de datos relacionados con hogares.
 ├── pages/
-│   ├── carga.py               # Interfaz para cargar y procesar los datos.
-│   ├── busqueda.py            # Página para realizar búsquedas sobre los datos procesados.
-│   └── visualizacion.py       # Página para visualizar los resultados.
+│   ├── 01_Carga de Datos.py      # Interfaz para cargar y procesar los datos.
+│   ├── 02_Busqueda por Tema.py   # Página para realizar búsquedas sobre los datos procesados.
+│   └── 03_Visualizacion.py       # Página para visualizar los resultados.
 ├── src/
-│   ├── consultas/             # Funciones para realizar consultas sobre los datos.
-│   │   └── consultas.py       # Contiene las funciones para realizar consultas sobre los datos de la EPH.
-│   ├── utils/                 # Funciones auxiliares para tareas comunes (e.g., limpieza de datos, formateo).
-│   │   ├── constants.py       # Contiene las constantes necesarias para el proyecto, datos de uso común.
-│   │   └── helpers.py         # Funciones auxiliares reutilizables para tareas comunes.
-│   └── procesamientos/        # Archivos con scripts para procesar y transformar los datos.
-│       ├── individuos.py      # Funciones específicas para procesar datos de individuos.
-│       └── hogares.py         # Funciones específicas para procesar datos de hogares.
-├── .gitignore                 # Archivos y carpetas que deben ser ignorados por Git.
-├── Inicio.py                  # Interfaz de inicio para app streamlit
-├── LICENSE                    # Licencia de uso del código fuente del proyecto.
-├── README.md                  # Descripción general del proyecto, cómo instalarlo y ejecutarlo.
-└── requirements.txt           # Lista de dependencias del proyecto (librerías de Python necesarias).
+│   ├── consultas/                # Funciones para realizar consultas sobre los datos.
+│   │   └── consultas.py          # Contiene las funciones para realizar consultas sobre los datos de la EPH.
+│   ├── utils/                    # Funciones auxiliares para tareas comunes (e.g., limpieza de datos, formateo).
+│   │   ├── constants.py          # Contiene las constantes necesarias para el proyecto, datos de uso común.
+│   │   └── helpers.py            # Funciones auxiliares reutilizables para tareas comunes.
+│   └── procesamientos/           # Archivos con scripts para procesar y transformar los datos.
+│       ├── individuos.py         # Funciones específicas para procesar datos de individuos.
+│       └── hogares.py            # Funciones específicas para procesar datos de hogares.
+├── .gitignore                    # Archivos y carpetas que deben ser ignorados por Git.
+├── Inicio.py                     # Interfaz de inicio para app streamlit
+├── LICENSE                       # Licencia de uso del código fuente del proyecto.
+├── README.md                     # Descripción general del proyecto, cómo instalarlo y ejecutarlo.
+└── requirements.txt              # Lista de dependencias del proyecto (librerías de Python necesarias).
 ```
 ---
 
@@ -52,22 +53,37 @@ Sigue estos pasos para ejecutar el proyecto en tu máquina local:
 ### 1. **Clonar el repositorio**
 Primero, clona este repositorio a tu máquina local usando Git. Abre tu terminal y ejecuta:
 
-bash git clone https://gitlab.catedras.linti.unlp.edu.ar/python-2025/proyectos/grupo18/code.git 
+```bash
+git clone https://gitlab.catedras.linti.unlp.edu.ar/python-2025/proyectos/grupo18/code.git 
+```
 
 ### 2. **Instalar las dependencias**
-Accede al directorio del proyecto: cd code
+Accede al directorio del proyecto: 
+```bash
+cd code
+```
 
 Crear entorno virtual:
-bash python3 -m venv venv
+```bash
+python3 -m venv venv
+```
 
 Activar entorno virtual:
-Windows: bash .\venv\Scripts\activate
-Linux/Mac: bash source venv/bin/activate
-
+Windows: 
+```bash
+source venv\Scripts\activate
 pip install -r requirements.txt
+```
+Linux/Mac: 
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ### 3. **Ejecutar la aplicación STREAMLIT**
+```bash
 streamlit run Inicio.py
+```
 
 Para cargar uno o más archivos que requieran procesarse, navegar por el menú de la web hasta la sección "Carga de Datos".
 
@@ -78,7 +94,9 @@ Luego, actualizar.
 Cargar los archivos que se quieran analizar dentro de la carpeta: Data/raw
 
 Ejecutar los notebooks:     
-bash jupyter notebook
+```bash
+jupyter notebook
+```
 
 Esto abrirá una interfaz web en tu navegador, donde podrás ver todos los notebooks en la carpeta notebooks/.
 
