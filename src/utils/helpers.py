@@ -5,8 +5,9 @@ from pathlib import Path
 from src.procesamientos.individuos import add_extra_data
 from src.procesamientos.hogares import procesar_hogares
 
-
+# -------------------------------------------------------------------------------
 # LEER  ARCHIVOS
+# -------------------------------------------------------------------------------
 
 
 def read_file(file_path):
@@ -44,8 +45,10 @@ def read_file_dic(file_path):
         print(f"❌ Error: El archivo {file_path} no existe.")
         return [], []
 
-
+# -------------------------------------------------------------------------------
 # PROCESAR ARCHIVOS
+# -------------------------------------------------------------------------------
+
 def process_file(source_path, category="hogar"):
     """
     Procesa archivos de texto en un path, filtrando por categoría, y unifica sus datos en una estructura común.
@@ -93,8 +96,9 @@ def process_file(source_path, category="hogar"):
 
     return all_headers, unified_data
 
-
+# -------------------------------------------------------------------------------
 # GUARDAR ARCHIVOS
+# -------------------------------------------------------------------------------
 
 # PROPUESTA -  Esta funcion puede unificar a save_to_txt y save_to_csv
 def save_to_file(file_path, file_name, header, data, separator=";"):
@@ -171,11 +175,12 @@ def save_to_csv(file_path, header, data, delimiter=";"):
         csv_writer.writeheader()  # Escribe el encabezado
         csv_writer.writerows(data)  # Escribe los datos
 
-
+# -------------------------------------------------------------------------------
 # STREAMLIT
-"""
+# -------------------------------------------------------------------------------
+
 def max_min_date(data):
-    
+    """
     Calcula el rango de fechas (año y trimestre) a partir de los datos proporcionados.
 
     Parameters:
@@ -183,7 +188,8 @@ def max_min_date(data):
 
     Returns:
         tuple: Una tupla que contiene la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
-    
+    """
+
     max_year = min_year = None
     max_trim = min_trim = None
 
@@ -209,7 +215,7 @@ def max_min_date(data):
     min_date = f"{min_trim}/{min_year}"
 
     return max_date, min_date
-"""
+
 
 
 def max_min_date(data):
@@ -244,6 +250,11 @@ def data_date_range():
     """
     Devuelve el rango de fechas (mínima y máxima) de los archivos de hogares e individuos procesados.
     """
+    # Verifica si los archivos procesados existen
+    if not Path(HOGARES_PROCESSED_DIR).exists() or not Path(INDIVIDUOS_PROCESSED_DIR).exists():
+        st.session_state["mensaje_sinarchivos"] = ("warning", "⚠️ No se encontraron archivos procesados. Inteta cargarlos primero, y luego actualizar")
+        return None, None
+
     # Lee los archivos procesados de hogares e individuos
     dataset_hog = read_file_dic(HOGARES_PROCESSED_DIR)
     dataset_ind = read_file_dic(INDIVIDUOS_PROCESSED_DIR)
@@ -254,7 +265,7 @@ def data_date_range():
         date_list = sorted(max_min_date(
             dataset_hog[1]) + max_min_date(dataset_ind[1]))
     except ValueError:
-        st.error("❌ Error: No se encontraron datos en los archivos procesados.")
+        st.session_state["mensaje_sinarchivos"] = ("warning","⚠️ No se pudieron validar los datos en los archivos procesados.")
         return None, None
 
     # devuelve la fecha minima y maxima de los dos archivos
@@ -272,8 +283,8 @@ def actualizar():
     o error según el resultado del procesamiento.
      
     """
-    if "mensajes" in st.session_state:
-        del st.session_state["mensajes"]
+    if "mensajes_actualizacion" in st.session_state:
+        del st.session_state["mensajes_actualizacion"]
     
     try:
         # Verificar si hay archivos para procesar
@@ -315,8 +326,8 @@ def cargar_archivos(archivos):
     Args:
         archivos (list): Lista de archivos subidos por el usuario.
     """
-    if "mensajes" in st.session_state:
-        del st.session_state["mensajes"]
+    if "mensajes_carga" in st.session_state:
+        del st.session_state["mensajes_carga"]
     
     mensajes = []
     
@@ -346,8 +357,8 @@ def eliminar_archivos():
     Elimina todos los archivos cargados previamente en el directorio de origen de datos.
     """
      # Limpiar los mensajes de éxito previos
-    if "mensajes" in st.session_state:
-        del st.session_state["mensajes"]
+    if "mensajes_eliminacion" in st.session_state:
+        del st.session_state["mensajes_eliminacion"]
 
     try:
         carpeta = Path(DATA_SOURCE_DIR)
