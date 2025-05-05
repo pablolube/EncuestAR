@@ -690,7 +690,7 @@ def tabla_nivel_educativo(data, aglomerado):
         imprimo_tabla_nivel_educativo(conteo)
 
 # -----------------------------------------------------------------------------------
-# FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS Nota: podes usar la funcion PUNTO 9!
+# FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS 
 # -----------------------------------------------------------------------------------
 
 
@@ -704,11 +704,12 @@ def crear_estructura_datos():
 
 
 def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  data):
-
+    """
+    Calcula el porcentaje de personas con secundario incompleto mayores de 18 años
+    en dos aglomerados específicos, agrupando los resultados por año y trimestre.
+    """
+    # Inicializo la estructura de datos
     dats = {}
-    """
-
-    """
 
     for row in data:
         # guardo el aglomerado y nivel educativo de la persona actual
