@@ -6,9 +6,9 @@ st.markdown("""
 </head>
 """, unsafe_allow_html=True)
 # Título principal
-st.markdown('<h1 style="color:black;">Bienvenidos 👋</h1>', unsafe_allow_html=True)
-st.markdown('<h1 style="color:black;">📊 Encuest.AR</h1>', unsafe_allow_html=True)
-st.markdown('<h3 style="color:black;"> Proyecto colectivo: Trabajo integrador UNLP </h3>', unsafe_allow_html=True)
+st.markdown('<h1 >Bienvenidos 👋</h1>', unsafe_allow_html=True)
+st.markdown('<h1 >📊 Encuest.AR</h1>', unsafe_allow_html=True)
+st.markdown('<h3 > Proyecto colectivo: Trabajo integrador UNLP </h3>', unsafe_allow_html=True)
 
 # Línea gris clara
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
