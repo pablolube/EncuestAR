@@ -188,7 +188,7 @@ def contar_universitarios_y_pondera_por_hogar(individuos):
             row["NRO_HOGAR"],
             row["ANO4"],
             row["TRIMESTRE"],
-            row["AGLOMERADO"]
+            int(row["AGLOMERADO"])
         )
 
         # Guardar el pondera solo una vez por hogar
@@ -1044,106 +1044,88 @@ def buscar_ultimo_trimestre_disponible(anio: int, filas_csv: list[dict], tipo_ar
             f"No hay trimestres disponibles en el archivo de {tipo_archivo} para el {anio}.")
         return None
 
-
-def armar_diccionario(datos: list[dict], tipo: str, anio: int, trimestre: int) -> dict:
+def contar_personas_educadas_en_viviendas_insuficientes(data_indiv: list[dict], data_hog: list[dict], anio: int, trimestre: int) -> int:
     """
-    Construye un diccionario de individuos o hogares filtrado por año y trimestre.
-
-    Retorna:
-        dict: Diccionario indexado por clave compuesta.
+    Se contabilizan las personas con nivel educativo universitario o superior
+    que vivan en viviendas con condición de habitabilidad insuficiente, en un 
+    año y trimestre específicos.
+    
+    Los datos se toman directamente de las listas de registros de
+    individuos y hogares, sin armar estructuras intermedias.
     """
-    resultado = {}
 
-    for fila in datos:
+    # Armo un conjunto con las claves de los hogares cuya habitabilidad es insuficiente
+    claves_hogares_insuficientes = set()
+
+    for hogar in data_hog:
         try:
-            if int(fila["ANO4"]) != anio or int(fila["TRIMESTRE"]) != trimestre:
-                continue
-
-            if tipo == "individuos":
-                clave = (
-                    fila["CODUSU"],
-                    fila["NRO_HOGAR"],
-                    fila["COMPONENTE"],
-                    fila["ANO4"],
-                    fila["TRIMESTRE"],
-                    fila["AGLOMERADO"]
-                )
-                valor = {
-                    "NIVEL_ED_str": fila["NIVEL_ED_str"].strip(),
-                    "PONDERA": float(fila["PONDERA"])
-                }
-
-            elif tipo == "hogares":
-                clave = (
-                    fila["CODUSU"],
-                    fila["NRO_HOGAR"],
-                    fila["ANO4"],
-                    fila["TRIMESTRE"],
-                    fila["AGLOMERADO"]
-                )
-                valor = {
-                    "CONDICION_DE_HABITABILIDAD": fila["CONDICION_DE_HABITABILIDAD"].strip(),
-                    "PONDERA": float(fila["PONDERA"])
-                }
-
-            else:
-                continue
-
-            resultado[clave] = valor
-
+            # Verifico que el hogar corresponda al año y trimestre indicados
+            if int(hogar["ANO4"]) == anio and int(hogar["TRIMESTRE"]) == trimestre:
+                # Verifico si la condición de habitabilidad es "insuficiente"
+                if hogar["CONDICION_DE_HABITABILIDAD"].strip().lower() == "insuficiente":
+                    # Armo la clave que identifica al hogar
+                    clave = (
+                        hogar["CODUSU"],
+                        hogar["NRO_HOGAR"],
+                        hogar["ANO4"],
+                        hogar["TRIMESTRE"],
+                        hogar["AGLOMERADO"]
+                    )
+                    claves_hogares_insuficientes.add(clave)
         except (KeyError, ValueError):
-            continue
+            continue  # Ignoro filas con errores
 
-    return resultado
-
-
-def contar_personas_en_viviendas_insuficientes(dic_indiv: dict, dic_hogares: dict) -> int:
-    """
-    Cuenta personas con educación superior/universitaria en viviendas insuficientes.
-
-    Retorna:
-        int: Cantidad ponderada de personas.
-    """
+    # Inicializo el total ponderado
     total_ponderado = 0
 
-    for clave_indiv, datos_indiv in dic_indiv.items():
-        clave_hogar = clave_indiv[:2] + clave_indiv[3:]  # Eliminar COMPONENTE
+    for persona in data_indiv:
+        try:
+            # Verifico que la persona corresponda al año y trimestre indicados
+            if int(persona["ANO4"]) == anio and int(persona["TRIMESTRE"]) == trimestre:
+                # Verifico si tiene nivel educativo superior o universitario
+                if persona["NIVEL_ED_str"].strip().lower() == "superior o universitario":
+                    # Armo la clave del hogar donde vive la persona
+                    clave = (
+                        persona["CODUSU"],
+                        persona["NRO_HOGAR"],
+                        persona["ANO4"],
+                        persona["TRIMESTRE"],
+                        persona["AGLOMERADO"]
+                    )
+                    # Sumo la ponderación si vive en un hogar con habitabilidad insuficiente
+                    if clave in claves_hogares_insuficientes:
+                        total_ponderado += float(persona["PONDERA"])
+        except (KeyError, ValueError):
+            continue  # Ignoro filas con errores
 
-        hogar = dic_hogares.get(clave_hogar)
-        if hogar:
-            condicion = hogar["CONDICION_DE_HABITABILIDAD"].strip().lower()
-            nivel_ed = datos_indiv["NIVEL_ED_str"].strip().lower()
-
-            if condicion == "insuficiente" and nivel_ed == "superior o universitario":
-                total_ponderado += datos_indiv["PONDERA"]
-
+    # Devuelvo el total ponderado redondeado
     return round(total_ponderado)
 
 
-def informe_personas_en_viviendas_insuficientes(data_indiv: list[dict], data_hog: list[dict], anio: int) -> None:
+def informe_universitarios_en_viviendas_insuficientes(data_indiv: list[dict], data_hog: list[dict], anio: int) -> None:
     """
-    Muestra un informe de personas con estudios superiores viviendo en viviendas insuficientes.
+    Mostramos un informe de la cantidad de personas con estudios universitarios o superiores
+    que viven en viviendas con condición de habitabilidad insuficiente, en el último trimestre
+    disponible del año indicado.
     """
-    # Buscar trimestres disponibles
-    trimestre_indiv = buscar_ultimo_trimestre_disponible(
-        anio, data_indiv, "individuos")
-    trimestre_hog = buscar_ultimo_trimestre_disponible(
-        anio, data_hog, "hogares")
 
+    # Busco el último trimestre disponible para cada archivo
+    trimestre_indiv = buscar_ultimo_trimestre_disponible(anio, data_indiv, "individuos")
+    trimestre_hog = buscar_ultimo_trimestre_disponible(anio, data_hog, "hogares")
+
+    # Verifico que haya datos disponibles en ambos archivos
     if trimestre_indiv is None or trimestre_hog is None:
-        print(
-            f"No hay información suficiente para el año {anio} en ambos archivos.")
+        print(f"No hay información suficiente para el año {anio} en ambos archivos.")
         return
 
-    # Construir diccionarios filtrados
-    personas = armar_diccionario(
-        data_indiv, "individuos", anio, trimestre_indiv)
-    hogares = armar_diccionario(data_hog, "hogares", anio, trimestre_hog)
+    # Verifico que los archivos correspondan al mismo trimestre
+    if trimestre_indiv != trimestre_hog:
+        print(f"Error: los archivos no corresponden al mismo trimestre (individuos: {trimestre_indiv}, hogares: {trimestre_hog}).")
+        return
 
-    # Calcular resultado
-    cantidad_ponderada = contar_personas_en_viviendas_insuficientes(
-        personas, hogares)
+    # Contamos personas directamente, sin armar diccionarios
+    cantidad_ponderada = contar_personas_educadas_en_viviendas_insuficientes(
+        data_indiv, data_hog, anio, trimestre_indiv
+    )
 
-    # Mostrar resultado
-    print(
-        f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
+    print(f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
