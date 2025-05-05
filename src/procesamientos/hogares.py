@@ -27,13 +27,26 @@ def clasificar_hogar_hab(cant_personas):
     return tipo
 
 def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
+    """
+    Clasifica la densidad habitacional de un hogar según la relación entre la cantidad de personas 
+    y la cantidad de habitaciones.
+
+    Parámetros:
+        cant_personas (int o str): Número total de personas en el hogar.
+        cant_hab (int o str): Número de habitaciones en el hogar.
+
+    Retorna:
+        str:
+            - "Bajo" si hay menos de 1 persona por habitación.
+            - "Medio" si hay entre 1 y 2 personas por habitación.
+            - "Alto" si hay más de 2 personas por habitación.
+            - "Desconocido" si la cantidad de habitaciones es 0 (para evitar división por cero).
+        None: si los valores no son válidos (por ejemplo, texto que no se puede convertir a entero).
+    """
     try:
         cant_personas = int(cant_personas)
         cant_hab = int(cant_hab)
-
-        if cant_hab == 0:
-            return "Desconocido"  # Evitar división por cero
-
+       
         personas_por_hab = cant_personas / cant_hab
 
         if personas_por_hab < 1:
@@ -43,8 +56,8 @@ def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
         else:
             return "Alto"
 
-    except ValueError:
-        return None  # Guarda este valor cuando hay error
+    except (ValueError, TypeError, ZeroDivisionError):
+        return None
    
 def clasificar_hogar_techo(material_nro):
     """
@@ -71,27 +84,6 @@ def clasificar_hogar_techo(material_nro):
     elif material_nro == 9:
         tipo = "No aplica"
     return tipo
-
-def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
-    try:
-        cant_personas = int(cant_personas)
-        cant_hab = int(cant_hab)
-
-        if cant_hab == 0:
-            return "Desconocido"  # Evitar división por cero
-
-        personas_por_hab = cant_personas / cant_hab
-
-        if personas_por_hab < 1:
-            return "Bajo"
-        elif personas_por_hab <= 2:
-            return "Medio"
-        else:
-            return "Alto"
-
-    except ValueError:
-        return None  # Guarda este valor cuando hay error
-
 
 def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_banio, desague, techo_material, piso_material):
 
@@ -190,7 +182,6 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
         return "saludable"
     else:
         return "otro"
-
 
 def procesar_hogares(header, data):
     """
