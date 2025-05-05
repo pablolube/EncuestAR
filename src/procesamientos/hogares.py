@@ -94,15 +94,44 @@ def clasificar_hogar_densidad_hab(cant_personas, cant_hab):
 
 
 def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_banio, desague, techo_material, piso_material):
+
+    """
+    Clasifica el nivel de habitabilidad de un hogar en función de diversas variables relacionadas con
+    el acceso a servicios básicos, materiales de construcción y condiciones sanitarias.
+
+    Parámetros:
+        agua (int): Acceso al agua (1: buena, 2: regular, 3: insuficiente).
+        origen_agua (int): Fuente del agua (1: buena, 2: saludable, 3-4: regular).
+        banio (int): Existencia de baño (0: insuficiente, 1: buena, 2: insuficiente).
+        ubi_banio (int): Ubicación del baño (1: buena, 2: saludable, 3: insuficiente).
+        tipo_banio (int): Tipo de baño (0: insuficiente, 1: buena, 2: saludable, 3: regular).
+        desague (int): Tipo de desagüe (0 o 4: insuficiente, 1: buena, 2-3: saludable).
+        techo_material (str): Material del techo ("Material durable", "Material precario", "No Aplica").
+        piso_material (int): Material del piso (1: buena, 2: saludable, 3-4: regular).
+
+    Returns:
+        str or None: Nivel de habitabilidad. Posibles valores:
+            - "buena"
+            - "saludable"
+            - "regular"
+            - "insuficiente"
+            - "otro"
+            - None (si los valores no son válidos)
+    """
+    
     ponderador = {
         "agua": {1: "buena", 2: "regular", 3: "insuficiente"},
-        "origen_agua": {1: "buena", 2: "saludable", 4: "regular"},
-        "banio": {1: "buena", 2: "insuficiente"},
-        "tipo_banio": {1: "buena", 2: "saludable", 3: "regular"},
-        "desague": {1: "buena", 2: "saludable", 3: "saludable", 4: "insuficiente"},
-        "piso_material": {1: "buena", 2: "saludable", 3: "regular"},
+        "origen_agua": {1: "buena", 2: "saludable", 3: "regular", 4: "regular"},
+        "banio": {0: "insuficiente", 1: "buena", 2: "insuficiente"},
+        "tipo_banio": {0: "insuficiente", 1: "buena", 2: "saludable", 3: "regular"},
+        "desague": {0: "insuficiente", 1: "buena", 2: "saludable", 3: "saludable", 4: "insuficiente"},
+        "piso_material": {1: "buena", 2: "saludable", 3: "regular", 4: "regular"},
         "ubi_banio": {1: "buena", 2: "saludable", 3: "insuficiente"},
-        "techo_material": {"Material durable": "buena", "Material precario": "insuficiente", 9: "insuficiente"}
+        "techo_material": {
+            "Material durable": "buena",
+            "Material precario": "insuficiente",
+            "No Aplica": "buena"
+        }
     }
 
     try:
@@ -112,16 +141,16 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
         ubi_banio = int(ubi_banio)
         tipo_banio = int(tipo_banio)
         desague = int(desague)
-        techo_material = int(techo_material)
         piso_material = int(piso_material)
+        techo_material = str(techo_material).strip()
     except ValueError:
-        return None  # Si no se pueden convertir a int, retorna None
+        return None
 
-    # Condición inmediata de habitabilidad insuficiente
+    # Corte directo por condiciones críticas
     if agua == 3 or banio == 2 or ubi_banio == 3:
         return "insuficiente"
 
-    # Contar ponderaciones
+    # Contador por categoría
     contador = {'buena': 0, 'saludable': 0, 'regular': 0, 'insuficiente': 0}
     variables = {
         "agua": agua,
@@ -139,16 +168,28 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
         if categoria:
             contador[categoria] += 1
 
-    # Clasificación final según cantidad de cada categoría
-    if contador["insuficiente"] == 1 and contador["regular"] >= 2:
+    # Clasificación según reglas
+    if contador["insuficiente"] > 2:
         return "insuficiente"
-    elif contador["regular"] > 2:
+
+    elif contador["insuficiente"] <= 2 and contador["regular"] >= 2:
+        return "insuficiente"
+
+    elif agua == 2:
         return "regular"
-    elif contador["regular"] <= 2 and contador["buena"] < 3:
+
+    elif contador["regular"] > 3:
+        return "regular"
+
+    elif contador["buena"] >= 5 and contador["insuficiente"] == 0 and contador["regular"] == 0:
+        return "buena"
+    
+    elif (contador["regular"] <= 2 and 
+          (contador["buena"] + contador["saludable"]) >= 5 and 
+          contador["insuficiente"] == 0):
         return "saludable"
     else:
-        return "buena"
-
+        return "otro"
 
 
 def procesar_hogares(header, data):
