@@ -838,7 +838,7 @@ def obtener_dats_ultimo_trimestre(anio, data):
                 
 def aglomerado_mayor_menor_vivienda_precario(anio, data):
     """
-    Se ingresa un anio y se busca el ultimo semestre en ese anio, del cual obtendremos 
+    Se ingresa un anio y se busca el ultimo trimestre en ese anio, del cual obtendremos 
     el aglomerado con mayor y menor porcentaje de viviendas con 'Material precario'
     """
 
