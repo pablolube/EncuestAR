@@ -997,15 +997,19 @@ def imprimir_datos_jubilados(resultados):
         Imprime de forma ordenada por aglomerados el porcentaje de jubilados
         en viviendas de habitabilidad insuficiente
     """
-    
-    print("-" * 32)
-    print(f"{'Aglomerado':<10} | {'% Jubilados en Hab. Insuf.':>21}")
-    print("-" * 32)
-    
-    for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
-        print(f"{aglomerado:<10} | {porcentaje:>20.2f}%")
-    
-    print("-" * 32)
+    try:
+        if len(resultados.items()) > 0:
+            print("-" * 32)
+            print(f"{'Aglomerado':<10} | {'% Jubilados en Hab. Insuf.':>21}")
+            print("-" * 32)
+            
+            for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
+                print(f"{aglomerado:<10} | {porcentaje:>20.2f}%")
+            print("-" * 32)
+    except:
+        print("No se encontraron datos para imprimir.")
+
+
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 13 (ANÁLISIS) - INDIVIDUOS Nota: se puede usar la funciones del PUNTO 9 y 12!
