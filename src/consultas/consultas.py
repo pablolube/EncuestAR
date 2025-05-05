@@ -169,7 +169,6 @@ def info_menor_desocupacion(data):
 # FUNCIONES PUNTO 4 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
-
 def contar_universitarios_y_pondera_por_hogar(individuos):
     """
     Cuenta cuántas personas con UNIVERSITARIO == '1' hay por hogar y guarda el PONDERA de ese hogar.
@@ -177,32 +176,35 @@ def contar_universitarios_y_pondera_por_hogar(individuos):
     Retorna dos diccionarios:
       - universitarios_por_hogar: clave = (CODUSU, NRO_HOGAR, ANO4, TRIMESTRE, AGLOMERADO), valor = cantidad de universitarios
       - pondera_por_hogar: misma clave, valor = PONDERA (una sola vez por hogar) 
-      (Aclaración: se guarda el PONDERA de cada hogar)
     """
     universitarios_por_hogar = {}
     pondera_por_hogar = {}
 
     for row in individuos:
-        clave = (
-            row["CODUSU"],
-            row["NRO_HOGAR"],
-            row["ANO4"],
-            row["TRIMESTRE"],
-            int(row["AGLOMERADO"])
-        )
+        try:
+            clave = (
+                row["CODUSU"],
+                row["NRO_HOGAR"],
+                row["ANO4"],
+                row["TRIMESTRE"],
+                int(row["AGLOMERADO"])
+            )
 
-        # Guardar el pondera solo una vez por hogar
-        if clave not in pondera_por_hogar:
-            pondera_por_hogar[clave] = float(row["PONDERA"])
+            # Guardo el PONDERA solo una vez por hogar
+            if clave not in pondera_por_hogar:
+                pondera_por_hogar[clave] = float(row["PONDERA"])
 
-        # Contar personas con estudios universitarios
-        if row.get("UNIVERSITARIO") == "1":
-            if clave in universitarios_por_hogar:
-                universitarios_por_hogar[clave] += 1
-            # Primera vez que encontramos una persona con UNIVERSITARIO == "1" en este hogar
-            # Iniciamos el contador en 1 (no en 0, porque ya hay una persona)
-            else:
-                universitarios_por_hogar[clave] = 1
+            # Cuento personas con estudios universitarios
+            if row.get("UNIVERSITARIO") == "1":
+                if clave in universitarios_por_hogar:
+                    universitarios_por_hogar[clave] += 1
+                else:
+                    universitarios_por_hogar[clave] = 1
+
+        except (KeyError, ValueError) as e:
+            # Para debuggear, podés activar este print:
+            # print(f"Fila ignorada por error: {e} — Datos: {row}")
+            continue
 
     return universitarios_por_hogar, pondera_por_hogar
 
@@ -228,21 +230,32 @@ def filtrar_hogares_con_min_universitarios(contador_universitarios, pondera_por_
 
     return hogares_filtrados
 
-
 def contar_hogares(hogares_ponderados):
     """
-    Cuenta hogares ponderados por aglomerado. También se usa para contar hogares filtrados por aglomerado.
+    Cuento hogares ponderados por aglomerado. Esta función también sirve para
+    contar subconjuntos filtrados de hogares por aglomerado.
 
-    hogares_ponderados (dict): Clave = hogar_id, Valor = pondera del hogar.
+    Parámetros:
+    - hogares_ponderados (dict): Diccionario con claves que identifican un hogar
+      (tupla que incluye el aglomerado como último elemento) y valores que indican
+      la ponderación del hogar.
 
-    Retorna:
-    - dict: Clave = aglomerado, Valor = suma de pondera.
+    Retorno:
+    - dict: Diccionario con claves de aglomerados y valores que indican la suma
+      total de la ponderación de los hogares pertenecientes a cada aglomerado.
     """
-    conteo_hogares_ponderados = {}
+
+    conteo_hogares_ponderados = {}  # Inicializo el diccionario resultado
+
     for clave_hogar, pondera in hogares_ponderados.items():
-        aglomerado = clave_hogar[-1]  # Último elemento de la clave
-        conteo_hogares_ponderados[aglomerado] = conteo_hogares_ponderados.get(
-            aglomerado, 0) + pondera
+        # Extraigo el aglomerado, que es el último elemento de la tupla clave
+        aglomerado = clave_hogar[-1]
+
+        # Sumo la ponderación del hogar al total acumulado del aglomerado
+        conteo_hogares_ponderados[aglomerado] = (
+            conteo_hogares_ponderados.get(aglomerado, 0) + pondera
+        )
+
     return conteo_hogares_ponderados
 
 def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top_n=5):
@@ -255,42 +268,26 @@ def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top
     - min_universitarios: mínimo de personas con estudios universitarios por hogar.
     - top_n: cantidad de aglomerados a mostrar en el ranking.
     """
-    # Paso 1: Contar universitarios por hogar y obtener PONDERA por hogar
+    # Cuento universitarios por hogar y obtener PONDERA por hogar
     universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(individuos)
 
-    # Paso 2: Contar hogares totales por aglomerado
+    # Cuento hogares totales por aglomerado
     total_hogares_por_aglomerado = contar_hogares(pondera_por_hogar)
 
-    # Paso 3: Filtrar hogares con al menos min_universitarios y contarlos por aglomerado
+    # Filtro hogares con al menos min_universitarios y contarlos por aglomerado
     hogares_filtrados = filtrar_hogares_con_min_universitarios(universitarios_por_hogar, pondera_por_hogar, min_universitarios)
     hogares_filtrados_por_aglomerado = contar_hogares(hogares_filtrados)
 
-    # Paso 4: Armar resultados para cada aglomerado con (hogares_filtrados, total_hogares)
+    # Armo resultados para cada aglomerado con (hogares_filtrados, total_hogares)
     resultados = {
         aglomerado: (hogares_filtrados_por_aglomerado.get(aglomerado, 0), total)
     for aglomerado, total in total_hogares_por_aglomerado.items()
     
     }
 
-
-    # Paso 5: Calcular porcentajes y mostrar el ranking
+    # Calculo porcentajes y muestro ranking
     ranking = calcular_porcentajes(resultados)
     imprimir_tabla_ranking(ranking, cantidad=top_n)
-
-
-def ranking_aglomerados_con_mas_hogares_universitarios(individuos):
-    """
-    Devuelve y muestra el ranking de los 5 aglomerados con mayor porcentaje de hogares 
-    que tienen al menos 2 personas con estudios universitarios o superiores.
-
-    Parámetro:
-    - individuos: lista de diccionarios procesados del archivo de individuos.
-    """
-    generar_ranking_hogares_universitarios(
-        individuos=individuos,
-        min_universitarios=2,
-        top_n=5
-    )
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
@@ -321,7 +318,7 @@ def contar_viviendas_propietarias(datos_hogares):
         except (ValueError, KeyError):
             continue
 
-        # Saltar registros con tenencia inválida
+        # Salto registros con tenencia inválida
         if tenencia not in TENENCIAS_VALIDAS:
             continue
 
@@ -363,22 +360,22 @@ def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
             (aglomerado, nombre, porcentaje) ordenada de mayor a menor porcentaje.
         cantidad (int, opcional): Número de filas a mostrar. Si es None, muestra todas.
     """
-    # Definir encabezados y calcular ancho dinámico
+    # Defino encabezados y calcular ancho dinámico
     encabezados = ["Puesto", "Código", "Aglomerado", "% Propietarios"]
     formatos = ["{:<6}", "{:<6}", "{:<35}", "{:>15}"]
     header = "  ".join(fmt.format(txt)
                        for fmt, txt in zip(formatos, encabezados))
     separator = "-" * len(header)
 
-    # Determinar filas a mostrar
+    # Determino filas a mostrar
     filas = porcentajes_por_aglomerado if cantidad is None else porcentajes_por_aglomerado[
         :cantidad]
 
-    # Imprimir encabezado y separador
+    # Imprimo encabezado y separador
     print(header)
     print(separator)
 
-    # Imprimir cada fila con el mismo formato
+    # Imprimo cada fila con el mismo formato
     for i, (aglomerado, nombre, porcentaje) in enumerate(filas, start=1):
         print(
             f"{i:<6}  "
@@ -445,7 +442,7 @@ def aglomerado_con_mayor_porcentaje_viviendas_precarias(lista_hogares):
         except (KeyError, ValueError):
             continue  # Ignora filas con datos incorrectos o ausentes
 
-    # Calcula porcentajes
+    # Calculo porcentajes
     porcentajes = {}
     for aglo in precarias_por_aglomerado:
         total = total_por_aglomerado.get(aglo, 0)
