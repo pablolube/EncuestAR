@@ -1,5 +1,5 @@
 import streamlit as st
-from src.utils.helpers import data_date_range, actualizar, cargar_archivos, eliminar_archivos
+from src.utils.helpers import actualizar, cargar_archivos, eliminar_archivos
 
 # Cargar Font Awesome desde CDN
 st.markdown("""
@@ -10,9 +10,8 @@ st.markdown("""
 
 # Guarda el rango de fechas en la session state
 if "date_range" not in st.session_state:
-    st.session_state.date_range = data_date_range()
-elif not st.session_state.date_range:
-    st.session_state.date_range = data_date_range()
+    st.session_state.date_range = actualizar()
+
 
 
 # Sección principal
@@ -26,7 +25,7 @@ st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Información del Dataset</h4>',
             unsafe_allow_html=True)
 
-if not st.session_state.date_range:
+if  st.session_state.date_range is None:
     st.warning(
         "No se encontraron archivos procesados. Intenta cargarlos primero, y luego actualizar", icon="⚠️")
 else:

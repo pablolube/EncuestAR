@@ -139,61 +139,6 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
 # STREAMLIT
 # -------------------------------------------------------------------------------
 
-
-def max_min_date(data):
-    """
-    Calcula la fecha mínima y máxima (año y trimestre) a partir de una lista de diccionarios.
-    Cada diccionario debe contener las claves "ANO4" (año) y "TRIMESTRE" (número de trimestre).
-    Args:
-        data (list of dict): Lista de diccionarios con claves "ANO4" y "TRIMESTRE".
-    Returns:
-        tuple: Una tupla con la fecha máxima y mínima en formato "TRIMESTRE/YYYY".
-    Raises:
-        ValueError: Si la lista está vacía o los datos no contienen las claves requeridas.
-    """
-    if not data:
-        raise ValueError("La lista de datos está vacía.")
-
-    try:
-        fechas = [(int(row["ANO4"]), int(row["TRIMESTRE"])) for row in data]
-    except (KeyError, ValueError, TypeError) as e:
-        raise ValueError(f"Error al procesar las fechas: {e}")
-
-    max_fecha = max(fechas)
-    min_fecha = min(fechas)
-
-    max_date = f"{max_fecha[1]}/{max_fecha[0]}"
-    min_date = f"{min_fecha[1]}/{min_fecha[0]}"
-
-    return max_date, min_date
-
-
-def data_date_range():
-    """
-    Devuelve el rango de fechas (mínima y máxima) de los archivos de hogares e individuos procesados.
-    """
-    # Verifica si los archivos procesados existen
-    if not Path(HOGARES_PROCESSED_DIR).exists() or not Path(INDIVIDUOS_PROCESSED_DIR).exists():
-        return False
-
-    # Lee los archivos procesados de hogares e individuos
-    dataset_hog = read_file_dic(HOGARES_PROCESSED_DIR)
-    dataset_ind = read_file_dic(INDIVIDUOS_PROCESSED_DIR)
-
-    # Obtiene las fechas mínimas y máximas de ambos conjuntos de datos
-    # y las ordena
-    try:
-        # Se vacia lista para evitar que se acumulen fechas de otras ejecuciones
-        date_list = []
-        date_list = sorted(max_min_date(
-            dataset_hog[1]) + max_min_date(dataset_ind[1]))
-    except ValueError:
-        return False
-
-    # devuelve la fecha minima y maxima de los dos archivos
-    return date_list[0], date_list[-1]
-
-
 # ACTUALIZAR
 
 
@@ -251,7 +196,7 @@ def actualizar():
         fecha_max_global = max(fechas_validas) if fechas_validas else None
 
         # Resetear el rango de fechas en el estado de la aplicación (Streamlit)
-        st.session_state.date_range = False
+        st.session_state.date_range = fecha_min_global, fecha_max_global
 
         
         # Mensaje de éxito
@@ -308,7 +253,8 @@ def eliminar_archivos():
     try:
         carpeta = Path(DATA_SOURCE_DIR)
         archivos = list(carpeta.glob("*.txt"))
-
+        carpeta2 = Path(DATA_PROCESSED_DIR)
+        archivos2 = list(carpeta2.glob("*.txt"))
         if not archivos:
             st.session_state["mensaje_eliminacion"] = (
                 "warning", "⚠️ No hay archivos para eliminar.")
@@ -316,6 +262,13 @@ def eliminar_archivos():
 
         for archivo in archivos:
             archivo.unlink()  # Elimina el archivo
+
+        if not archivos:
+            st.session_state["mensaje_eliminacion"] = (
+                "warning", "⚠️ No hay archivos para eliminar.")
+            return
+        for archivo2 in archivos2:
+            archivo2.unlink()  # Elimina el archivo
 
         st.session_state["mensaje_eliminacion"] = (
             "success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
