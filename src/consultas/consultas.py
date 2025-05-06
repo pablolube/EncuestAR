@@ -713,18 +713,6 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
 
     for row in data:
         # guardo el aglomerado y nivel educativo de la persona actual
-        try:
-            aglo = int(row['AGLOMERADO'])
-            nivel_ed = str(row['NIVEL_ED_str'])
-
-            # creamos una clave anio trimestre que los vaya guardando en su respectivo bloque
-            clave = (row['ANO4'], row['TRIMESTRE'])
-
-            # cargamos el pondera de cada individuo
-            Pondera = int(row['PONDERA'])
-
-        except (ValueError, KeyError):
-            continue  # ignora filas con valores erroneos o incompletos
 
         try:
             aglo = int(row['AGLOMERADO'])
