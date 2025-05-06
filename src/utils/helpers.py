@@ -224,7 +224,7 @@ def actualizar():
         encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
 
         # Agregar columnas derivadas y calcular fechas mínima y máxima para hogares
-        min_hogares, max_hogares = procesar_hogares(encabezados_h, hogares)
+        min_fecha_hog, max_fecha_hog = procesar_hogares(encabezados_h, hogares)
 
         # Guardar los hogares procesados en un archivo intermedio
         save_to_file(DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
@@ -237,10 +237,18 @@ def actualizar():
         encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
 
         # Agregar columnas derivadas y calcular fechas mínima y máxima para individuos
-        min_individuos, max_individuos = add_extra_data(encabezados_i, individuos)
+        min_fecha_indiv, max_fecha_indiv= add_extra_data(encabezados_i, individuos)
 
         # Guardar los individuos procesados en un archivo intermedio
         save_to_file(DATA_PROCESSED_DIR, FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
+
+        # Calcular la fecha mínima y máxima global entre hogares e individuos
+    
+        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv] if f is not None]
+        fecha_min_global = min(fechas_validas) if fechas_validas else None
+
+        fechas_validas = [f for f in [max_fecha_hog, max_fecha_indiv] if f is not None]
+        fecha_max_global = max(fechas_validas) if fechas_validas else None
 
         # Resetear el rango de fechas en el estado de la aplicación (Streamlit)
         st.session_state.date_range = False
