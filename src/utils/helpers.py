@@ -133,6 +133,8 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
 
     print(f"✅ Archivo guardado en: {file_path}")
 
+
+
 # -------------------------------------------------------------------------------
 # STREAMLIT
 # -------------------------------------------------------------------------------
@@ -214,32 +216,42 @@ def actualizar():
             st.session_state["mensaje_actualizacion"] = (
                 "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
             return
+        # -------------------------------------------------------------------------------
+        # PROCESAMIENTO DE HOGARES
+        # -------------------------------------------------------------------------------
 
-        # Procesar hogares
-        encabezados_h, hogares = process_file(
-            DATA_SOURCE_DIR, category="hogar")
-        procesar_hogares(encabezados_h, hogares)
-        save_to_file(DATA_PROCESSED_DIR,
-                     FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
+        # Unificar archivos de hogares desde la fuente
+        encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
 
-        # Procesar individuos
-        encabezados_i, individuos = process_file(
-            DATA_SOURCE_DIR, category="individual")
-        add_extra_data(encabezados_i, individuos)
-        save_to_file(DATA_PROCESSED_DIR,
-                     FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
+        # Agregar columnas derivadas y calcular fechas mínima y máxima para hogares
+        min_hogares, max_hogares = procesar_hogares(encabezados_h, hogares)
 
-        # Sirve para que se resetee el rango de fechas en la app
+        # Guardar los hogares procesados en un archivo intermedio
+        save_to_file(DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
+
+        # -------------------------------------------------------------------------------
+        # PROCESAMIENTO DE INDIVIDUOS
+        # -------------------------------------------------------------------------------
+
+        # Unificar archivos de individuos desde la fuente
+        encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
+
+        # Agregar columnas derivadas y calcular fechas mínima y máxima para individuos
+        min_individuos, max_individuos = add_extra_data(encabezados_i, individuos)
+
+        # Guardar los individuos procesados en un archivo intermedio
+        save_to_file(DATA_PROCESSED_DIR, FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
+
+        # Resetear el rango de fechas en el estado de la aplicación (Streamlit)
         st.session_state.date_range = False
 
+        
         # Mensaje de éxito
-        st.session_state["mensaje_actualizacion"] = (
-            "success", "✅ Archivos actualizados correctamente.")
+        st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
 
     except Exception as e:
         # Si ocurre un error, guardo el mensaje de error
-        st.session_state["mensaje_actualizacion"] = (
-            "error", f"❌ Error al actualizar archivos: {e}")
+        st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
 
 
 def cargar_archivos(archivos):

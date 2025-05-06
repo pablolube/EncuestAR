@@ -1,6 +1,5 @@
-
 # ------------------------------------------------------------------------------
-# PROCESAMIENTO HOGARES
+# PROCESAMIENTO HOGARES DETALLE
 # ------------------------------------------------------------------------------
 def clasificar_hogar_hab(cant_personas):
     """
@@ -183,10 +182,52 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
     else:
         return "otro"
 
+# -------------------------------------------------------------------------------
+# CALCULOS MAXIMOS Y MINIMOS FECHA
+# -------------------------------------------------------------------------------
+
+
+def extraer_fecha(row):
+    """
+    Intenta extraer y devolver una tupla (año, trimestre) desde un diccionario.
+    Devuelve None si los datos son inválidos o faltan.
+    """
+    try:
+        año = int(row["ANO4"])
+        trimestre = int(row["TRIMESTRE"])
+        return (año, trimestre)
+    except (KeyError, ValueError, TypeError):
+        return None
+
+def actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha):
+    """
+    Actualiza las fechas mínima y máxima comparando con una nueva fecha actual.
+
+    Args:
+        fecha_actual (tuple): Tupla (año, trimestre) actual.
+        min_fecha (tuple or None): Fecha mínima actual.
+        max_fecha (tuple or None): Fecha máxima actual.
+
+    Returns:
+        tuple: (min_fecha_actualizada, max_fecha_actualizada)
+    """
+    if min_fecha is None or fecha_actual < min_fecha:
+        min_fecha = fecha_actual
+    if max_fecha is None or fecha_actual > max_fecha:
+        max_fecha = fecha_actual
+    return min_fecha, max_fecha
+    
+# -------------------------------------------------------------------------------
+# PROCESAMIENTO DE HOGARES
+# -------------------------------------------------------------------------------
+
 def procesar_hogares(header, data):
     """
     Procesa los datos de los hogares y agrega nuevas columnas con clasificaciones.
     """
+    # Inicializo las fechas mínima y máxima
+    min_fecha = None
+    max_fecha = None
 
     # Agrego las nuevas columnas al header
     header.extend(["TIPO_HOGAR", "MATERIAL_TECHUMBRE",
@@ -208,3 +249,15 @@ def procesar_hogares(header, data):
         # Clasifico la condición de habitabilidad del hogar basado en varios atributos relacionados con la vivienda
         row['CONDICION_DE_HABITABILIDAD'] = clasificar_hogar_habitabilidad(
             row['IV6'], row['IV7'], row['IV8'], row['IV9'], row['IV10'], row['IV11'], row['MATERIAL_TECHUMBRE'], row['IV3'])
+        
+        fecha_actual = extraer_fecha(row)
+        if fecha_actual:
+            min_fecha, max_fecha = actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha)
+    return min_fecha, max_fecha
+
+
+        
+      
+
+
+
