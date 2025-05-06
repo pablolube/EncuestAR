@@ -244,10 +244,10 @@ def actualizar():
 
         # Calcular la fecha mínima y máxima global entre hogares e individuos
     
-        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv] if f is not None]
+        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv,max_fecha_hog, max_fecha_indiv] if f is not None]
         fecha_min_global = min(fechas_validas) if fechas_validas else None
 
-        fechas_validas = [f for f in [max_fecha_hog, max_fecha_indiv] if f is not None]
+        fechas_validas = [f for f in [max_fecha_hog, max_fecha_indiv,max_fecha_hog, max_fecha_indiv] if f is not None]
         fecha_max_global = max(fechas_validas) if fechas_validas else None
 
         # Resetear el rango de fechas en el estado de la aplicación (Streamlit)

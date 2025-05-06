@@ -115,6 +115,8 @@ def actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha):
 
 
 def add_extra_data(header, data):
+    min_fecha=None
+    max_fecha=None
 
     # Agrego las nuevas columnas al header
     header.extend(["CH04_str", "NIVEL_ED_str",

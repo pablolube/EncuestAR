@@ -16,7 +16,7 @@ elif not st.session_state.date_range:
 
 
 # Sección principal
-st.markdown('<h2 style="color:#D35400;">🗂️ Carga de Datos</h2>',
+st.markdown('<h2 style"color:#D35400;">🗂️ Carga de Datos</h2>',
             unsafe_allow_html=True)
 
 # Separador
@@ -28,7 +28,7 @@ st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Info
 
 if not st.session_state.date_range:
     st.warning(
-        "No se encontraron archivos procesados. Inteta cargarlos primero, y luego actualizar", icon="⚠️")
+        "No se encontraron archivos procesados. Intenta cargarlos primero, y luego actualizar", icon="⚠️")
 else:
     st.markdown(
         f"El sistema contiene información desde el **{st.session_state.date_range[0]}** hasta el **{st.session_state.date_range[1]}** (trimestre/año).")
