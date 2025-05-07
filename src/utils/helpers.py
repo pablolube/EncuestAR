@@ -263,15 +263,45 @@ def eliminar_archivos():
         for archivo in archivos:
             archivo.unlink()  # Elimina el archivo
 
-        if not archivos:
-            st.session_state["mensaje_eliminacion"] = (
-                "warning", "⚠️ No hay archivos para eliminar.")
-            return
+    
         for archivo2 in archivos2:
             archivo2.unlink()  # Elimina el archivo
 
         st.session_state["mensaje_eliminacion"] = (
             "success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
+
+    except Exception as e:
+        st.session_state["mensaje_eliminacion"] = (
+            "error", f"❌ Error al eliminar archivos: {e}")
+from pathlib import Path
+import streamlit as st
+
+def eliminar_archivos():
+    """
+    Elimina todos los archivos .txt del directorio de origen de datos y del directorio procesado.
+    """
+    # Limpiar mensajes previos
+    st.session_state.pop("mensaje_eliminacion", None)
+
+    try:
+        carpetas = [Path(DATA_SOURCE_DIR), Path(DATA_PROCESSED_DIR)]
+        total_eliminados = 0
+        archivos_encontrados = False
+
+        for carpeta in carpetas:
+            archivos = list(carpeta.glob("*.txt"))
+            if archivos:
+                archivos_encontrados = True
+                for archivo in archivos:
+                    archivo.unlink()
+                total_eliminados += len(archivos)
+
+        if not archivos_encontrados:
+            st.session_state["mensaje_eliminacion"] = (
+                "warning", "⚠️ No hay archivos para eliminar.")
+        else:
+            st.session_state["mensaje_eliminacion"] = (
+                "success", f"🗑️ {total_eliminados} archivo(s) eliminados correctamente.")
 
     except Exception as e:
         st.session_state["mensaje_eliminacion"] = (
