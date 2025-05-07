@@ -4,7 +4,7 @@ from src.utils.helpers import actualizar, cargar_archivos, eliminar_archivos
 # Cargar Font Awesome desde CDN
 st.markdown("""
 <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="style=sheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 """, unsafe_allow_html=True)
 
@@ -46,6 +46,9 @@ uploaded_files = st.file_uploader(
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
           on_click=cargar_archivos, args=(uploaded_files,))
 
+
+
+
 # Mensajes de carga de archivos
 if "mensajes_carga" in st.session_state:
     for tipo, texto in st.session_state["mensajes_carga"]:
@@ -54,8 +57,11 @@ if "mensajes_carga" in st.session_state:
     del st.session_state["mensajes_carga"]
 
 # Botón para eliminar archivos cargados
-st.button("🗑️ Eliminar Todos los Archivos Cargados",
-          key="b_eliminar", on_click=eliminar_archivos)
+col1, col2 = st.columns(2)
+with col1:
+    st.button("🗑️ Eliminar Todos los Archivos Cargados", key="b_eliminar", on_click=eliminar_archivos)
+with col2:
+    st.button("🔄 Actualizar", key="b_actualizar", on_click=actualizar)
 
 # Mensaje de eliminación
 if "mensaje_eliminacion" in st.session_state:
@@ -71,7 +77,6 @@ st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 st.markdown('<h4><i class="fas fa-sync-alt" style="color:#CA6F1E;"></i> Actualización de Datos</h4>',
             unsafe_allow_html=True)
 st.write("Haga clic en el botón para sincronizar y procesar los archivos cargados.")
-st.button("🔄 Actualizar", key="b_actualizar", on_click=actualizar)
 
 # Mensaje de actualización
 if "mensaje_actualizacion" in st.session_state:
