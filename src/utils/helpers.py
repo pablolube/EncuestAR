@@ -241,38 +241,6 @@ def cargar_archivos(archivos):
 
     st.session_state["mensajes_carga"] = mensajes
 
-
-def eliminar_archivos():
-    """
-    Elimina todos los archivos cargados previamente en el directorio de origen de datos.
-    """
-    # Limpiar los mensajes de éxito previos
-    if "mensajes_eliminacion" in st.session_state:
-        del st.session_state["mensajes_eliminacion"]
-
-    try:
-        carpeta = Path(DATA_SOURCE_DIR)
-        archivos = list(carpeta.glob("*.txt"))
-        carpeta2 = Path(DATA_PROCESSED_DIR)
-        archivos2 = list(carpeta2.glob("*.txt"))
-        if not archivos:
-            st.session_state["mensaje_eliminacion"] = (
-                "warning", "⚠️ No hay archivos para eliminar.")
-            return
-
-        for archivo in archivos:
-            archivo.unlink()  # Elimina el archivo
-
-    
-        for archivo2 in archivos2:
-            archivo2.unlink()  # Elimina el archivo
-
-        st.session_state["mensaje_eliminacion"] = (
-            "success", f"🗑️ {len(archivos)} Archivos eliminados correctamente.")
-
-    except Exception as e:
-        st.session_state["mensaje_eliminacion"] = (
-            "error", f"❌ Error al eliminar archivos: {e}")
 from pathlib import Path
 import streamlit as st
 
