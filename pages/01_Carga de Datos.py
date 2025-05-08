@@ -1,5 +1,5 @@
 import streamlit as st
-from src.utils.helpers import actualizar, cargar_archivos, eliminar_archivos
+from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos
 
 # Cargar Font Awesome desde CDN
 st.markdown("""

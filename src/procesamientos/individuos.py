@@ -74,40 +74,7 @@ def add_data_universitario(row):
 
     row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
 
-# -------------------------------------------------------------------------------
-# CALCULOS MAXIMOS Y MINIMOS FECHA
-# -------------------------------------------------------------------------------
-
-
-def extraer_fecha(row):
-    """
-    Intenta extraer y devolver una tupla (año, trimestre) desde un diccionario.
-    Devuelve None si los datos son inválidos o faltan.
-    """
-    try:
-        año = int(row["ANO4"])
-        trimestre = int(row["TRIMESTRE"])
-        return (año, trimestre)
-    except (KeyError, ValueError, TypeError):
-        return None
-
-def actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha):
-    """
-    Actualiza las fechas mínima y máxima comparando con una nueva fecha actual.
-
-    Args:
-        fecha_actual (tuple): Tupla (año, trimestre) actual.
-        min_fecha (tuple or None): Fecha mínima actual.
-        max_fecha (tuple or None): Fecha máxima actual.
-
-    Returns:
-        tuple: (min_fecha_actualizada, max_fecha_actualizada)
-    """
-    if min_fecha is None or fecha_actual < min_fecha:
-        min_fecha = fecha_actual
-    if max_fecha is None or fecha_actual > max_fecha:
-        max_fecha = fecha_actual
-    return min_fecha, max_fecha
+from src.utils.helpers import extraer_fecha,actualizarmaxmin_fechas
     
 # -------------------------------------------------------------------------------
 # PROCESAMIENTO DE INDIVIDUOS

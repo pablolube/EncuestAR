@@ -1,9 +1,5 @@
-from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
-import streamlit as st
 import csv
 from pathlib import Path
-from src.procesamientos.individuos import add_extra_data
-from src.procesamientos.hogares import procesar_hogares
 
 # -------------------------------------------------------------------------------
 # LEER  ARCHIVOS
@@ -92,7 +88,7 @@ def process_file(source_path, category="hogar"):
                     # Si no existe en el header agregar None, sino guarda el dato en esa key
                     unified_row[key] = row.get(key, None)
 
-                # Este debe ir fuera del loop de las columnas, agregando toda la fila a unified_data
+                # Arega toda la fila a unified_data
                 unified_data.append(unified_row)
 
     return all_headers, unified_data
@@ -134,141 +130,39 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
     print(f"✅ Archivo guardado en: {file_path}")
 
 
-
 # -------------------------------------------------------------------------------
-# STREAMLIT
+# CALCULOS MAXIMOS Y MINIMOS FECHA
 # -------------------------------------------------------------------------------
 
-# ACTUALIZAR
 
-
-def actualizar():
+def extraer_fecha(row):
     """
-    Procesa y guarda archivos de hogares e individuos. Pensado para ser usado en una app de Streamlit.
-
-    Utiliza las rutas y nombres de archivo definidos en constantes globales. Muestra mensajes de éxito
-    o error según el resultado del procesamiento.
-
+    Intenta extraer y devolver una tupla (año, trimestre) desde un diccionario.
+    Devuelve None si los datos son inválidos o faltan.
     """
-    if "mensajes_actualizacion" in st.session_state:
-        del st.session_state["mensajes_actualizacion"]
-
     try:
-        # Verificar si hay archivos para procesar
-        archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
-        if not archivos_existentes:
-            # Si no hay archivos, guardo el mensaje de advertencia
-            st.session_state["mensaje_actualizacion"] = (
-                "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
-            return
-        # -------------------------------------------------------------------------------
-        # PROCESAMIENTO DE HOGARES
-        # -------------------------------------------------------------------------------
+        año = int(row["ANO4"])
+        trimestre = int(row["TRIMESTRE"])
+        return (año, trimestre)
+    except (KeyError, ValueError, TypeError):
+        return None
 
-        # Unificar archivos de hogares desde la fuente
-        encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
-
-        # Agregar columnas derivadas y calcular fechas mínima y máxima para hogares
-        min_fecha_hog, max_fecha_hog = procesar_hogares(encabezados_h, hogares)
-
-        # Guardar los hogares procesados en un archivo intermedio
-        save_to_file(DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
-
-        # -------------------------------------------------------------------------------
-        # PROCESAMIENTO DE INDIVIDUOS
-        # -------------------------------------------------------------------------------
-
-        # Unificar archivos de individuos desde la fuente
-        encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
-
-        # Agregar columnas derivadas y calcular fechas mínima y máxima para individuos
-        min_fecha_indiv, max_fecha_indiv= add_extra_data(encabezados_i, individuos)
-
-        # Guardar los individuos procesados en un archivo intermedio
-        save_to_file(DATA_PROCESSED_DIR, FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
-
-        # Calcular la fecha mínima y máxima global entre hogares e individuos
-    
-        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv,max_fecha_hog, max_fecha_indiv] if f is not None]
-        fecha_min_global = min(fechas_validas) if fechas_validas else None
-        fecha_max_global = max(fechas_validas) if fechas_validas else None
-
-        # Resetear el rango de fechas en el estado de la aplicación (Streamlit)
-        st.session_state.date_range = fecha_min_global, fecha_max_global
-
-        
-        # Mensaje de éxito
-        st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
-
-    except Exception as e:
-        # Si ocurre un error, guardo el mensaje de error
-        st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
-
-
-def cargar_archivos(archivos):
+def actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha):
     """
-    Carga archivos en el directorio de datos especificado. Si el archivo ya existe, muestra un mensaje de advertencia.
+    Actualiza las fechas mínima y máxima comparando con una nueva fecha actual.
+
     Args:
-        archivos (list): Lista de archivos subidos por el usuario.
+        fecha_actual (tuple): Tupla (año, trimestre) actual.
+        min_fecha (tuple or None): Fecha mínima actual.
+        max_fecha (tuple or None): Fecha máxima actual.
+
+    Returns:
+        tuple: (min_fecha_actualizada, max_fecha_actualizada)
     """
-    if "mensajes_carga" in st.session_state:
-        del st.session_state["mensajes_carga"]
+    if min_fecha is None or fecha_actual < min_fecha:
+        min_fecha = fecha_actual
+    if max_fecha is None or fecha_actual > max_fecha:
+        max_fecha = fecha_actual
+    return min_fecha, max_fecha
 
-    mensajes = []
 
-    if archivos:
-        for uploaded_file in archivos:
-            file_name = uploaded_file.name
-            file_path = Path(DATA_SOURCE_DIR) / file_name
-
-            if file_path.exists():
-                # Si el archivo ya existe, guardo el mensaje de advertencia
-                mensajes.append(
-                    ("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó."))
-                continue
-
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-            # Guardo el mensaje de éxito
-            mensajes.append(
-                ("success", f"✅ {file_name} guardado en {file_path}"))
-    else:
-        # Si no se seleccionaron archivos, guardo el mensaje de advertencia
-        mensajes.append(
-            ("warning", "⚠️ No se seleccionaron archivos para cargar."))
-
-    st.session_state["mensajes_carga"] = mensajes
-
-from pathlib import Path
-import streamlit as st
-
-def eliminar_archivos():
-    """
-    Elimina todos los archivos .txt del directorio de origen de datos y del directorio procesado.
-    """
-    # Limpiar mensajes previos
-    st.session_state.pop("mensaje_eliminacion", None)
-
-    try:
-        carpetas = [Path(DATA_SOURCE_DIR), Path(DATA_PROCESSED_DIR)]
-        total_eliminados = 0
-        archivos_encontrados = False
-
-        for carpeta in carpetas:
-            archivos = list(carpeta.glob("*.txt"))
-            if archivos:
-                archivos_encontrados = True
-                for archivo in archivos:
-                    archivo.unlink()
-                total_eliminados += len(archivos)
-
-        if not archivos_encontrados:
-            st.session_state["mensaje_eliminacion"] = (
-                "warning", "⚠️ No hay archivos para eliminar.")
-        else:
-            st.session_state["mensaje_eliminacion"] = (
-                "success", f"🗑️ {total_eliminados} archivo(s) eliminados correctamente.")
-
-    except Exception as e:
-        st.session_state["mensaje_eliminacion"] = (
-            "error", f"❌ Error al eliminar archivos: {e}")
