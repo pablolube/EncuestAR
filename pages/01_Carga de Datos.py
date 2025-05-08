@@ -29,8 +29,10 @@ if  st.session_state.date_range is None:
     st.warning(
         "No se encontraron archivos procesados. Intenta cargarlos primero, y luego actualizar", icon="⚠️")
 else:
+    fecha_inicio = st.session_state.date_range[0]
+    fecha_fin = st.session_state.date_range[1]
     st.markdown(
-        f"El sistema contiene información desde el **{st.session_state.date_range[0]}** hasta el **{st.session_state.date_range[1]}** (trimestre/año).")
+        f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
