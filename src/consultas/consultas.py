@@ -707,6 +707,14 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
     """
     Calcula el porcentaje de personas con secundario incompleto mayores de 18 años
     en dos aglomerados específicos, agrupando los resultados por año y trimestre.
+    
+    Args:
+        aglomerado1 (int): Código del primer aglomerado a considerar.
+        aglomerado2 (int): Código del segundo aglomerado a considerar.
+        data (list[dict]): Lista de registros, cada uno representado como un diccionario
+            que contiene las claves 'AGLOMERADO', 'NIVEL_ED_str', 'ANO4', 
+            'TRIMESTRE', 'PONDERA' y 'CH06'.
+    
     """
     # Inicializo la estructura de datos
     dats = {}
@@ -790,6 +798,15 @@ def imprimir_porcentaje_secundario_incompleto(datos):
 
 def obtener_dats_ultimo_trimestre(anio, data):
     
+     """
+    Obtiene los registros correspondientes al último trimestre disponible de un año específico.
+
+    Args:
+        anio (int or str): Año del cual se desea obtener la información del último trimestre.
+        data (list[dict]): Lista de registros, cada uno representado como un diccionario 
+            que contiene las claves 'ANO4' y 'TRIMESTRE'.
+
+    """
     # A partir de un anio tomamos la data del ultimo trimestre
 
     # estructura a guardar datos
@@ -828,6 +845,12 @@ def aglomerado_mayor_menor_vivienda_precario(anio, data):
     """
     Se ingresa un anio y se busca el ultimo trimestre en ese anio, del cual obtendremos 
     el aglomerado con mayor y menor porcentaje de viviendas con 'Material precario'
+    
+    Args:
+        anio (int or str): Año del cual se desea obtener los datos.
+        data (list[dict]): Lista de registros, cada uno representado como un diccionario
+            que debe contener las claves 'AGLOMERADO' y 'MATERIAL_TECHUMBRE'.
+
     """
 
     dats_ultimo_trimestre = obtener_dats_ultimo_trimestre(anio, data)
