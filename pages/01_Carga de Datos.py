@@ -97,15 +97,18 @@ if "mensaje_actualizacion" in st.session_state:
     del st.session_state["mensaje_actualizacion"]
 
 # Enlace al área de información del Dataset
-st.markdown(""" Podés verificar si se actualizó correctamente en:
-    <a href=#5541d523 style="text-decoration: none; font-weight: bold;"> 🔗 Ver Información del Dataset</a>
+st.markdown("""
+    <h6 style="font-weight: bold; font-size: 18px;">
+    </h6>
+        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a>.</p>
 """, unsafe_allow_html=True)
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Sección: Tutoriales
-st.markdown('<h4 id="tutoriales"><i class="fas fa-book" style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
+st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
 st.markdown("""
             <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Video explicativo.
 </div>
