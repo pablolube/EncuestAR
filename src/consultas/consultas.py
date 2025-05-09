@@ -798,7 +798,7 @@ def imprimir_porcentaje_secundario_incompleto(datos):
 
 def obtener_dats_ultimo_trimestre(anio, data):
     
-     """
+    """
     Obtiene los registros correspondientes al último trimestre disponible de un año específico.
 
     Args:
@@ -942,6 +942,9 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
     else:
         datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
         datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
+
+        if not datos_proc_hog or not datos_proc_ind:
+            return None
         
         # estructura donde guardaremos los hogares con habitabilidad insuficiente
         
@@ -1018,6 +1021,8 @@ def imprimir_datos_jubilados(resultados):
             for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
                 print(f"{aglomerado:<10} | {porcentaje:>20.2f}%")
             print("-" * 32)
+    except AttributeError:
+        print("Datos Faltantes")
     except:
         print("No se encontraron datos para imprimir.")
 
