@@ -1018,7 +1018,7 @@ def imprimir_datos_jubilados(resultados):
     try:
         
         if resultados == "NO_HOGARES_INSUFICIENTES":
-            print("No existen hogares con habitabilidad insuficiente.")
+            print("No existen jubilados en hogares con habitabilidad insuficiente.")
             return
 
         if len(resultados.items()) > 0:
