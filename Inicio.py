@@ -37,5 +37,7 @@ Los datos recolectados son fundamentales para el diseño y monitoreo de polític
 </div>
 """, unsafe_allow_html=True)
 
+st.video("https://www.youtube.com/watch?v=cQXHWMnaY2A")
+
 # Línea divisoria cálida
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
