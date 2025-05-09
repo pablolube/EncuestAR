@@ -423,54 +423,66 @@ def procesar_y_mostrar_porcentajes(datos_hogares):
 # FUNCIONES PUNTO 6 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
-def aglomerado_con_mayor_porcentaje_viviendas_precarias(lista_hogares):
+def contar_viviendas_precarias(datos_hogares):
     """
-    Esta función recibe una lista de diccionarios con datos de hogares (formato EPH)
-    y calcula, para cada aglomerado, el porcentaje de viviendas consideradas precarias,
-    es decir, aquellas que tienen más de dos ocupantes y no poseen baño.
+    Cuenta la cantidad ponderada de viviendas precarias por aglomerado:
+    - Más de 2 ocupantes
+    - No tiene baño (IV8 == 2)
 
-    Retorna una tupla con:
-    - El código del aglomerado con mayor porcentaje de viviendas precarias,
-    - La cantidad ponderada de estas viviendas,
-    - El porcentaje que representan sobre el total de viviendas del aglomerado.
+    Usa (CODUSU, NRO_HOGAR) como clave para evitar duplicados.
     """
 
-    total_por_aglomerado = {}
-    precarias_por_aglomerado = {}
+    if not datos_hogares:
+        print("❌ Error: no hay datos para realizar el análisis.")
+        return {}
 
-    for hogar in lista_hogares:
+    viviendas_precarias_por_aglomerado = {}
+    hogares_vistos = set()
+
+    for fila in datos_hogares:
         try:
-            aglomerado = int(hogar["AGLOMERADO"])
-            # Total de ocupantes en la vivienda
-            ocupantes = int(hogar["IX_TOT"])
-            tiene_banio = int(hogar["IV8"])      # 2 = no posee baño
-            pondera = int(hogar["PONDERA"])      # Peso estadístico del hogar
+            clave_hogar = (fila["CODUSU"], fila["NRO_HOGAR"])
+            if clave_hogar in hogares_vistos:
+                continue
+            hogares_vistos.add(clave_hogar)
 
-            # Acumula la cantidad total de viviendas ponderadas por aglomerado
-            total_por_aglomerado[aglomerado] = total_por_aglomerado.get(
-                aglomerado, 0) + pondera
+            aglomerado = int(fila["AGLOMERADO"])
+            ocupantes = int(fila["IX_TOT"])
+            tiene_banio = int(fila["IV8"])  # 2 = no tiene baño
+            pondera = int(fila["PONDERA"])
+        except (ValueError, KeyError):
+            continue
 
-            # Si es una vivienda precaria (más de 2 ocupantes y sin baño)
-            if ocupantes > 2 and tiene_banio == 2:
-                precarias_por_aglomerado[aglomerado] = precarias_por_aglomerado.get(
-                    aglomerado, 0) + pondera
+        if ocupantes > 2 and tiene_banio == 2:
+            if aglomerado not in viviendas_precarias_por_aglomerado:
+                viviendas_precarias_por_aglomerado[aglomerado] = 0
+            viviendas_precarias_por_aglomerado[aglomerado] += pondera  # ponderado
 
-        except (KeyError, ValueError):
-            continue  # Ignora filas con datos incorrectos o ausentes
+    if not viviendas_precarias_por_aglomerado:
+        print("❌ No se encontraron viviendas precarias.")
+        return {}
 
-    # Calculo porcentajes
-    porcentajes = {}
-    for aglo in precarias_por_aglomerado:
-        total = total_por_aglomerado.get(aglo, 0)
-        if total > 0:
-            porcentaje = (precarias_por_aglomerado[aglo] / total) * 100
-            porcentajes[aglo] = porcentaje
+    return viviendas_precarias_por_aglomerado
 
-    if not porcentajes:
-        return None, 0, 0
 
-    aglo_max = max(porcentajes, key=porcentajes.get)
-    return aglo_max, precarias_por_aglomerado[aglo_max], porcentajes[aglo_max]
+def aglomerado_con_mayor_cantidad_viviendas_precarias(datos_hogares):
+    """
+    Obtiene el aglomerado con la mayor cantidad de viviendas precarias (más de 2 ocupantes y sin baño).
+    """
+    viviendas_precarias_por_aglomerado = contar_viviendas_precarias(datos_hogares)
+
+    if not viviendas_precarias_por_aglomerado:  # Verificamos si no hay resultados
+        print("❌ No se encontraron viviendas precarias para realizar el análisis.")
+        return None, 0
+
+    # Encontramos el aglomerado con el máximo número de viviendas precarias
+    aglomerado_max = max(viviendas_precarias_por_aglomerado, key=viviendas_precarias_por_aglomerado.get)
+    cantidad_max = viviendas_precarias_por_aglomerado[aglomerado_max]
+
+    print(f"Aglomerado con mayor cantidad de viviendas precarias (más de 2 ocupantes y sin baño):")
+    print(f"Aglomerado {aglomerado_max} con {cantidad_max} viviendas.")
+
+    return aglomerado_max, cantidad_max
 
 
 # -----------------------------------------------------------------------------------

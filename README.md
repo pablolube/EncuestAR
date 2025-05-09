@@ -1,5 +1,7 @@
 # Proyecto Grupo 18 // Encuest.AR 🧮
 
+Versión 0.0.0 - Mayo 2025
+
 Aplicación para la exploración de datos de la Encuesta Permanente de Hogares (EPH), desarrollada como trabajo integrador en la UNLP.
 
 Integrantes: 
