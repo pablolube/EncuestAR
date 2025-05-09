@@ -36,34 +36,21 @@ else:
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-# Pasos y tutorial
-st.markdown('<h4><i class="fas fa-book" style="color:#E67E22;"></i> Pasos para la Carga de Datos</h4>',
-            unsafe_allow_html=True)
-
 # Complemento de carga de archivos
 
-# Imprimo pasos para el usuario
-st.markdown(
-    " 1) Seleccioná el o los archivos de tu ordenador (encontrarás el link de descarga de archivos EPH en la **sección de Inicio**)")
-st.markdown(
-    "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar Todos los Archivos Cargados**.")
-
-st.markdown(
-    "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
-
+# Carga de Archivos
+st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i>  Carga y Actualización de Datos </h4>',
+            unsafe_allow_html=True)
 
 # Link a tutoriales
 st.markdown("""
-    <h6 style="font-weight: bold; font-size: 18px;">
+    <h7 style="font-weight: bold; font-size: 18px;">
         <i class="fas fa-question-circle" style="color:#E67E22; font-size: 20px;"></i>  
-    ¿Alguna duda? </h6>
-        <p style="font-size: 16px;">¡Mirá el tutorial! En la sección <a href="#tutoriales" style="text-decoration: none; font-weight: bold; color:#E67E22;">
+    ¿Necesitas ayuda? </h7>
+        <p style="font-size: 16px;">¡Mirá el paso-a-paso y video tutorial! En la sección <a href="#tutoriales" style="text-decoration: none; font-weight: bold; color:#E67E22;">
         <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
 """, unsafe_allow_html=True)
 
-# Carga de Archivos
-st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga y Actualización de Datos </h4>',
-            unsafe_allow_html=True)
 
 uploaded_files = st.file_uploader("**Seccioná el o los archivos desde tu dispositivo:**", accept_multiple_files=True)
 
@@ -113,9 +100,19 @@ st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 # Sección: Tutoriales
 st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
 st.markdown("""
-            <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Video explicativo.
+            <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Paso a paso y Video explicativo.
 </div>
 """, unsafe_allow_html=True)
+
+# Imprimo pasos para el usuario
+st.markdown(
+    " 1) Seleccioná el o los archivos de tu ordenador (encontrarás el link de descarga de archivos EPH en la **sección de Inicio**)")
+st.markdown(
+    "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar Todos los Archivos Cargados** y repetí el paso 1).")
+
+st.markdown(
+    "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
+
 
 # Espacio
 st.markdown("&nbsp;", unsafe_allow_html=True)
