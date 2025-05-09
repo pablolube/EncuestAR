@@ -65,36 +65,49 @@ def process_file(source_path, category="hogar"):
             - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada
               según los encabezados recolectados.
     """
-    all_headers = []  # Aca voy  a acumular los headers
-    # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
+
+    all_headers = []
     unified_data = []
 
-    # PRIMER FOR: recolectar todos los encabezados
-    for file in source_path.glob("*.txt"):
-        if category in file.name:  # Condición si el archivo tiene la categoría elegida
-            headers, _ = read_file_dic(file)  # solo me interesa el header
-            for header in headers:  # Recorro los encabezados del archivo
-                if header not in all_headers:  # Solo lo agrego si no está en la lista
+    try:
+        archivos = list(source_path.glob("*.txt"))
+        if not archivos:
+            raise FileNotFoundError("No hay archivos .txt en el directorio.")
+
+        # Filtrar por categoría
+        archivos_filtrados = [f for f in archivos if category in f.name]
+        if not archivos_filtrados:
+            raise FileNotFoundError(f"No se encontraron archivos con la categoría '{category}'.")
+
+        # PRIMER FOR: recolectar encabezados
+        for file in archivos_filtrados:
+            headers, _ = read_file_dic(file)
+            for header in headers:
+                if header not in all_headers:
                     all_headers.append(header)
 
-     # SEGUNDO FOR: Unificar filas
-    for file in source_path.glob("*.txt"):
-        if category in file.name:
-            _, rows = read_file_dic(file)  # Ahora solo me importan las filas
-
-            for row in rows:  # Recorro las filas
-                unified_row = {}
-                for key in all_headers:  # Para cada fila voy recorriendo por header
-                    # Si no existe en el header agregar None, sino guarda el dato en esa key
-                    unified_row[key] = row.get(key, None)
-
-                # Arega toda la fila a unified_data
+        # SEGUNDO FOR: unificar filas
+        for file in archivos_filtrados:
+            _, rows = read_file_dic(file)
+            for row in rows:
+                unified_row = {key: row.get(key, None) for key in all_headers}
                 unified_data.append(unified_row)
 
-    return all_headers, unified_data
+        if not all_headers or not unified_data:
+            raise ValueError("No se pudieron extraer encabezados o datos de los archivos.")
+
+        return all_headers, unified_data
+
+    except FileNotFoundError as e:
+        print(f"❌ Error: {e}")
+        return None,None
+    except Exception as e:
+        print(f"⚠️ Error inesperado al procesar archivos: {e}")
+        return None,None
 
 # -------------------------------------------------------------------------------
 # GUARDAR ARCHIVOS
+
 # -------------------------------------------------------------------------------
 
 

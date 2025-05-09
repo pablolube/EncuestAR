@@ -117,7 +117,7 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
         "tipo_banio": {0: "insuficiente", 1: "buena", 2: "saludable", 3: "regular"},
         "desague": {0: "insuficiente", 1: "buena", 2: "saludable", 3: "saludable", 4: "insuficiente"},
         "piso_material": {1: "buena", 2: "saludable", 3: "regular", 4: "regular"},
-        "ubi_banio": {1: "buena", 2: "saludable", 3: "insuficiente"},
+        "ubi_banio": {1: "buena", 2: "regular", 3: "insuficiente"},
         "techo_material": {
             "Material durable": "buena",
             "Material precario": "insuficiente",
@@ -160,18 +160,33 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
             contador[categoria] += 1
 
     # Clasificación según reglas
-    if contador["insuficiente"] > 2:
+    if 0 < contador["insuficiente"] <=2 and contador["regular"] >= 2:
+        return "insuficiente"
+    
+    elif contador["regular"] >= 5:
         return "insuficiente"
 
-    elif contador["insuficiente"] <= 2 and contador["regular"] >= 2:
-        return "insuficiente"
+    elif 0 < contador["insuficiente"] <=2 and 0 < contador["regular"] < 2:
+        return "regular"
+
+    elif desague == 4:
+        return "regular"
+    
 
     elif agua == 2:
         return "regular"
-
-    elif contador["regular"] > 3:
+    
+    
+    elif contador["regular"] >= 3:  
         return "regular"
-
+    
+      
+    elif contador["insuficiente"]==1 and contador["regular"] == 0:
+        return "Saludable"
+    
+    elif contador["regualres"]<=2 and contador["regular"] == 0:
+        return "Saludable"
+    
     elif contador["buena"] >= 5 and contador["insuficiente"] == 0 and contador["regular"] == 0:
         return "buena"
     
