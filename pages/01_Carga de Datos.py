@@ -31,7 +31,7 @@ st.markdown("""
     <h7 style="font-weight: bold; font-size: 18px;">
         <i class="fas fa-question-circle" style="color:#E67E22; font-size: 20px;"></i>  
     ¿Necesitas ayuda? </h7>
-        <p style="font-size: 16px;">¡Mirá el paso-a-paso y video tutorial! En la sección <a href="#tutoriales" style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <p style="font-size: 16px;">¡Mirá el paso-a-paso y video tutorial! En la sección <a href=#tutoriales style="text-decoration: none; font-weight: bold; color:#E67E22;">
         <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
 """, unsafe_allow_html=True)
 
@@ -141,7 +141,7 @@ st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Sección: Tutoriales-------------------------------------------------------------------------------
 
-st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
+st.markdown('<h4 ><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
 st.markdown("""
             <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Paso a paso y Video explicativo.
 </div>
