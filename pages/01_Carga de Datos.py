@@ -30,9 +30,13 @@ if  st.session_state.date_range is None:
 else:
     fecha_inicio = st.session_state.date_range[0]
     fecha_fin = st.session_state.date_range[1]
-    st.markdown(
-        f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
-
+    if fecha_inicio is not None and fecha_fin is not None:
+        st.markdown(
+            f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
+    else:
+         st.warning(
+        "No fue posible determinar las fechas porque los archivos cargados no contienen información temporal válida", icon="⚠️")
+       
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
@@ -44,10 +48,10 @@ st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i>  Carga y A
 
 # Link a tutoriales
 st.markdown("""
-    <h8 style="font-weight: bold; font-size: 18px;">
+    <h7 style="font-weight: bold; font-size: 18px;">
         <i class="fas fa-question-circle" style="color:#E67E22; font-size: 20px;"></i>  
-    ¿Necesitas ayuda? </h8>
-        <p style="font-size: 16px;">¡Mirá el paso-a-paso y video tutorial! En la sección <a href=#6bcdb398 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+    ¿Necesitas ayuda? </h7>
+        <p style="font-size: 16px;">¡Mirá el paso-a-paso y video tutorial! En la sección <a href="#tutoriales" style="text-decoration: none; font-weight: bold; color:#E67E22;">
         <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
 """, unsafe_allow_html=True)
 
@@ -87,9 +91,8 @@ if "mensaje_actualizacion" in st.session_state:
 st.markdown("""
     <h6 style="font-weight: bold; font-size: 18px;">
     </h6>
-        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente la información en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
-        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a> y los archivos en sistema actualmente en <a href=#archivos-en-sistema style="text-decoration: none; font-weight: bold; color:#E67E22;">
-        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Archivos en sistema </a> </p>
+        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a>.</p>
 """, unsafe_allow_html=True)
 
 from src.utils.constants import DATA_SOURCE_DIR
@@ -99,7 +102,7 @@ import datetime
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Sección: Tutoriales
-st.markdown('<h4 <i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
+st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
 st.markdown("""
             <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Paso a paso y Video explicativo.
 </div>
@@ -110,8 +113,10 @@ st.markdown(
     " 1) Seleccioná el o los archivos de tu ordenador (encontrarás el link de descarga de archivos EPH en la **sección de Inicio**)")
 st.markdown(
     "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar Todos los Archivos Cargados** y repetí el paso 1).")
+
 st.markdown(
     "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
+
 
 # Espacio
 st.markdown("&nbsp;", unsafe_allow_html=True)
@@ -120,36 +125,29 @@ st.markdown("&nbsp;", unsafe_allow_html=True)
 st.video("https://www.youtube.com/watch?v=bILbA6-mzWw")
 
 
-# Separador
+# Línea divisoria cálida
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
-# Sección archivos en sesión
-st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos en sistema</h4>', unsafe_allow_html=True)
 
-archivos_hogar = []
-archivos_indiv = []
+if uploaded_files:
+    st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos cargados en esta sesión</h4>', unsafe_allow_html=True)
 
-# Listar los archivos en el directorio, no verificamos si esta vacio, porque siempre tiene al menos .gitkeep
-for archivo in DATA_SOURCE_DIR.iterdir():
-    if archivo.name.endswith(".txt"):
-        nombre = archivo.name.lower()
-        if "hogar" in nombre:
-            archivos_hogar.append(archivo)
-        elif "individual" in nombre:
-            archivos_indiv.append(archivo)
+    archivos_hogar = []
+    archivos_indiv = []
 
-# Función para imprimir archivos clasificados
-def imprimir_archivos(titulo, archivos):
-    if archivos:
-        st.markdown(f"#### {titulo}")
-        for archivo in archivos:
-            fecha = datetime.datetime.fromtimestamp(archivo.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
-            st.markdown(f"- 📄 **{archivo.name}** - Fecha y Hora de carga: {fecha}")
-    else:
-        st.markdown(f"**No hay archivos de {titulo.lower()} cargados.**")
+    for archivo in DATA_SOURCE_DIR.iterdir():
+        if archivo.name.endswith(".txt"):
+            nombre = archivo.name.lower()
+            if "hogar" in nombre:
+                archivos_hogar.append(archivo)
+            elif "individual" in nombre:
+                archivos_indiv.append(archivo)
 
-# Mostrar los archivos cargados
-imprimir_archivos("🏠 Hogares", archivos_hogar)
-imprimir_archivos("👤 Individuos", archivos_indiv)
+    def imprimir_archivos(titulo, archivos):
+        if archivos:
+            st.markdown(f"#### {titulo}")
+            for archivo in archivos:
+                
+                st.markdown(f"- 📄 **{archivo.name}** ")
 
-# Separador opcional
-st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+    imprimir_archivos("🏠 Hogares", archivos_hogar)
+    imprimir_archivos("👤 Individuos", archivos_indiv)
