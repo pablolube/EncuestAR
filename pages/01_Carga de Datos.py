@@ -122,48 +122,34 @@ st.video("https://www.youtube.com/watch?v=bILbA6-mzWw")
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
-
-# Seccion archivos en sesion
+# Sección archivos en sesión
 st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos en sistema</h4>', unsafe_allow_html=True)
 
 archivos_hogar = []
 archivos_indiv = []
 
-try:
-    # Verificar si hay archivos en el directorio
-    if any(DATA_SOURCE_DIR.iterdir()):
+# Listar los archivos en el directorio, no verificamos si esta vacio, porque siempre tiene al menos .gitkeep
+for archivo in DATA_SOURCE_DIR.iterdir():
+    if archivo.name.endswith(".txt"):
+        nombre = archivo.name.lower()
+        if "hogar" in nombre:
+            archivos_hogar.append(archivo)
+        elif "individual" in nombre:
+            archivos_indiv.append(archivo)
 
-        # Listar los archivos en el directorio
-        for archivo in DATA_SOURCE_DIR.iterdir():
-            if archivo.name.endswith(".txt"):
-                nombre = archivo.name.lower()
-                # Clasificar los archivos según su nombre
-                if "hogar" in nombre:
-                    archivos_hogar.append(archivo)
-                elif "individual" in nombre:
-                    archivos_indiv.append(archivo)
+# Función para imprimir archivos clasificados
+def imprimir_archivos(titulo, archivos):
+    if archivos:
+        st.markdown(f"#### {titulo}")
+        for archivo in archivos:
+            fecha = datetime.datetime.fromtimestamp(archivo.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
+            st.markdown(f"- 📄 **{archivo.name}** - Fecha y Hora de carga: {fecha}")
+    else:
+        st.markdown(f"**No hay archivos de {titulo.lower()} cargados.**")
 
-        def imprimir_archivos(titulo, archivos):
-            """
-            Función para imprimir los archivos en el sistema.
-            """
-            # Verificar si hay archivos
-            if archivos:
-                st.markdown(f"#### {titulo}")
-                for archivo in archivos:
-                    # Convertir la fecha de carga a un formato legible
-                    fecha = datetime.datetime.utcfromtimestamp(archivo.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
-                    # Mostrar el nombre del archivo y la fecha de carga
-                    st.markdown(f"- 📄 **{archivo.name}** - Fecha y Hora de carga: {fecha} ")
-            # Si no hay archivos, mostrar un mensaje
-            else:
-                st.markdown(f"**No hay archivos de {titulo} cargados.**")
-        # Imprimir los información
-        imprimir_archivos("🏠 Hogares", archivos_hogar)
-        imprimir_archivos("👤 Individuos", archivos_indiv)
+# Mostrar los archivos cargados
+imprimir_archivos("🏠 Hogares", archivos_hogar)
+imprimir_archivos("👤 Individuos", archivos_indiv)
 
-except Exception as e:
-    st.error(f"Ocurrió un error: {str(e)}")
-
-# Separador
+# Separador opcional
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
