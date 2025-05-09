@@ -703,6 +703,16 @@ def tabla_nivel_educativo(data, aglomerado):
 
 
 def crear_estructura_datos():
+    
+    """
+    Genera una estructura que se encargara de manejar los datos para guardarse
+    en un solo recorrido del data
+        
+    return:
+        Dict[]: diccionario con la estructura a cargar
+        Cumplen_aglom_n: Individuos con el secundario incompleto y mayores de 18
+         Todos_aglomn_18: Mayores a 18
+    """
     return {
         "Cumplen_aglom_1": 0,
         "Todos_aglom1_18": 0,
@@ -771,6 +781,15 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
 
 def imprimir_porcentaje_secundario_incompleto(datos, aglo1, aglo2):
 
+    """
+    Imprime una tabla con los porcentajes de cumplimiento para dos aglomerados 
+    a partir de un diccionario de datos organizados por año y trimestre.
+
+    Parámetros:
+        Datos(Dict[]) lista de diccionarios de clave Año trimestre
+        De valor una estructura que recopila los mayores de 18 con educacion "Secundario Incompleto"
+    """
+    
     # Encabezado
     print(f"{'Año':^8} {'Trimestre':^8} {f'Aglomerado {aglo1}':^20} {
           f'Aglomerado {aglo2}':^20}")
@@ -903,11 +922,24 @@ def aglomerado_mayor_menor_vivienda_precario(anio, data):
 
 def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
 
+    """
+    Muestra en consola el aglomerado con mayor y menor porcentaje de viviendas 
+    de material precario.
+
+    Parámetros:
+    aglo_porcentaje_max :
+        Tupla que contiene el nombre del aglomerado y su porcentaje máximo 
+        de viviendas de material precario.
+
+    aglo_porcentaje_min :
+        Tupla que contiene el nombre del aglomerado y su porcentaje mínimo 
+        de viviendas de material precario.
+    """
     if not aglo_porcentaje_max or not aglo_porcentaje_min:
         print("No se encontraron datos de viviendas con material precario para ese año.")
     else:
         print('-'*50)
-        print('El aglomerado con mayor porcentaje de vivientas de material precario es: ',
+        print('El aglomerado con mayor porcentaje de viviendas de material precario es: ',
               aglo_porcentaje_max[0], 'con', aglo_porcentaje_max[1])
         print('El aglomerado con menor porcentaje de vivientas de material precario es: ',
               aglo_porcentaje_min[0], 'con', aglo_porcentaje_min[1])
