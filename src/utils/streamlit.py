@@ -84,9 +84,11 @@ def actualizar():
         st.session_state.date_range = fecha_min_global, fecha_max_global
 
         
+
         # Mensaje de éxito
         st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
 
+        return fecha_min_global, fecha_max_global
     except Exception as e:
         # Si ocurre un error, guardo el mensaje de error
         st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")

@@ -128,7 +128,8 @@ st.video("https://www.youtube.com/watch?v=bILbA6-mzWw")
 # Línea divisoria cálida
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-if uploaded_files:
+archivos_existentes = list(DATA_SOURCE_DIR.glob("*.txt"))
+if archivos_existentes:
     st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos cargados en esta sesión</h4>', unsafe_allow_html=True)
 
     archivos_hogar = []
