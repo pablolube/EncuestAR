@@ -260,41 +260,37 @@ def contar_hogares(hogares_ponderados):
         )
 
     return conteo_hogares_ponderados
-
-
+ 
 def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top_n=5):
     """
     Genera y muestra un ranking de aglomerados según el porcentaje de hogares
     con al menos 'min_universitarios' personas con estudios universitarios.
-
-    Parámetros:
-    - individuos: lista de diccionarios con datos individuales.
-    - min_universitarios: mínimo de personas con estudios universitarios por hogar.
-    - top_n: cantidad de aglomerados a mostrar en el ranking.
     """
     # Cuento universitarios por hogar y obtener PONDERA por hogar
-    universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(
-        individuos)
+    universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(individuos)
+
+    # Verificación: ¿hay datos válidos?
+    if not universitarios_por_hogar or not pondera_por_hogar:
+        print("❌ Error: no hay datos válidos para generar el ranking. Verifique el archivo de entrada.")
+        return
 
     # Cuento hogares totales por aglomerado
     total_hogares_por_aglomerado = contar_hogares(pondera_por_hogar)
 
     # Filtro hogares con al menos min_universitarios y contarlos por aglomerado
-    hogares_filtrados = filtrar_hogares_con_min_universitarios(
-        universitarios_por_hogar, pondera_por_hogar, min_universitarios)
+    hogares_filtrados = filtrar_hogares_con_min_universitarios(universitarios_por_hogar, pondera_por_hogar, min_universitarios)
     hogares_filtrados_por_aglomerado = contar_hogares(hogares_filtrados)
 
     # Armo resultados para cada aglomerado con (hogares_filtrados, total_hogares)
     resultados = {
-        aglomerado: (hogares_filtrados_por_aglomerado.get(
-            aglomerado, 0), total)
+        aglomerado: (hogares_filtrados_por_aglomerado.get(aglomerado, 0), total)
         for aglomerado, total in total_hogares_por_aglomerado.items()
-
     }
 
     # Calculo porcentajes y muestro ranking
     ranking = calcular_porcentajes(resultados)
     imprimir_tabla_ranking(ranking, cantidad=top_n)
+
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
@@ -392,7 +388,7 @@ def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
             f"{porcentaje:>14.2f}%"
         )
 
-
+    
 def procesar_y_mostrar_porcentajes(datos_hogares):
     """
     Ejecuta todo el procesamiento y la impresión del ranking de
@@ -401,11 +397,23 @@ def procesar_y_mostrar_porcentajes(datos_hogares):
     Args:
         datos_hogares (list of dict): Lista de registros de hogares.
     """
+    if not datos_hogares:
+        print("❌ Error: no hay datos para realizar el análisis.")
+        return
+
     # 1) Cuenta viviendas propietarias y totales por aglomerado
     resultados = contar_viviendas_propietarias(datos_hogares)
 
+    if not resultados:
+        print("❌ Error: no hay datos válidos para realizar el análisis.")
+        return
+
     # 2) Calcula el porcentaje de viviendas propietarias
     porcentajes = calcular_porcentajes(resultados)
+
+    if not porcentajes:
+        print("❌ Error: no hay datos con tenencia válida para calcular porcentajes.")
+        return
 
     # 3) Imprime el ranking
     imprimir_tabla_ranking(porcentajes, cantidad=None)
