@@ -18,7 +18,7 @@ st.markdown('<h3><i class="fas fa-info-circle" style="color:#E67E22;"></i> ¿En 
 st.markdown("""
             <div style="text-align: justify;"><strong>Encuest.AR</strong> es una aplicación diseñada para cargar, visualizar y obtener información resumida y jerarquizada. Utilizamos sets de datos brindados por la  <a href="https://www.indec.gob.ar/ftp/cuadros/sociedad/Gacetilla_EPHContinua.pdf" target="_blank"><strong>EPH</strong></a> (Encuesta Permanente de Hogares), los cuales son facilitados de forma pública por el Estado Nacional.
 
-Podés acceder a los set de datos en:
+Podés acceder a los archivos descargables en:
 <a href="https://www.indec.gob.ar/indec/web/Institucional-Indec-BasesDeDatos" target="_blank"> <strong>Descargar Set de Datos<strong></a>
 </div>
 """, unsafe_allow_html=True)

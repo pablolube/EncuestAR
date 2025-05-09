@@ -30,6 +30,9 @@ def actualizar():
             # Si no hay archivos, guardo el mensaje de advertencia
             st.session_state["mensaje_actualizacion"] = (
                 "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
+ 
+            st.session_state.date_range = None
+
             return
         # -------------------------------------------------------------------------------
         # PROCESAMIENTO DE HOGARES

@@ -4,14 +4,13 @@ from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos
 # Cargar Font Awesome desde CDN
 st.markdown("""
 <head>
-    <link rel="style=sheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 """, unsafe_allow_html=True)
 
 # Guarda el rango de fechas en la session state
 if "date_range" not in st.session_state:
     st.session_state.date_range = actualizar()
-
 
 
 # Sección principal
@@ -38,18 +37,24 @@ else:
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Carga de Archivos
-st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga de Archivos</h4>',
+st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga y Actualización de Archivos</h4>',
             unsafe_allow_html=True)
 
 # Complemento de carga de archivos
-uploaded_files = st.file_uploader(
-    "Seleccione uno o más archivos", accept_multiple_files=True, type=["txt"])
+
+# Imprimo pasos para el usuario
+st.markdown(
+    " 1) Seleccioná el o los archivos de tu ordenador (encontrarás el link de descarga de archivos EPH en la **sección de Inicio**)")
+st.markdown(
+    "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar Todos los Archivos Cargados**.")
+
+st.markdown(
+    "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
+
+uploaded_files = st.file_uploader("Subí tus archivos", accept_multiple_files=True)
 
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
           on_click=cargar_archivos, args=(uploaded_files,))
-
-
-
 
 # Mensajes de carga de archivos
 if "mensajes_carga" in st.session_state:
@@ -71,17 +76,12 @@ if "mensaje_eliminacion" in st.session_state:
     getattr(st, tipo)(texto)
     del st.session_state["mensaje_eliminacion"]
 
-
-# Separador
-st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
-
-# Actualización de Datos
-st.markdown('<h4><i class="fas fa-sync-alt" style="color:#CA6F1E;"></i> Actualización de Datos</h4>',
-            unsafe_allow_html=True)
-st.write("Haga clic en el botón para sincronizar y procesar los archivos cargados.")
-
 # Mensaje de actualización
 if "mensaje_actualizacion" in st.session_state:
     tipo, texto = st.session_state["mensaje_actualizacion"]
     getattr(st, tipo)(texto)
     del st.session_state["mensaje_actualizacion"]
+
+
+# Separador
+st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
