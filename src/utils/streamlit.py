@@ -24,16 +24,30 @@ def actualizar():
         del st.session_state["mensajes_actualizacion"]
 
     try:
-        # Verificar si hay archivos para procesar
-        archivos_existentes = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
-        if not archivos_existentes:
-            # Si no hay archivos, guardo el mensaje de advertencia
+        # Verificar si hay archivos .txt en la carpeta
+        archivos_txt = list(Path(DATA_SOURCE_DIR).glob("*.txt"))
+
+        # Si no hay archivos .txt, lanzar advertencia
+        if not archivos_txt:
             st.session_state["mensaje_actualizacion"] = (
                 "warning", "⚠️ No hay archivos en la carpeta para actualizar. Verifique si agregó los archivos.")
- 
             st.session_state.date_range = None
-
             return
+        else:
+
+            # Filtrar los archivos que contienen 'hogares' o 'individuos' en el nombre
+            archivos_validos = [
+                archivo for archivo in archivos_txt
+                if "hogar" in archivo.name.lower() or "individual" in archivo.name.lower()
+            ]
+
+            # Si hay archivos .txt pero ninguno válido, lanzar otra advertencia
+            if not archivos_validos:
+                st.session_state["mensaje_actualizacion"] = (
+                    "warning", "⚠️ Los archivos encontrados no son de la EPH. Verifique los nombres.")
+                st.session_state.date_range = None
+                return
+
         # -------------------------------------------------------------------------------
         # PROCESAMIENTO DE HOGARES
         # -------------------------------------------------------------------------------
@@ -80,7 +94,9 @@ def actualizar():
 
 def cargar_archivos(archivos):
     """
-    Carga archivos en el directorio de datos especificado. Si el archivo ya existe, muestra un mensaje de advertencia.
+    Carga archivos en el directorio de datos especificado. Solo se permiten archivos .txt que contengan
+    'hogares' o 'individuos' en el nombre. Si el archivo ya existe, muestra un mensaje de advertencia.
+    
     Args:
         archivos (list): Lista de archivos subidos por el usuario.
     """
@@ -92,25 +108,36 @@ def cargar_archivos(archivos):
     if archivos:
         for uploaded_file in archivos:
             file_name = uploaded_file.name
+            lower_name = file_name.lower()
+            
+            # Verifica si es .txt y contiene 'hogares' o 'individuos'
+            if not (file_name.endswith(".txt") and ("hogar" in lower_name or "individual" in lower_name)):
+                mensajes.append(
+                    ("warning", f"⚠️ El archivo '{file_name}' fue ignorado. Solo se aceptan archivos .txt de la EPH.")
+                )
+                continue
+
             file_path = Path(DATA_SOURCE_DIR) / file_name
 
             if file_path.exists():
-                # Si el archivo ya existe, guardo el mensaje de advertencia
                 mensajes.append(
-                    ("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó."))
+                    ("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
+                )
                 continue
 
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            # Guardo el mensaje de éxito
+            
             mensajes.append(
-                ("success", f"✅ {file_name} guardado en {file_path}"))
+                ("success", f"✅ {file_name} guardado en {file_path}")
+            )
     else:
-        # Si no se seleccionaron archivos, guardo el mensaje de advertencia
         mensajes.append(
-            ("warning", "⚠️ No se seleccionaron archivos para cargar."))
+            ("warning", "⚠️ No se seleccionaron archivos para cargar.")
+        )
 
     st.session_state["mensajes_carga"] = mensajes
+
 
 from pathlib import Path
 import streamlit as st
