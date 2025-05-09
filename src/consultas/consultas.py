@@ -961,6 +961,9 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
                 continue # ante cualquier dato mal ingresado o vacio
             
         # ahora con el diccionario de hogares de habitabilidad insuficientes
+             
+        if not hogares_habitabilidad_insuficiente:
+            return "NO_HOGARES_INSUFICIENTES"
         
         # estructura para calcular % de jubilados
         
@@ -1013,6 +1016,11 @@ def imprimir_datos_jubilados(resultados):
         en viviendas de habitabilidad insuficiente
     """
     try:
+        
+        if resultados == "NO_HOGARES_INSUFICIENTES":
+            print("No existen hogares con habitabilidad insuficiente.")
+            return
+
         if len(resultados.items()) > 0:
             print("-" * 32)
             print(f"{'Aglomerado':<10} | {'% Jubilados en Hab. Insuf.':>21}")
