@@ -65,9 +65,10 @@ def process_file(source_path, category="hogar"):
             - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada
               según los encabezados recolectados.
     """
+    unified_data =[]
     all_headers = []  # Aca voy  a acumular los headers
     # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
-    unified_data = []
+    
 
     # PRIMER FOR: recolectar todos los encabezados
     for file in source_path.glob("*.txt"):
@@ -90,11 +91,13 @@ def process_file(source_path, category="hogar"):
 
                 # Arega toda la fila a unified_data
                 unified_data.append(unified_row)
-
+    
     return all_headers, unified_data
+    
 
 # -------------------------------------------------------------------------------
 # GUARDAR ARCHIVOS
+
 # -------------------------------------------------------------------------------
 
 
