@@ -129,6 +129,7 @@ def imprimir_archivos(titulo, archivos):
             fecha = datetime.datetime.fromtimestamp(archivo.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
             st.markdown(f"- 📄 **{archivo.name}** - Fecha y Hora de carga: {fecha}")
     else:
+        st.markdown(f"#### {titulo}")
         st.markdown(f"**No hay archivos de {titulo.lower()} cargados.**")
 
 # Mostrar los archivos cargados
