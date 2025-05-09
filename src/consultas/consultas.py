@@ -74,8 +74,10 @@ def cant_personas_alfabetizadas(data):
             elif row["CH09"] == "2":
                 count[row["ANO4"]][row["TRIMESTRE"]
                                    ]["NA"] += int(row["PONDERA"])
-
-    imprimir_alfabetizadas(count)
+    if count:
+        imprimir_alfabetizadas(count)
+    else:
+        print('No hay datos para mostrar.')
 
 # --------------------------------------------------------------------
 # FUNCIONES PUNTO 2 (ANÁLISIS) - INDIVIDUOS
@@ -230,6 +232,7 @@ def filtrar_hogares_con_min_universitarios(contador_universitarios, pondera_por_
 
     return hogares_filtrados
 
+
 def contar_hogares(hogares_ponderados):
     """
     Cuento hogares ponderados por aglomerado. Esta función también sirve para
@@ -258,6 +261,7 @@ def contar_hogares(hogares_ponderados):
 
     return conteo_hogares_ponderados
 
+
 def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top_n=5):
     """
     Genera y muestra un ranking de aglomerados según el porcentaje de hogares
@@ -269,20 +273,23 @@ def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top
     - top_n: cantidad de aglomerados a mostrar en el ranking.
     """
     # Cuento universitarios por hogar y obtener PONDERA por hogar
-    universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(individuos)
+    universitarios_por_hogar, pondera_por_hogar = contar_universitarios_y_pondera_por_hogar(
+        individuos)
 
     # Cuento hogares totales por aglomerado
     total_hogares_por_aglomerado = contar_hogares(pondera_por_hogar)
 
     # Filtro hogares con al menos min_universitarios y contarlos por aglomerado
-    hogares_filtrados = filtrar_hogares_con_min_universitarios(universitarios_por_hogar, pondera_por_hogar, min_universitarios)
+    hogares_filtrados = filtrar_hogares_con_min_universitarios(
+        universitarios_por_hogar, pondera_por_hogar, min_universitarios)
     hogares_filtrados_por_aglomerado = contar_hogares(hogares_filtrados)
 
     # Armo resultados para cada aglomerado con (hogares_filtrados, total_hogares)
     resultados = {
-        aglomerado: (hogares_filtrados_por_aglomerado.get(aglomerado, 0), total)
-    for aglomerado, total in total_hogares_por_aglomerado.items()
-    
+        aglomerado: (hogares_filtrados_por_aglomerado.get(
+            aglomerado, 0), total)
+        for aglomerado, total in total_hogares_por_aglomerado.items()
+
     }
 
     # Calculo porcentajes y muestro ranking
@@ -292,6 +299,7 @@ def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 5 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
+
 
 def contar_viviendas_propietarias(datos_hogares):
     """
@@ -690,7 +698,7 @@ def tabla_nivel_educativo(data, aglomerado):
         imprimo_tabla_nivel_educativo(conteo)
 
 # -----------------------------------------------------------------------------------
-# FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS 
+# FUNCIONES PUNTO 10 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
 
@@ -707,14 +715,14 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
     """
     Calcula el porcentaje de personas con secundario incompleto mayores de 18 años
     en dos aglomerados específicos, agrupando los resultados por año y trimestre.
-    
+
     Args:
         aglomerado1 (int): Código del primer aglomerado a considerar.
         aglomerado2 (int): Código del segundo aglomerado a considerar.
         data (list[dict]): Lista de registros, cada uno representado como un diccionario
             que contiene las claves 'AGLOMERADO', 'NIVEL_ED_str', 'ANO4', 
             'TRIMESTRE', 'PONDERA' y 'CH06'.
-    
+
     """
     # Inicializo la estructura de datos
     dats = {}
@@ -764,7 +772,8 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
 def imprimir_porcentaje_secundario_incompleto(datos, aglo1, aglo2):
 
     # Encabezado
-    print(f"{'Año':^8} {'Trimestre':^8} {f'Aglomerado {aglo1}':^20} {f'Aglomerado {aglo2}':^20}")
+    print(f"{'Año':^8} {'Trimestre':^8} {f'Aglomerado {aglo1}':^20} {
+          f'Aglomerado {aglo2}':^20}")
     print("-" * 60)
 
     # sorted lo usa para ir imprimiendo ordenando por el par anio, trimestre
@@ -793,13 +802,11 @@ def imprimir_porcentaje_secundario_incompleto(datos, aglo1, aglo2):
             continue
 
 
-
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
 def obtener_dats_ultimo_trimestre(anio, data):
-    
     """
     Obtiene los registros correspondientes al último trimestre disponible de un año específico.
 
@@ -812,42 +819,43 @@ def obtener_dats_ultimo_trimestre(anio, data):
     # A partir de un anio tomamos la data del ultimo trimestre
 
     # estructura a guardar datos
-    
+
     resultado = []
     ultimo_trimestre = -1
-    anio_encontrado = False 
+    anio_encontrado = False
     try:
         anio = int(anio)
     except:
         return None
-    
+
     # se anade este booleano en caso que no exista el anio en el data set
-    
+
     for row in data:
-        
+
         try:
             anio_row_actual = int(row['ANO4'])
             trimestre_actual = int(row['TRIMESTRE'])
         except:
-            continue # si contiene valores no normativos pasa al siguiente
-        
-        if anio_row_actual == anio :
+            continue  # si contiene valores no normativos pasa al siguiente
+
+        if anio_row_actual == anio:
             anio_encontrado = True
             if trimestre_actual > ultimo_trimestre:
                 ultimo_trimestre = trimestre_actual
                 resultado = [row]
             elif trimestre_actual == ultimo_trimestre:
                 resultado.append(row)
-    
+
     if not anio_encontrado:
         return None
     return resultado
-                
+
+
 def aglomerado_mayor_menor_vivienda_precario(anio, data):
     """
     Se ingresa un anio y se busca el ultimo trimestre en ese anio, del cual obtendremos 
     el aglomerado con mayor y menor porcentaje de viviendas con 'Material precario'
-    
+
     Args:
         anio (int or str): Año del cual se desea obtener los datos.
         data (list[dict]): Lista de registros, cada uno representado como un diccionario
@@ -856,14 +864,14 @@ def aglomerado_mayor_menor_vivienda_precario(anio, data):
     """
 
     dats_ultimo_trimestre = obtener_dats_ultimo_trimestre(anio, data)
-    
+
     # si el data set no tiene datos de ese anio o directamente no hay anio
     if not dats_ultimo_trimestre:
         return None, None
-    
+
     # estructura donde se guardaran los aglomerados y su porcentaje
     result = {}
-    
+
     conteo_total = Counter()
     conteo_precario = Counter()
     for row in dats_ultimo_trimestre:
@@ -871,39 +879,43 @@ def aglomerado_mayor_menor_vivienda_precario(anio, data):
             aglomerado = int(row['AGLOMERADO'])
             material = str(row['MATERIAL_TECHUMBRE'])
         except:
-            continue # si no hay la columna o datos erroneos
-        
+            continue  # si no hay la columna o datos erroneos
+
         conteo_total[aglomerado] += 1
-        
+
         if material == 'Material precario':
             conteo_precario[aglomerado] += 1
-            
+
     # Calcular porcentajes
     porcentajes = {
         aglo: round((conteo_precario[aglo]/conteo_total[aglo])*100, 2) for aglo in conteo_total
     }
-    
+
     if not porcentajes:
-        return None, None # si no hay datos validos
-    
+        return None, None  # si no hay datos validos
+
     # con .get max y min se basan en el valor de cada aglomerado
     aglo_max = max(porcentajes, key=porcentajes.get)
     aglo_min = min(porcentajes, key=porcentajes.get)
-    
+
     return (aglo_max, porcentajes[aglo_max]), (aglo_min, porcentajes[aglo_min])
-    
+
+
 def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
-    
+
     if not aglo_porcentaje_max or not aglo_porcentaje_min:
         print("No se encontraron datos de viviendas con material precario para ese año.")
     else:
         print('-'*50)
-        print('El aglomerado con mayor porcentaje de vivientas de material precario es: ',aglo_porcentaje_max[0],'con',aglo_porcentaje_max[1])
-        print('El aglomerado con menor porcentaje de vivientas de material precario es: ',aglo_porcentaje_min[0],'con',aglo_porcentaje_min[1])
+        print('El aglomerado con mayor porcentaje de vivientas de material precario es: ',
+              aglo_porcentaje_max[0], 'con', aglo_porcentaje_max[1])
+        print('El aglomerado con menor porcentaje de vivientas de material precario es: ',
+              aglo_porcentaje_min[0], 'con', aglo_porcentaje_min[1])
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
+
 
 def buscar_anios_disponibles(data):
     """
@@ -917,103 +929,103 @@ def buscar_anios_disponibles(data):
         except (KeyError, ValueError):
             continue
     return anios
-    
+
+
 def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
-    
-    # Busco el ultimo anio disponible para reutilizar 
+
+    # Busco el ultimo anio disponible para reutilizar
     # la funcion de obtener_dats_ultimo_trimestre
-    
     """
     Calcula el porcentaje de jubilados que viven en un hogar con habitabilidad insuficiente
     por cada aglomerado del ultimo trimestre del año disponible
-    
+
     Return:
         Dict: diccionario con aglomerados como claves y porcentajes de jubilados
         en hogares con habitabilidad insuficiente 
     """
-    
+
     # Buscar años disponibles en ambos datasets
     anios_hog = buscar_anios_disponibles(data_hog)
     anios_ind = buscar_anios_disponibles(data_ind)
-    
+
     anios_comunes = anios_hog & anios_ind
-    
+
     if not anios_comunes:
         return "No compatibles"
-        
+
     anio_max = max(anios_comunes)
-        
+
     datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
     datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
 
     if not datos_proc_hog or not datos_proc_ind:
         return None
-    
+
     # Verificar que ambos conjuntos de datos correspondan al mismo trimestre
-    
+
     try:
         trimestre_hog = max(int(row['TRIMESTRE']) for row in datos_proc_hog)
         trimestre_ind = max(int(row['TRIMESTRE']) for row in datos_proc_ind)
     except (KeyError, ValueError):
         return None
-    
+
     if trimestre_hog != trimestre_ind:
         return "No compatibles"  # Trimestres distintos, no se puede calcular correctamente
-    
+
     # estructura donde guardaremos los hogares con habitabilidad insuficiente
-        
+
     hogares_habitabilidad_insuficiente = set()
     # lo hacemos set para evitar datos repetidos
-        
+
     # generamos un diccionario de par codosu, hogar y valor cantidad de miembros del hogar
     for row in datos_proc_hog:
         try:
             if row['CONDICION_DE_HABITABILIDAD'].strip().lower() == 'insuficiente':
                 clave = (row['CODUSU'], row['NRO_HOGAR'])
                 hogares_habitabilidad_insuficiente.add(clave)
-        except(KeyError, ValueError):
-            continue # ante cualquier dato mal ingresado o vacio
-            
+        except (KeyError, ValueError):
+            continue  # ante cualquier dato mal ingresado o vacio
+
     # ahora con el diccionario de hogares de habitabilidad insuficientes
-             
+
     if not hogares_habitabilidad_insuficiente:
         return "NO_HOGARES_INSUFICIENTES"
-        
-    
+
     # estructura para calcular % de jubilados
-        
+
     datos_jubilados = {}
-        
-        # recorremos individuos
-        
+
+    # recorremos individuos
+
     for fila in datos_proc_ind:
-            
-            # sabemos que jubilados en CAT_INAC corresponde a 1
-            
+
+        # sabemos que jubilados en CAT_INAC corresponde a 1
+
         try:
             clave = (fila['CODUSU'], fila['NRO_HOGAR'])
-                
-            if int(fila['CAT_INAC']) == 1: 
-                
-                #obtener el aglomerado actual
+
+            if int(fila['CAT_INAC']) == 1:
+
+                # obtener el aglomerado actual
                 aglomerado = fila['AGLOMERADO']
-                
+
                 if aglomerado not in datos_jubilados:
                     datos_jubilados[aglomerado] = {
                         'total': 0,
                         'habitabilidad_insuficiente': 0
                     }
                 datos_jubilados[aglomerado]['total'] += int(fila['PONDERA'])
-                    
+
                 # si el jubilado esta en un hogar de habitabilidad insuficiente
-                if clave in hogares_habitabilidad_insuficiente:  
-                    datos_jubilados[aglomerado]['habitabilidad_insuficiente'] += int(fila['PONDERA'])
-                                      
+                if clave in hogares_habitabilidad_insuficiente:
+                    datos_jubilados[aglomerado]['habitabilidad_insuficiente'] += int(
+                        fila['PONDERA'])
+
         except (KeyError, ValueError):
-            continue   
-            
+            continue
+
     resultado = {}
-        
+
     for aglomerado, valores in datos_jubilados.items():
         total = valores['total']
         insuficiente = valores['habitabilidad_insuficiente']
@@ -1023,20 +1035,21 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
             porcentaje = 0.0
         resultado[aglomerado] = round(porcentaje, 2)
 
-    return resultado   
+    return resultado
+
 
 def imprimir_datos_jubilados(resultados):
     """
         Imprime de forma ordenada por aglomerados el porcentaje de jubilados
         en viviendas de habitabilidad insuficiente
     """
-        
+
     if resultados == "NO_HOGARES_INSUFICIENTES":
         print("No existen jubilados en hogares con habitabilidad insuficiente.")
         return
     elif resultados == "No compatibles":
         print("No son compatibles los archivos hogares - individuos")
-        return 
+        return
     elif not resultados:
         print("Datos faltantes.")
         return
@@ -1084,12 +1097,13 @@ def buscar_ultimo_trimestre_disponible(anio: int, filas_csv: list[dict], tipo_ar
             f"No hay trimestres disponibles en el archivo de {tipo_archivo} para el {anio}.")
         return None
 
+
 def contar_personas_educadas_en_viviendas_insuficientes(data_indiv: list[dict], data_hog: list[dict], anio: int, trimestre: int) -> int:
     """
     Se contabilizan las personas con nivel educativo universitario o superior
     que vivan en viviendas con condición de habitabilidad insuficiente, en un 
     año y trimestre específicos.
-    
+
     Los datos se toman directamente de las listas de registros de
     individuos y hogares, sin armar estructuras intermedias.
     """
@@ -1150,17 +1164,21 @@ def informe_universitarios_en_viviendas_insuficientes(data_indiv: list[dict], da
     """
 
     # Busco el último trimestre disponible para cada archivo
-    trimestre_indiv = buscar_ultimo_trimestre_disponible(anio, data_indiv, "individuos")
-    trimestre_hog = buscar_ultimo_trimestre_disponible(anio, data_hog, "hogares")
+    trimestre_indiv = buscar_ultimo_trimestre_disponible(
+        anio, data_indiv, "individuos")
+    trimestre_hog = buscar_ultimo_trimestre_disponible(
+        anio, data_hog, "hogares")
 
     # Verifico que haya datos disponibles en ambos archivos
     if trimestre_indiv is None or trimestre_hog is None:
-        print(f"No hay información suficiente para el año {anio} en ambos archivos.")
+        print(
+            f"No hay información suficiente para el año {anio} en ambos archivos.")
         return
 
     # Verifico que los archivos correspondan al mismo trimestre
     if trimestre_indiv != trimestre_hog:
-        print(f"Error: los archivos no corresponden al mismo trimestre (individuos: {trimestre_indiv}, hogares: {trimestre_hog}).")
+        print(
+            f"Error: los archivos no corresponden al mismo trimestre (individuos: {trimestre_indiv}, hogares: {trimestre_hog}).")
         return
 
     # Contamos personas directamente, sin armar diccionarios
@@ -1168,4 +1186,5 @@ def informe_universitarios_en_viviendas_insuficientes(data_indiv: list[dict], da
         data_indiv, data_hog, anio, trimestre_indiv
     )
 
-    print(f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
+    print(
+        f"\nCantidad de personas con estudios superiores/universitarios en viviendas insuficientes: {cantidad_ponderada}")
