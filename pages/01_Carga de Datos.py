@@ -36,8 +36,8 @@ else:
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-# Carga de Archivos
-st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga y Actualización de Archivos</h4>',
+# Pasos y tutorial
+st.markdown('<h4><i class="fas fa-book" style="color:#E67E22;"></i> Pasos para la Carga de Datos</h4>',
             unsafe_allow_html=True)
 
 # Complemento de carga de archivos
@@ -51,7 +51,21 @@ st.markdown(
 st.markdown(
     "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
 
-uploaded_files = st.file_uploader("Subí tus archivos", accept_multiple_files=True)
+
+# Link a tutoriales
+st.markdown("""
+    <h6 style="font-weight: bold; font-size: 18px;">
+        <i class="fas fa-question-circle" style="color:#E67E22; font-size: 20px;"></i>  
+    ¿Alguna duda? </h6>
+        <p style="font-size: 16px;">¡Mirá el tutorial! En la sección <a href="#tutoriales" style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
+""", unsafe_allow_html=True)
+
+# Carga de Archivos
+st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i> Carga y Actualización de Datos </h4>',
+            unsafe_allow_html=True)
+
+uploaded_files = st.file_uploader("**Seccioná el o los archivos desde tu dispositivo:**", accept_multiple_files=True)
 
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
           on_click=cargar_archivos, args=(uploaded_files,))
@@ -82,11 +96,35 @@ if "mensaje_actualizacion" in st.session_state:
     getattr(st, tipo)(texto)
     del st.session_state["mensaje_actualizacion"]
 
+# Enlace al área de información del Dataset
+st.markdown("""
+    <h6 style="font-weight: bold; font-size: 18px;">
+    </h6>
+        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a>.</p>
+""", unsafe_allow_html=True)
 
 from src.utils.constants import DATA_SOURCE_DIR
 import datetime
 
 # Separador
+st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+# Sección: Tutoriales
+st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
+st.markdown("""
+            <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Video explicativo.
+</div>
+""", unsafe_allow_html=True)
+
+# Espacio
+st.markdown("&nbsp;", unsafe_allow_html=True)
+
+# Video Tutorial 1
+st.video("https://www.youtube.com/watch?v=bILbA6-mzWw")
+
+
+# Línea divisoria cálida
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 if uploaded_files:
