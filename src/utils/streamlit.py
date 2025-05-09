@@ -138,18 +138,6 @@ def cargar_archivos(archivos):
 
     st.session_state["mensajes_carga"] = mensajes
 
-
-from pathlib import Path
-import streamlit as st
-
-from pathlib import Path
-from src.utils.constants import DATA_SOURCE_DIR, DATA_PROCESSED_DIR
-import streamlit as st
-
-from pathlib import Path
-import streamlit as st
-from src.utils.constants import DATA_SOURCE_DIR, DATA_PROCESSED_DIR
-
 def eliminar_archivos():
     """
     Elimina todos los archivos .txt excepto .gitkeep del directorio de origen y del directorio procesado.
