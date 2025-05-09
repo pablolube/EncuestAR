@@ -155,7 +155,7 @@ def eliminar_archivos():
         archivos_encontrados = False
 
         for carpeta in carpetas:
-            archivos = list(carpeta.glob("*.txt"))
+            archivos = list(carpeta)
             if archivos:
                 archivos_encontrados = True
                 for archivo in archivos:

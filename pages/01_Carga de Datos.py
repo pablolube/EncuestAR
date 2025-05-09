@@ -83,5 +83,32 @@ if "mensaje_actualizacion" in st.session_state:
     del st.session_state["mensaje_actualizacion"]
 
 
+from src.utils.constants import DATA_SOURCE_DIR
+import datetime
+
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+if uploaded_files:
+    st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos cargados en esta sesión</h4>', unsafe_allow_html=True)
+
+    archivos_hogar = []
+    archivos_indiv = []
+
+    for archivo in DATA_SOURCE_DIR.iterdir():
+        if archivo.name.endswith(".txt"):
+            nombre = archivo.name.lower()
+            if "hogar" in nombre:
+                archivos_hogar.append(archivo)
+            elif "individual" in nombre:
+                archivos_indiv.append(archivo)
+
+    def imprimir_archivos(titulo, archivos):
+        if archivos:
+            st.markdown(f"#### {titulo}")
+            for archivo in archivos:
+                
+                st.markdown(f"- 📄 **{archivo.name}** ")
+
+    imprimir_archivos("🏠 Hogares", archivos_hogar)
+    imprimir_archivos("👤 Individuos", archivos_indiv)
