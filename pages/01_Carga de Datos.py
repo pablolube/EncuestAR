@@ -20,27 +20,7 @@ st.markdown('<h2 style"color:#D35400;">🗂️ Carga de Datos</h2>',
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-# Información del Dataset
-st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Información del Dataset</h4>',
-            unsafe_allow_html=True)
-
-if  st.session_state.date_range is None:
-    st.warning(
-        "No se encontraron archivos procesados. Intenta cargarlos primero, y luego actualizar", icon="⚠️")
-else:
-    fecha_inicio = st.session_state.date_range[0]
-    fecha_fin = st.session_state.date_range[1]
-    if fecha_inicio is not None and fecha_fin is not None:
-        st.markdown(
-            f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
-    else:
-         st.warning(
-        "No fue posible determinar las fechas porque los archivos cargados no contienen información temporal válida", icon="⚠️")
-       
-# Separador
-st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
-
-# Complemento de carga de archivos
+# Complemento de carga de archivos--------------------------------------------------------------------
 
 # Carga de Archivos
 st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i>  Carga y Actualización de Datos </h4>',
@@ -91,9 +71,11 @@ if "mensaje_actualizacion" in st.session_state:
 st.markdown("""
     <h6 style="font-weight: bold; font-size: 18px;">
     </h6>
-        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
-        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a>.</p>
-""", unsafe_allow_html=True)
+        <p style="font-size: 16px;"> Podés verificar si se actualizó correctamente la información en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a> y qué archivos cargaste en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
+        <i class="fas fa-link" style="color:#E67E22;"></i> Ver Archivos en sistema </a> </p>
+""", unsafe_allow_html=True) 
+
 
 from src.utils.constants import DATA_SOURCE_DIR
 import datetime
@@ -101,7 +83,64 @@ import datetime
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-# Sección: Tutoriales
+# Información del Dataset------------------------------------------------------------------------------
+
+st.markdown('<h4><i class="fas fa-calendar-alt" style="color:#E67E22;"></i> Información del Dataset</h4>',
+            unsafe_allow_html=True)
+
+if  st.session_state.date_range is None:
+    st.warning(
+        "No se encontraron archivos procesados. Intenta cargarlos primero, y luego actualizar", icon="⚠️")
+else:
+    fecha_inicio = st.session_state.date_range[0]
+    fecha_fin = st.session_state.date_range[1]
+    if fecha_inicio is not None and fecha_fin is not None:
+        st.markdown(
+            f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
+    else:
+         st.warning(
+        "No fue posible determinar las fechas porque los archivos cargados no contienen información temporal válida", icon="⚠️")
+       
+# Separador
+st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+# Sección: Archivos cargados en el sistema-----------------------------------------------------------
+
+# Sección archivos en sesión
+st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos en sistema</h4>', unsafe_allow_html=True)
+
+archivos_hogar = []
+archivos_indiv = []
+
+# Listar los archivos en el directorio, no verificamos si esta vacio, porque siempre tiene al menos .gitkeep
+for archivo in DATA_SOURCE_DIR.iterdir():
+    if archivo.name.endswith(".txt"):
+        nombre = archivo.name.lower()
+        if "hogar" in nombre:
+            archivos_hogar.append(archivo)
+        elif "individual" in nombre:
+            archivos_indiv.append(archivo)
+
+# Función para imprimir archivos clasificados
+def imprimir_archivos(titulo, archivos):
+    if archivos:
+        st.markdown(f"#### {titulo}")
+        for archivo in archivos:
+            fecha = datetime.datetime.fromtimestamp(archivo.stat().st_mtime).strftime("%d/%m/%Y %H:%M:%S")
+            st.markdown(f"- 📄 **{archivo.name}** - Fecha y Hora de carga: {fecha}")
+    else:
+        st.markdown(f"**No hay archivos de {titulo.lower()} cargados.**")
+
+# Mostrar los archivos cargados
+imprimir_archivos("🏠 Hogares", archivos_hogar)
+imprimir_archivos("👤 Individuos", archivos_indiv)
+
+# Separador opcional
+st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+
+# Sección: Tutoriales-------------------------------------------------------------------------------
+
 st.markdown('<h4 id="tutoriales"><i class="fas fa-book"; style="color:#E67E22;"></i> Tutoriales</h4>', unsafe_allow_html=True)
 st.markdown("""
             <div style="text-align: justify;"><strong>¿Cómo cargar datos en la App?</strong>  Paso a paso y Video explicativo.
@@ -128,27 +167,4 @@ st.video("https://www.youtube.com/watch?v=bILbA6-mzWw")
 # Línea divisoria cálida
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-archivos_existentes = list(DATA_SOURCE_DIR.glob("*.txt"))
-if archivos_existentes:
-    st.markdown('<h4><i class="fas fa-file-alt" style="color:#E67E22;"></i> Archivos cargados en esta sesión</h4>', unsafe_allow_html=True)
 
-    archivos_hogar = []
-    archivos_indiv = []
-
-    for archivo in DATA_SOURCE_DIR.iterdir():
-        if archivo.name.endswith(".txt"):
-            nombre = archivo.name.lower()
-            if "hogar" in nombre:
-                archivos_hogar.append(archivo)
-            elif "individual" in nombre:
-                archivos_indiv.append(archivo)
-
-    def imprimir_archivos(titulo, archivos):
-        if archivos:
-            st.markdown(f"#### {titulo}")
-            for archivo in archivos:
-                
-                st.markdown(f"- 📄 **{archivo.name}** ")
-
-    imprimir_archivos("🏠 Hogares", archivos_hogar)
-    imprimir_archivos("👤 Individuos", archivos_indiv)
