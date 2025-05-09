@@ -142,11 +142,18 @@ def cargar_archivos(archivos):
 from pathlib import Path
 import streamlit as st
 
+from pathlib import Path
+from src.utils.constants import DATA_SOURCE_DIR, DATA_PROCESSED_DIR
+import streamlit as st
+
+from pathlib import Path
+import streamlit as st
+from src.utils.constants import DATA_SOURCE_DIR, DATA_PROCESSED_DIR
+
 def eliminar_archivos():
     """
-    Elimina todos los archivos .txt del directorio de origen de datos y del directorio procesado.
+    Elimina todos los archivos .txt excepto .gitkeep del directorio de origen y del directorio procesado.
     """
-    # Limpiar mensajes previos
     st.session_state.pop("mensaje_eliminacion", None)
 
     try:
@@ -155,7 +162,8 @@ def eliminar_archivos():
         archivos_encontrados = False
 
         for carpeta in carpetas:
-            archivos = list(carpeta)
+            archivos = [archivo for archivo in carpeta.iterdir() 
+                        if archivo.is_file() and archivo.name != ".gitkeep"]
             if archivos:
                 archivos_encontrados = True
                 for archivo in archivos:
