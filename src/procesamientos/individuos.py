@@ -3,6 +3,9 @@
 # PROCESADO DE INDIVIDUOS DETALLE
 # -------------------------------------------------------------------------------------------------------------------------
 
+from src.utils.helpers import extraer_fecha, actualizarmaxmin_fechas
+
+
 def add_data_ch04str(row):
     """
     Agrega la clasificación Masculino/Femenino a la columna ch4_str.
@@ -74,16 +77,21 @@ def add_data_universitario(row):
 
     row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
 
-from src.utils.helpers import extraer_fecha,actualizarmaxmin_fechas
-    
+
 # -------------------------------------------------------------------------------
 # PROCESAMIENTO DE INDIVIDUOS
 # -------------------------------------------------------------------------------
 
 
 def add_extra_data(header, data):
-    min_fecha=None
-    max_fecha=None
+    """
+    Agrega columnas adicionales al header y procesa los datos para cada fila.
+    Args:
+    :param header: Lista de encabezados del archivo CSV.
+    :param data: Lista de filas del archivo CSV.
+    """
+    min_fecha = None
+    max_fecha = None
 
     # Agrego las nuevas columnas al header
     header.extend(["CH04_str", "NIVEL_ED_str",
@@ -97,7 +105,7 @@ def add_extra_data(header, data):
         add_data_universitario(row)
         fecha_actual = extraer_fecha(row)
         if fecha_actual:
-            min_fecha, max_fecha = actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha)
-  
-    return min_fecha, max_fecha
+            min_fecha, max_fecha = actualizarmaxmin_fechas(
+                fecha_actual, min_fecha, max_fecha)
 
+    return min_fecha, max_fecha
