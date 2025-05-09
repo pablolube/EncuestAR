@@ -761,35 +761,37 @@ def personas_secundario_incompleto_anio_trimestre(aglomerado1, aglomerado2,  dat
     return dats
 
 
-def imprimir_porcentaje_secundario_incompleto(datos):
+def imprimir_porcentaje_secundario_incompleto(datos, aglo1, aglo2):
 
     # Encabezado
-
-    print(f"{'Año':^8} {'Trimestre':^8} {'Aglomerado A':^20} {'Aglomerado B':^20}")
+    print(f"{'Año':^8} {'Trimestre':^8} {f'Aglomerado {aglo1}':^20} {f'Aglomerado {aglo2}':^20}")
     print("-" * 60)
 
-    # sorted lo usa para ir imprimendo ordenando por el par anio, trimestre
+    # sorted lo usa para ir imprimiendo ordenando por el par anio, trimestre
     for (anio, trimestre), valores in sorted(datos.items()):
 
-        # guardamos los valores de cada anio trimestre
-        cumplen1 = valores["Cumplen_aglom_1"]
-        total1 = valores["Todos_aglom1_18"]
-        cumplen2 = valores["Cumplen_aglom_2"]
-        total2 = valores["Todos_aglom2_18"]
+        try:
+            # Guardamos los valores de cada año trimestre
+            cumplen1 = valores.get("Cumplen_aglom_1", 0)
+            total1 = valores.get("Todos_aglom1_18", 0)
+            cumplen2 = valores.get("Cumplen_aglom_2", 0)
+            total2 = valores.get("Todos_aglom2_18", 0)
 
-        # Calculamos porcentaje
+            # Calculamos porcentaje
+            porcentaje1 = (cumplen1 / total1) * 100 if total1 > 0 else 0
+            porcentaje2 = (cumplen2 / total2) * 100 if total2 > 0 else 0
 
-        porcentaje1 = (cumplen1 / total1) * 100 if total1 > 0 else 0
-        porcentaje2 = (cumplen2 / total2) * 100 if total2 > 0 else 0
+            # Mejoramos el formato para la impresión
+            porcentaje1 = f"{porcentaje1:.2f} %"
+            porcentaje2 = f"{porcentaje2:.2f} %"
 
-        # Mejoramos el formato para la impresion
+            # Imprimimos fila
+            print(f"{anio:^8} {trimestre:^8} {porcentaje1:^20} {porcentaje2:^20}")
 
-        porcentaje1 = f"{porcentaje1:.2f} %"
-        porcentaje2 = f"{porcentaje2:.2f} %"
+        except (KeyError, ValueError) as e:
+            print(f"Error al procesar los datos para {anio}-{trimestre}: {e}")
+            continue
 
-        # Imprimimos fila
-
-        print(f"{anio:^8} {trimestre:^8} {porcentaje1:^20} {porcentaje2:^20}")
 
 
 # -----------------------------------------------------------------------------------
@@ -903,23 +905,18 @@ def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
 # FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
-def buscar_ultimo_anio_disponible(data):
+def buscar_anios_disponibles(data):
     """
-    Busca el último año disponible en los datos cargados.
+    Devuelve un conjunto de años disponibles en los datos.
     """
     anios = set()
-
     for fila in data:
         try:
             anio = int(fila["ANO4"])
             anios.add(anio)
         except (KeyError, ValueError):
             continue
-
-    if anios:
-        return max(anios)  # Retorna el último año (máximo)
-    else:
-        return None  # Si no hay años disponibles, retorna None
+    return anios
     
 def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
     
@@ -935,78 +932,96 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
         en hogares con habitabilidad insuficiente 
     """
     
-    anio_max = buscar_ultimo_anio_disponible(data_ind)
+    # Buscar años disponibles en ambos datasets
+    anios_hog = buscar_anios_disponibles(data_hog)
+    anios_ind = buscar_anios_disponibles(data_ind)
     
-    if not anio_max:
-        return None
-    else:
-        datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
-        datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
+    anios_comunes = anios_hog & anios_ind
+    
+    if not anios_comunes:
+        return "No compatibles"
+        
+    anio_max = max(anios_comunes)
+        
+    datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
+    datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
 
-        if not datos_proc_hog or not datos_proc_ind:
-            return None
+    if not datos_proc_hog or not datos_proc_ind:
+        return None
+    
+    # Verificar que ambos conjuntos de datos correspondan al mismo trimestre
+    
+    try:
+        trimestre_hog = max(int(row['TRIMESTRE']) for row in datos_proc_hog)
+        trimestre_ind = max(int(row['TRIMESTRE']) for row in datos_proc_ind)
+    except (KeyError, ValueError):
+        return None
+    
+    if trimestre_hog != trimestre_ind:
+        return "No compatibles"  # Trimestres distintos, no se puede calcular correctamente
+    
+    # estructura donde guardaremos los hogares con habitabilidad insuficiente
         
-        # estructura donde guardaremos los hogares con habitabilidad insuficiente
+    hogares_habitabilidad_insuficiente = set()
+    # lo hacemos set para evitar datos repetidos
         
-        hogares_habitabilidad_insuficiente = set()
-        # lo hacemos set para evitar datos repetidos
-        
-        # generamos un diccionario de par codosu, hogar y valor cantidad de miembros del hogar
-        for row in datos_proc_hog:
-            try:
-                if row['CONDICION_DE_HABITABILIDAD'].strip().lower() == 'insuficiente':
-                    clave = (row['CODUSU'], row['NRO_HOGAR'])
-                    hogares_habitabilidad_insuficiente.add(clave)
-            except(KeyError, ValueError):
-                continue # ante cualquier dato mal ingresado o vacio
+    # generamos un diccionario de par codosu, hogar y valor cantidad de miembros del hogar
+    for row in datos_proc_hog:
+        try:
+            if row['CONDICION_DE_HABITABILIDAD'].strip().lower() == 'insuficiente':
+                clave = (row['CODUSU'], row['NRO_HOGAR'])
+                hogares_habitabilidad_insuficiente.add(clave)
+        except(KeyError, ValueError):
+            continue # ante cualquier dato mal ingresado o vacio
             
-        # ahora con el diccionario de hogares de habitabilidad insuficientes
+    # ahora con el diccionario de hogares de habitabilidad insuficientes
              
-        if not hogares_habitabilidad_insuficiente:
-            return "NO_HOGARES_INSUFICIENTES"
+    if not hogares_habitabilidad_insuficiente:
+        return "NO_HOGARES_INSUFICIENTES"
         
-        # estructura para calcular % de jubilados
+    
+    # estructura para calcular % de jubilados
         
-        datos_jubilados = {}
+    datos_jubilados = {}
         
         # recorremos individuos
         
-        for fila in datos_proc_ind:
+    for fila in datos_proc_ind:
             
             # sabemos que jubilados en CAT_INAC corresponde a 1
             
-            try:
-                clave = (fila['CODUSU'], fila['NRO_HOGAR'])
+        try:
+            clave = (fila['CODUSU'], fila['NRO_HOGAR'])
                 
-                if int(fila['CAT_INAC']) == 1: 
+            if int(fila['CAT_INAC']) == 1: 
                 
-                    #obtener el aglomerado actual
-                    aglomerado = fila['AGLOMERADO']
+                #obtener el aglomerado actual
+                aglomerado = fila['AGLOMERADO']
                 
-                    if aglomerado not in datos_jubilados:
-                        datos_jubilados[aglomerado] = {
-                            'total': 0,
-                            'habitabilidad_insuficiente': 0
-                        }
-                    datos_jubilados[aglomerado]['total'] += int(fila['PONDERA'])
+                if aglomerado not in datos_jubilados:
+                    datos_jubilados[aglomerado] = {
+                        'total': 0,
+                        'habitabilidad_insuficiente': 0
+                    }
+                datos_jubilados[aglomerado]['total'] += int(fila['PONDERA'])
                     
-                    # si el jubilado esta en un hogar de habitabilidad insuficiente
-                    if clave in hogares_habitabilidad_insuficiente:  
-                        datos_jubilados[aglomerado]['habitabilidad_insuficiente'] += int(fila['PONDERA'])
+                # si el jubilado esta en un hogar de habitabilidad insuficiente
+                if clave in hogares_habitabilidad_insuficiente:  
+                    datos_jubilados[aglomerado]['habitabilidad_insuficiente'] += int(fila['PONDERA'])
                                       
-            except (KeyError, ValueError):
-                continue   
+        except (KeyError, ValueError):
+            continue   
             
-        resultado = {}
+    resultado = {}
         
-        for aglomerado, valores in datos_jubilados.items():
-            total = valores['total']
-            insuficiente = valores['habitabilidad_insuficiente']
-            if total > 0:
-                porcentaje = (insuficiente / total) * 100
-            else:
-                porcentaje = 0.0
-            resultado[aglomerado] = round(porcentaje, 2)
+    for aglomerado, valores in datos_jubilados.items():
+        total = valores['total']
+        insuficiente = valores['habitabilidad_insuficiente']
+        if total > 0:
+            porcentaje = (insuficiente / total) * 100
+        else:
+            porcentaje = 0.0
+        resultado[aglomerado] = round(porcentaje, 2)
 
     return resultado   
 
@@ -1015,25 +1030,24 @@ def imprimir_datos_jubilados(resultados):
         Imprime de forma ordenada por aglomerados el porcentaje de jubilados
         en viviendas de habitabilidad insuficiente
     """
-    try:
         
-        if resultados == "NO_HOGARES_INSUFICIENTES":
-            print("No existen jubilados en hogares con habitabilidad insuficiente.")
-            return
+    if resultados == "NO_HOGARES_INSUFICIENTES":
+        print("No existen jubilados en hogares con habitabilidad insuficiente.")
+        return
+    elif resultados == "No compatibles":
+        print("No son compatibles los archivos hogares - individuos")
+        return 
+    elif not resultados:
+        print("Datos faltantes.")
+        return
 
-        if len(resultados.items()) > 0:
-            print("-" * 32)
-            print(f"{'Aglomerado':<10} | {'% Jubilados en Hab. Insuf.':>21}")
-            print("-" * 32)
-            
-            for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
-                print(f"{aglomerado:<10} | {porcentaje:>20.2f}%")
-            print("-" * 32)
-    except AttributeError:
-        print("Datos Faltantes")
-    except:
-        print("No se encontraron datos para imprimir.")
+    print("-" * 45)
+    print(f"{'Aglomerado':<15} | {'% Jubilados en Hab. Insuf.':>27}")
+    print("-" * 45)
 
+    for aglomerado, porcentaje in sorted(resultados.items(), key=lambda x: int(x[0])):
+        print(f"{aglomerado:<15} | {porcentaje:>27.2f}%")
+    print("-" * 45)
 
 
 # -----------------------------------------------------------------------------------
