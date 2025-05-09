@@ -32,9 +32,10 @@ code/
 ├── src/
 │   ├── consultas/                # Funciones para realizar consultas sobre los datos.
 │   │   └── consultas.py          # Contiene las funciones para realizar consultas sobre los datos de la EPH.
-│   ├── utils/                    # Funciones auxiliares para tareas comunes (e.g., limpieza de datos, formateo).
+│   ├── utils/                    # Funciones auxiliares para tareas comunes.
 │   │   ├── constants.py          # Contiene las constantes necesarias para el proyecto, datos de uso común.
-│   │   └── helpers.py            # Funciones auxiliares reutilizables para tareas comunes.
+│   │   ├── helpers.py            # Funciones auxiliares reutilizables para tareas comunes.
+│   │   └── streamlit.py          # Funciones para Streamlit.
 │   └── procesamientos/           # Archivos con scripts para procesar y transformar los datos.
 │       ├── individuos.py         # Funciones específicas para procesar datos de individuos.
 │       └── hogares.py            # Funciones específicas para procesar datos de hogares.
@@ -56,6 +57,8 @@ Primero, clona este repositorio a tu máquina local usando Git. Abre tu terminal
 ```bash
 git clone https://gitlab.catedras.linti.unlp.edu.ar/python-2025/proyectos/grupo18/code.git 
 ```
+
+Ingresá tus credenciales de GitLab
 
 ### 2. **Instalar las dependencias**
 Accede al directorio del proyecto: 
