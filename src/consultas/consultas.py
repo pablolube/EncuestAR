@@ -954,7 +954,7 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
         # generamos un diccionario de par codosu, hogar y valor cantidad de miembros del hogar
         for row in datos_proc_hog:
             try:
-                if row['CONDICION_DE_HABITABILIDAD'] == 'Insuficiente':
+                if row['CONDICION_DE_HABITABILIDAD'].strip().lower() == 'insuficiente':
                     clave = (row['CODUSU'], row['NRO_HOGAR'])
                     hogares_habitabilidad_insuficiente.add(clave)
             except(KeyError, ValueError):
