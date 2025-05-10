@@ -960,9 +960,9 @@ def mostrar_datos_porcentajes(aglo_porcentaje_max, aglo_porcentaje_min):
     else:
         print('-'*50)
         print('El aglomerado con mayor porcentaje de viviendas de material precario es: ',
-              aglo_porcentaje_max[0], 'con', aglo_porcentaje_max[1])
+              aglo_porcentaje_max[0], 'con', aglo_porcentaje_max[1],'%')
         print('El aglomerado con menor porcentaje de vivientas de material precario es: ',
-              aglo_porcentaje_min[0], 'con', aglo_porcentaje_min[1])
+              aglo_porcentaje_min[0], 'con', aglo_porcentaje_min[1],'%')
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 12 (ANÁLISIS) - HOGAR
