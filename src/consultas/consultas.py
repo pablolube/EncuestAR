@@ -6,16 +6,16 @@ from collections import Counter
 # -----------------------------------------------------------------------------------
 
 
-def imprimir_alfabetizadas(diccionario):
+def imprimir_alfabetizadas(data):
     """
     Realiza calculos porcentuales 
 
     Imprime el % de personas alfabetizadas por año.
 
     Args:
-    :param diccionario: Diccionario con los datos de alfabetización.
+    :param data: data con los datos de alfabetización.
     """
-    if not diccionario:
+    if not data:
         print("No hay datos para mostrar.")
         return
 
@@ -23,32 +23,21 @@ def imprimir_alfabetizadas(diccionario):
     print("-" * 45)
 
     # Calculo resultados porcentuales por año
-    for anio in sorted(diccionario.keys(), reverse=True):
-
-        # Recorro los trimestres de mayor a menor
-        for trimestre in sorted(diccionario[anio].keys(), reverse=True):
-            # Si hay personas alfabetizadas o no alfabetizadas, calculo los porcentajes
-            if diccionario[anio][trimestre]["A"] > 0 or diccionario[anio][trimestre]["NA"] > 0:
-                valor_alf = diccionario[anio][trimestre]["A"]
-                valor_nalf = diccionario[anio][trimestre]["NA"]
-
-                # Calculo el total de personas
+    for anio in sorted(data.keys(), reverse=True):
+        for trimestre in sorted(data[anio].keys(), reverse=True):
+            if data[anio][trimestre]["A"] > 0 or data[anio][trimestre]["NA"] > 0:
+                valor_alf = data[anio][trimestre]["A"]
+                valor_nalf = data[anio][trimestre]["NA"]
                 total = valor_alf + valor_nalf
-
-                # Calculo los porcentajes
                 porcentaje_alf = round((valor_alf / total) * 100, 2)
                 porcentaje_Nalf = round((valor_nalf / total) * 100, 2)
-
-                # Imprimo resultados
                 print(f"{anio:<10}{porcentaje_alf:>15.2f}{porcentaje_Nalf:>20.2f}")
-
-                # Paso al siguiente año
                 break
 
 
-def cant_personas_alfabetizadas(data):
+def cantidad_alfabetizadas(data):
     """
-    Cuenta la cantidad de personas alfabetizadas en el archivo CSV por el último trimestre de cada año.
+    Devuelve la cantidad de personas alfabetizadas en el archivo CSV por el último trimestre de cada año.
     Se clasifican a las personas que tengan 6 años o más.
 
     Args:
@@ -58,35 +47,24 @@ def cant_personas_alfabetizadas(data):
     count = {}
 
     for row in data:
-        # Analiza si la edad (CH06) mayor a 6 años y que la persona no sea menor de 2 años (CH09=3)
-        if row["CH06"] > "6" and row["CH09"] != "3" and row["PONDERA"].isdigit():
+        if row['CH06'] > '6' and row['CH09'] != '3' and row['PONDERA'].isdigit():
+            if row['ANO4'] not in count:
+                count[row['ANO4']] = {'1': {'A': 0, 'NA': 0}, '2': {'A': 0, 'NA': 0}, '3': {'A': 0, 'NA': 0}, '4': {'A': 0, 'NA': 0}}
+            if row['CH09'] == '1':
+                count[row['ANO4']][row['TRIMESTRE']]['A'] += int(row['PONDERA'])
+            elif row['CH09'] == '2':
+                count[row['ANO4']][row['TRIMESTRE']]['NA'] += int(row['PONDERA'])
+    
+    return count
 
-            # Si el año no existe, lo crea
-            if row["ANO4"] not in count:
-                count[row["ANO4"]] = {"1": {"A": 0, "NA": 0}, "2": {
-                    "A": 0, "NA": 0}, "3": {"A": 0, "NA": 0}, "4": {"A": 0, "NA": 0}}
-
-            # Si la persona es alfabetizada (CH09 == 1), suma al contador de alfabetizados
-            if row["CH09"] == "1":
-                count[row["ANO4"]][row["TRIMESTRE"]
-                                   ]["A"] += int(row["PONDERA"])
-            # Si la persona no es alfabetizada (CH09 == 2), suma al contador de no alfabetizados
-            elif row["CH09"] == "2":
-                count[row["ANO4"]][row["TRIMESTRE"]
-                                   ]["NA"] += int(row["PONDERA"])
-    if count:
-        imprimir_alfabetizadas(count)
-    else:
-        print('No hay datos para mostrar.')
 
 # --------------------------------------------------------------------
 # FUNCIONES PUNTO 2 (ANÁLISIS) - INDIVIDUOS
 # --------------------------------------------------------------------
 
-
 def porc_extranjero_universitario(anio, trim, data):
     """
-    Imprime el % de personas extranjeras que hayan cursado el nivel universitario o superior.
+    Devuelve el % de personas extranjeras que hayan cursado el nivel universitario o superior.
 
     Args:
     :anio: año a analizar.
@@ -94,77 +72,70 @@ def porc_extranjero_universitario(anio, trim, data):
     :param data: lista de datos del dataset.
     """
 
-    count = {"argentino": 0, "extranjero": 0}
+    count = {'argentino': 0, 'extranjero': 0}
 
     for row in data:
-        if row["ANO4"] == anio and row["TRIMESTRE"] == trim and row["NIVEL_ED_str"] == "Superior o universitario":
+        if row['ANO4'] == anio and row['TRIMESTRE'] == trim and row['NIVEL_ED_str'] == 'Superior o universitario':
             # CH15 donde nacio
-            if row["CH15"] in ("4", "5") and row["PONDERA"].isdigit():
-                count["extranjero"] += int(row["PONDERA"])
+            if row['CH15'] in ('4', '5') and row['PONDERA'].isdigit():
+                count['extranjero'] += int(row['PONDERA'])
             else:
-                count["argentino"] += int(row["PONDERA"])
+                count['argentino'] += int(row['PONDERA'])
 
     try:
-        porcentaje = (count["extranjero"] /
-                      (count["argentino"] + count["extranjero"])) * 100
-        print(
-            f"El % de personas extranjeras que han cursado el nivel superior o universitario en el trimestre {trim} del año {anio} es del: {porcentaje:.2f}%")
+        return (count['extranjero'] / (count['argentino'] + count['extranjero'])) * 100
 
     except ZeroDivisionError:
-        print(f"No hay datos para el trimestre {trim} del año {anio}")
+        return None
+
 
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 3 (ANÁLISIS) - INDIVIDUOS
 # -----------------------------------------------------------------------------------
 
+def imprimir_info_menor_desocupacion(data):
+
+    print(f"{'Año':<10}{'Trimestre':<16}{'Desocupados':<18}")
+    print("-" * 40)
+
+    for anio, trimestre,cantidad in data:
+        print(f"{anio:<10}{trimestre:<16}{cantidad:<18}")
 
 def info_menor_desocupacion(data):
     """
-    Informa el año y trimestre donde hubo menor desocupación
-    y la cantidad de personas desocupadas.
+    Informa el año y trimestre donde hubo menor desocupación y la cantidad de personas desocupadas.
 
     Args:
     :param data: lista de datos del dataset
     """
 
-    # Filtra los datos para obtener solo los desocupados
-    desocupados = list(filter(
-        lambda x: x["CONDICION_LABORAL"] == "Desocupado", data))
+    desocupados = list(filter(lambda x: x["CONDICION_LABORAL"] == "Desocupado", data))
 
-    # Si no hay desocupados en los datos, imprime un mensaje y retorna
     if not desocupados:
         print("No hay datos de desocupación disponibles.")
-        return
+        return None
 
-    # Inicializa un diccionario para almacenar la cantidad de desocupados por año y trimestre
-    total_trim = {}
+    contador_desocupados = {}
 
-    # Itera sobre cada fila de los desocupados para acumular el total por año y trimestre
     for row in desocupados:
-        if row["ANO4"] not in total_trim:
-            total_trim[row["ANO4"]] = {}
-        if row["TRIMESTRE"] not in total_trim[row["ANO4"]]:
-            total_trim[row["ANO4"]][row["TRIMESTRE"]] = 0
+        if row["ANO4"] not in contador_desocupados:
+            contador_desocupados[row["ANO4"]] = {}
+        if row["TRIMESTRE"] not in contador_desocupados[row["ANO4"]]:
+            contador_desocupados[row["ANO4"]][row["TRIMESTRE"]] = 0
+        contador_desocupados[row['ANO4']][row["TRIMESTRE"]] += int(row["PONDERA"])
 
-        total_trim[row['ANO4']][row["TRIMESTRE"]] += int(row["PONDERA"])
-
-    # Se obtiene el menor valor de desocupacion
-    min_valor = min(valor for trimestres in total_trim.values()
-                    for valor in trimestres.values())
+    min_valor_desocupacion = min(valor for trimestres in contador_desocupados.values() for valor in trimestres.values())
 
     # Se guarda si hubo otros años y trimestres con el mismo valor que el minimo.
     resultados = []
-    for anio, trimestres in total_trim.items():
+    for anio, trimestres in contador_desocupados.items():
         for trimestre, valor in trimestres.items():
-            if valor == min_valor:
-                resultados.append((anio, trimestre))
+            if valor == min_valor_desocupacion:
+                resultados.append((anio, trimestre,valor))
 
-    # Se imprime resultado
-    print(
-        f"Valor mínimo de desocupación: {min_valor} en los siguientes años y trimestres:")
-    for anio, trimestre in resultados:
-        print(f"Año: {anio}, Trimestre: {trimestre}")
+    return resultados
+
 
 
 # -----------------------------------------------------------------------------------
