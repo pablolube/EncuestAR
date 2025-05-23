@@ -6,76 +6,83 @@
 from src.utils.helpers import extraer_fecha, actualizarmaxmin_fechas
 
 
-def add_data_ch04str(row):
+def get_gender(gender_num):
     """
-    Agrega la clasificación Masculino/Femenino a la columna ch4_str.
+    Devuelve la clasificación Masculino/Femenino
 
     Args:
-    :param row: Fila a la que se le agregarán las columnas.
+    :param gender_num: Valor del genero correspondiente a la col CH04.
+
+    Returns:
+        string: gender_str: Masculino o Femenino
     """
 
-    row["CH04_str"] = "Masculino" if row["CH04"] == "1" else "Femenino"
+    gender_map = {'1': 'Masculino', '2': 'Femenino'}
+    return gender_map.get(gender_num, 'S/D')
 
 
-def add_data_nivel_ed_str(row):
+
+def get_ed_level(ed_level):
     """
-    Agrega la clasificación de nivel educativo a la columna nivel_ed_str.
+    Devuelve la clasificación de nivel educativo.
 
     Args:
-    :param row: Fila a la que se le agregarán las columnas.
+    :param ed_level: Valor correspondiente a la col NIVEL_ED.
     """
+    match ed_level:
+        case '1':
+            return 'Primario incompleto'
+        case '2':
+            return 'Primario completo'
+        case '3':
+            return 'Secundario incompleto'
+        case '4':
+            return 'Secundario completo'
+        case '5' | '6':
+            return 'Superior o universitario'
+        case '7' | '9':
+            return 'Sin Información'
+        case _:
+            return 'S/D'
 
-    match row["NIVEL_ED"]:
-        case "1":
-            row["NIVEL_ED_str"] = "Primario incompleto"
-        case "2":
-            row["NIVEL_ED_str"] = "Primario completo"
-        case "3":
-            row["NIVEL_ED_str"] = "Secundario incompleto"
-        case "4":
-            row["NIVEL_ED_str"] = "Secundario completo"
-        case "5" | "6":
-            row["NIVEL_ED_str"] = "Superior o universitario"
-        case "7" | "9":
-            row["NIVEL_ED_str"] = "Sin Información"
 
 
-def add_data_cond_lab(row):
+def get_work_cond(state,category):
     """
-    Agrega la clasificación de condición laboral a la columna CONDICION_LABORAL.
+    Devuelve la clasificación de condición laboral 
 
     Args:
-    :param row: Fila a la que se le agregarán las columnas.
+    :param state: Condición de actividad
+    :param category: Categoría ocupacional
     """
 
-    estado = int(row["ESTADO"])
-    cat_ocup = int(row["CAT_OCUP"])
-
-    if estado == 1 and cat_ocup in (1, 2):
-        row["CONDICION_LABORAL"] = "Ocupado autónomo"
-    elif estado == 1 and cat_ocup in (3, 4, 9):
-        row["CONDICION_LABORAL"] = "Ocupado dependiente"
-    elif estado == 2:
-        row["CONDICION_LABORAL"] = "Desocupado"
-    elif estado == 3:
-        row["CONDICION_LABORAL"] = "Inactivo"
+    if state == '1' and category in ('1', '2'):
+        return "Ocupado autónomo"
+    elif state == '1' and category in ('3', '4', '9'):
+        return "Ocupado dependiente"
+    elif state == '2':
+        return "Desocupado"
+    elif state == '3':
+        return "Inactivo"
     else:
-        row["CONDICION_LABORAL"] = "Fuera de categoría/sin información"
+        return "Fuera de categoría/sin información"
 
 
-def add_data_universitario(row):
+def get_university_level(age,ed_level,ed_level_completed):
     """
-    Agrega la clasificación de nivel universitario a la columna UNIVERSITARIO.
+    Devuelve la clasificación de nivel universitario.
 
     Args:
-    :param row: Fila a la que se le agregarán las columnas.
+    :param 
+        age: edad
+        ed_level: nivel más alto que cursa o cursó
+        ed_level_completed: finalizo ese nivel
     """
 
-    if int(row["CH06"]) < 18:  # CH06 es la edad
-        row["UNIVERSITARIO"] = 2
-        return
+    if int(age) < 18:
+        return 2
 
-    row["UNIVERSITARIO"] = 1 if row["CH12"] == "8" or row["CH12"] == "7" and row["CH13"] == "1" else 0
+    return 1 if ed_level == '8' or (ed_level == '7' and ed_level_completed == '1') else 0
 
 
 # -------------------------------------------------------------------------------
@@ -94,18 +101,16 @@ def add_extra_data(header, data):
     max_fecha = None
 
     # Agrego las nuevas columnas al header
-    header.extend(["CH04_str", "NIVEL_ED_str",
-                  "CONDICION_LABORAL", "UNIVERSITARIO"])
+    header.extend(['CH04_str', 'NIVEL_ED_str','CONDICION_LABORAL', 'UNIVERSITARIO'])
 
-    # Proceso las nuevas columnas por cada fila
     for row in data:
-        add_data_ch04str(row)
-        add_data_nivel_ed_str(row)
-        add_data_cond_lab(row)
-        add_data_universitario(row)
+        row['CH04_str']=get_gender(row['CH04'])
+        row['NIVEL_ED_str']=get_ed_level(row['NIVEL_ED'])
+        row['CONDICION_LABORAL']=get_work_cond(row['ESTADO'],row['CAT_OCUP'])
+        row['UNIVERSITARIO']=get_university_level(row['CH06'],row['CH12'],row['CH13'])
+        
         fecha_actual = extraer_fecha(row)
         if fecha_actual:
-            min_fecha, max_fecha = actualizarmaxmin_fechas(
-                fecha_actual, min_fecha, max_fecha)
+            min_fecha, max_fecha = actualizarmaxmin_fechas(fecha_actual, min_fecha, max_fecha)
 
     return min_fecha, max_fecha
