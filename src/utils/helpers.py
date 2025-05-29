@@ -52,11 +52,6 @@ def process_file(source_path, category="hogar"):
     """
     Procesa archivos de texto en un path, filtrando por categoría, y unifica sus datos en una estructura común.
 
-    Esta función busca archivos `.txt` dentro del `source_path` cuyo nombre contenga la categoría especificada.
-    Primero recolecta todos los encabezados únicos presentes en los archivos filtrados. Luego, construye una lista
-    unificada de diccionarios fila por fila, asegurando que todas las filas tengan las mismas claves (encabezados),
-    completando con `None` si falta algún dato.
-
     Args:
         source_path (Path): Ruta al directorio que contiene los archivos `.txt` a procesar.
         category (str, optional): Categoría a buscar dentro del nombre de los archivos. Por defecto es "hogar".
@@ -64,36 +59,25 @@ def process_file(source_path, category="hogar"):
     Returns:
         tuple:
             - all_headers (list): Lista con todos los encabezados únicos encontrados en los archivos.
-            - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada
-              según los encabezados recolectados.
+            - unified_data (list of dict): Lista de diccionarios, cada uno representando una fila de datos unificada.
     """
-    all_headers = []  # Aca voy  a acumular los headers
-    # En esta lista voy  a unificar las filas de los archivos(encabezados y filas)
-    unified_data = []
+    headers_set = set()
+    raw_rows = []
 
-    # PRIMER FOR: recolectar todos los encabezados
-    for file in source_path.glob("*.txt"):
-        if category in file.name:  # Condición si el archivo tiene la categoría elegida
-            headers, _ = read_file_dic(file)  # solo me interesa el header
-            for header in headers:  # Recorro los encabezados del archivo
-                if header not in all_headers:  # Solo lo agrego si no está en la lista
-                    all_headers.append(header)
-
-     # SEGUNDO FOR: Unificar filas
+    # Procesar archivos en una sola pasada
     for file in source_path.glob("*.txt"):
         if category in file.name:
-            _, rows = read_file_dic(file)  # Ahora solo me importan las filas
+            headers, rows = read_file_dic(file)
+            headers_set.update(headers)
+            raw_rows.extend(rows)
 
-            for row in rows:  # Recorro las filas
-                unified_row = {}
-                for key in all_headers:  # Para cada fila voy recorriendo por header
-                    # Si no existe en el header agregar None, sino guarda el dato en esa key
-                    unified_row[key] = row.get(key, None)
+    all_headers = list(headers_set)
 
-                # Arega toda la fila a unified_data
-                unified_data.append(unified_row)
+    # Unificar filas
+    unified_data = [{key: row.get(key, None) for key in all_headers} for row in raw_rows]
 
     return all_headers, unified_data
+
 
 # -------------------------------------------------------------------------------
 # GUARDAR ARCHIVOS
