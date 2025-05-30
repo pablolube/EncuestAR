@@ -1,9 +1,10 @@
-from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, HOGARES_PROCESSED_DIR, INDIVIDUOS_PROCESSED_DIR
+from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, INDIVIDUOS_PROCESSED_DIR
 import streamlit as st
 from pathlib import Path
 from src.procesamientos.individuos import add_extra_data
 from src.procesamientos.hogares import procesar_hogares
-from src.utils.helpers import save_to_file,process_file
+from src.utils.helpers import save_to_file, process_file
+import pandas as pd
 
 # -------------------------------------------------------------------------------
 # STREAMLIT
@@ -53,52 +54,57 @@ def actualizar():
         # -------------------------------------------------------------------------------
 
         # Unificar archivos de hogares desde la fuente
-        encabezados_h, hogares = process_file(DATA_SOURCE_DIR, category="hogar")
+        encabezados_h, hogares = process_file(
+            DATA_SOURCE_DIR, category="hogar")
 
         # Agregar columnas derivadas y calcular fechas mínima y máxima para hogares
         min_fecha_hog, max_fecha_hog = procesar_hogares(encabezados_h, hogares)
 
         # Guardar los hogares procesados en un archivo intermedio
-        save_to_file(DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
+        save_to_file(DATA_PROCESSED_DIR,
+                     FILENAME_HOGARES_PROCESSED, encabezados_h, hogares)
 
         # -------------------------------------------------------------------------------
         # PROCESAMIENTO DE INDIVIDUOS
         # -------------------------------------------------------------------------------
 
         # Unificar archivos de individuos desde la fuente
-        encabezados_i, individuos = process_file(DATA_SOURCE_DIR, category="individual")
+        encabezados_i, individuos = process_file(
+            DATA_SOURCE_DIR, category="individual")
 
         # Agregar columnas derivadas y calcular fechas mínima y máxima para individuos
-        min_fecha_indiv, max_fecha_indiv= add_extra_data(encabezados_i, individuos)
+        min_fecha_indiv, max_fecha_indiv = add_extra_data(
+            encabezados_i, individuos)
 
         # Guardar los individuos procesados en un archivo intermedio
-        save_to_file(DATA_PROCESSED_DIR, FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
+        save_to_file(DATA_PROCESSED_DIR,
+                     FILENAME_INDIVIDUOS_PROCESSED, encabezados_i, individuos)
 
         # Calcular la fecha mínima y máxima global entre hogares e individuos
-    
-        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv,max_fecha_hog, max_fecha_indiv] if f is not None]
+
+        fechas_validas = [f for f in [min_fecha_hog, min_fecha_indiv,
+                                      max_fecha_hog, max_fecha_indiv] if f is not None]
         fecha_min_global = min(fechas_validas) if fechas_validas else None
         fecha_max_global = max(fechas_validas) if fechas_validas else None
 
         # Resetear el rango de fechas en el estado de la aplicación (Streamlit)
         st.session_state.date_range = fecha_min_global, fecha_max_global
 
-        
-
-        # Mensaje de éxito
-        st.session_state["mensaje_actualizacion"] = ("success", "✅ Archivos actualizados correctamente.")
+        st.session_state["mensaje_actualizacion"] = (
+            "success", "✅ Archivos actualizados correctamente.")
 
         return fecha_min_global, fecha_max_global
     except Exception as e:
         # Si ocurre un error, guardo el mensaje de error
-        st.session_state["mensaje_actualizacion"] = ("error", f"❌ Error al actualizar archivos: {e}")
+        st.session_state["mensaje_actualizacion"] = (
+            "error", f"❌ Error al actualizar archivos: {e}")
 
 
 def cargar_archivos(archivos):
     """
     Carga archivos en el directorio de datos especificado. Solo se permiten archivos .txt que contengan
     'hogares' o 'individuos' en el nombre. Si el archivo ya existe, muestra un mensaje de advertencia.
-    
+
     Args:
         archivos (list): Lista de archivos subidos por el usuario.
     """
@@ -111,11 +117,12 @@ def cargar_archivos(archivos):
         for uploaded_file in archivos:
             file_name = uploaded_file.name
             lower_name = file_name.lower()
-            
+
             # Verifica si es .txt y contiene 'hogares' o 'individuos'
             if not (file_name.endswith(".txt") and ("hogar" in lower_name or "individual" in lower_name)):
                 mensajes.append(
-                    ("warning", f"⚠️ El archivo '{file_name}' fue ignorado. Solo se aceptan archivos .txt de la EPH.")
+                    ("warning",
+                     f"⚠️ El archivo '{file_name}' fue ignorado. Solo se aceptan archivos .txt de la EPH.")
                 )
                 continue
 
@@ -123,13 +130,14 @@ def cargar_archivos(archivos):
 
             if file_path.exists():
                 mensajes.append(
-                    ("warning", f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
+                    ("warning",
+                     f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
                 )
                 continue
 
             with open(file_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
-            
+
             mensajes.append(
                 ("success", f"✅ {file_name} guardado en {file_path}")
             )
@@ -139,6 +147,7 @@ def cargar_archivos(archivos):
         )
 
     st.session_state["mensajes_carga"] = mensajes
+
 
 def eliminar_archivos():
     """
@@ -152,7 +161,7 @@ def eliminar_archivos():
         archivos_encontrados = False
 
         for carpeta in carpetas:
-            archivos = [archivo for archivo in carpeta.iterdir() 
+            archivos = [archivo for archivo in carpeta.iterdir()
                         if archivo.is_file() and archivo.name != ".gitkeep"]
             if archivos:
                 archivos_encontrados = True
@@ -170,3 +179,17 @@ def eliminar_archivos():
     except Exception as e:
         st.session_state["mensaje_eliminacion"] = (
             "error", f"❌ Error al eliminar archivos: {e}")
+
+
+def cargar_df():
+    try:
+        df_ind = pd.DataFrame()
+        df_ind = pd.read_csv(INDIVIDUOS_PROCESSED_DIR,
+                             delimiter=';', low_memory=False)
+        columnas_ind = ['CH04', 'CH06', 'ANO4',
+                        'TRIMESTRE', 'PONDERA', 'AGLOMERADO']
+        df_ind = df_ind.loc[:, columnas_ind]
+    except Exception as e:
+        print('No se pudo cargar el df', type(e).__name__)
+    finally:
+        return df_ind
