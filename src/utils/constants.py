@@ -48,7 +48,7 @@ AGLOMERADOS_NOMBRES = {
     36: "Río Cuarto",
     38: "San Nicolás - Villa Constitución",
     91: "Rawson - Trelew",
-    93: "Viedma - Carmen de Patagones",
+    93: "Viedma - Carmen de Patagones"
 }
 
 # Este diccionario contiene los nombres de los aglomerados según su número
