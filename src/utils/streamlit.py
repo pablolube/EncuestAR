@@ -187,7 +187,7 @@ def cargar_df():
         df_ind = pd.read_csv(INDIVIDUOS_PROCESSED_DIR,
                              delimiter=';', low_memory=False)
         columnas_ind = ['CH04', 'CH06', 'ANO4',
-                        'TRIMESTRE', 'PONDERA', 'AGLOMERADO']
+                        'TRIMESTRE', 'PONDERA', 'AGLOMERADO','AGLOMERADO', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PP04A']
         df_ind = df_ind.loc[:, columnas_ind]
     except Exception as e:
         print('No se pudo cargar el df', type(e).__name__)

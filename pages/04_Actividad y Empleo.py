@@ -1,89 +1,102 @@
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
+#-----------------------------------------------------------------------------------------------------------------------------
+# Librerías para el análisis de datos
+##-----------------------------------------------------------------------------------------------------------------------------
+# Cargar de archivos de datos y librerías necesarias
+import sys
 from src.utils.constants import AGLOMERADOS_NOMBRES
 from src.utils.constants import INDIVIDUOS_PROCESSED_DIR, HOGARES_PROCESSED_DIR
 import matplotlib.pyplot as plt
+import plotly.express as px
+import pandas as pd
+import streamlit as st
 
-# Título de la sección
-st.title("📊 Desocupados según estudios alcanzados")
+# Carga de Archivos
+sys.path.append("..")
 
-# Cargar datos procesados (asegúrate de tener bien la ruta)
-df_individuos =pd.read_csv(INDIVIDUOS_PROCESSED_DIR, sep=";", encoding="utf-8")
+#-----------------------------------------------------------------------------------------------------------------------------
+# PROCESOS
+##-----------------------------------------------------------------------------------------------------------------------------
+### 1.5.1 Para las personas desocupadas, informar la cantidad de ellas según sus estudios alcanzados. Se debe informar para un año y trimestre elegido por el usuario.
 
-# Filtros de año y trimestre
-anios_disponibles = sorted(df_individuos['ANO4'].dropna().unique())
-trimestres_disponibles = sorted(df_individuos['TRIMESTRE'].dropna().unique())
+def grafica_barras(df, titulo="Desocupados por nivel educativo",
+                   xlabel="Cantidad de personas desocupadas",
+                   ylabel="Nivel educativo", color="#E67E22"):
+    """
+    Dibuja un gráfico de barras horizontal en una app de Streamlit.
 
-anio = st.selectbox("Seleccioná un año", anios_disponibles)
-trimestre = st.selectbox("Seleccioná un trimestre", trimestres_disponibles)
+    Parámetros:
+    - df: DataFrame con los datos a graficar (index = categorías, valores = cantidades)
+    - titulo: título del gráfico
+    - xlabel: etiqueta del eje X
+    - ylabel: etiqueta del eje Y
+    - color: color de las barras (por defecto naranja)
+    """
+    fig, ax = plt.subplots()
+    df.plot(kind='barh', ax=ax, color=color)
 
-# Filtro por año, trimestre y condición laboral
-df_filtrado = df_individuos[
-    (df_individuos['ANO4'] == anio) &
-    (df_individuos['TRIMESTRE'] == trimestre) &
-    (df_individuos['CONDICION_LABORAL'] == 'Desocupado')
-]
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(titulo)
 
-# Agrupar por nivel educativo
-resultados = df_filtrado.groupby('NIVEL_ED_str')['PONDERA'].sum().sort_values(ascending=False)
-
-# Mostrar tabla
-st.subheader("Tabla de cantidad de desocupados por nivel educativo")
-st.dataframe(resultados.rename("Cantidad de Personas").to_frame())
-
-# Mostrar gráfico
-st.subheader("Gráfico de barras")
-fig, ax = plt.subplots()
-resultados.plot(kind='barh', ax=ax, color="#E67E22")
-ax.set_xlabel("Cantidad ponderada")
-ax.set_ylabel("Nivel educativo")
-ax.set_title("Desocupados por nivel educativo")
-st.pyplot(fig)
+    plt.tight_layout()
+    return fig
 
 
 
+#-----------------------------------------------------------------------------------------------------------------------------
+# STREAMLIT
+##-----------------------------------------------------------------------------------------------------------------------------
 
-st.title("Evolución de la tasa de desempleo")
+### Configuro pagina
+st.set_page_config(page_title='Actividad y Empleo', page_icon='💼')
 
-# --- Selector de aglomerado ---
-codigos_aglomerados = df_individuos['AGLOMERADO'].unique()
-aglomerados_disponibles = {
-    codigo: AGLOMERADOS_NOMBRES[codigo]
-    for codigo in codigos_aglomerados
-    if codigo in AGLOMERADOS_NOMBRES
-}
-aglomerados_nombres = list(aglomerados_disponibles.values())
+st.header('Actividad y Empleo')
+st.markdown(' ## ')
 
-aglomerados_seleccionados = st.multiselect(
-    "Seleccioná uno o más aglomerados (opcional)", 
-    options=aglomerados_nombres
-)
+### CARGO DATASET
+if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
+    df_empleo = st.session_state.df_ind[['AGLOMERADO', 'ANO4', 'TRIMESTRE', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PONDERA','PP04A']].copy()
 
-# --- Convertir nombres a códigos (si eligieron alguno) ---
-nombre_a_codigo = {v: k for k, v in aglomerados_disponibles.items()}
-if aglomerados_seleccionados:
-    codigos_seleccionados = [nombre_a_codigo[nombre] for nombre in aglomerados_seleccionados]
-    df_filtrado = df_individuos[df_individuos['AGLOMERADO'].isin(codigos_seleccionados)]
+    #Filtro año
+    anio_trim = df_empleo.groupby('ANO4')['TRIMESTRE'].unique().apply(list).to_dict()
+    
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# 1.5.1 Para las personas desocupadas, informar la cantidad de ellas según sus estudios alcanzados.
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+st.subheader("📊 Desocupación según Nivel Educativo")
+st.markdown("Seleccioná un **año** y **trimestre** para visualizar cómo se distribuye la desocupación según el nivel educativo alcanzado.")
+st.divider()
+
+# FILTRO POR AÑO / TRIMESTRE
+col1, col2 = st.columns(2)
+
+with col1:
+    anio = st.selectbox("🗓️ Año", list(anio_trim.keys()), key="select_anio")
+
+with col2:
+    trimestres = anio_trim.get(anio, [])
+    trimestre = st.selectbox("📆 Trimestre", trimestres, key="select_trim")
+
+# PROCESO ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Filtro Dataset
+df_filtrado = df_empleo[
+    (df_empleo['ANO4'] == anio) &
+    (df_empleo['TRIMESTRE'] == trimestre) &
+    (df_empleo['CONDICION_LABORAL'] == 'Desocupado')]
+
+# Agrupo Dataset
+df_educacion_desocupado = df_filtrado.groupby('NIVEL_ED_str')['PONDERA'].sum().sort_values(ascending=False)
+
+
+# GRAFICO ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Gráfico
+if df_educacion_desocupado.empty:
+    st.warning("⚠️ No se encontraron datos de personas desocupadas para el año y trimestre seleccionados.")
 else:
-    df_filtrado = df_individuos.copy()
+    st.pyplot(grafica_barras(df_educacion_desocupado,
+                              titulo=f"Desocupados por Nivel Educativo ({anio} - T{trimestre})",
+                              xlabel="Cantidad estimada de personas",
+                              ylabel="Nivel educativo"))
 
-# --- Crear columna fecha combinada para agrupar ---
-df_filtrado['FECHA'] = df_filtrado['ANO4'].astype(str) + 'T' + df_filtrado['TRIMESTRE'].astype(str)
-
-# --- Agrupar por fecha y condición laboral ---
-tabla = df_filtrado.groupby(['FECHA', 'CONDICION_LABORAL'])['PONDERA'].sum().unstack().fillna(0)
-
-# --- Calcular tasa de desempleo ---
-tabla['Tasa_desempleo'] = tabla.get('Desocupado', 0) / (tabla.get('Ocupado', 0) + tabla.get('Desocupado', 0)) * 100
-
-# --- Visualización ---
-st.subheader("Gráfico de evolución")
-fig, ax = plt.subplots(figsize=(10, 5))
-tabla['Tasa_desempleo'].plot(marker='o', ax=ax, color='#C0392B')
-ax.set_ylabel("Tasa de desempleo (%)")
-ax.set_xlabel("Fecha (Año y Trimestre)")
-ax.set_title("Tasa de desempleo a lo largo del tiempo")
-ax.grid(True)
-plt.xticks(rotation=45)
-st.pyplot(fig)
