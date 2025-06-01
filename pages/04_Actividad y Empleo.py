@@ -32,40 +32,45 @@ def mapear_nombres_aglomerados(df) :
     df['AGLOMERADO_NOMBRE'] = df['AGLOMERADO'].map(AGLOMERADOS_NOMBRES)
     return df
 
-def calcular_tasa_emp_desemp(df, condicion='Desocupado', agrupacion=['ANO4', 'TRIMESTRE']):
+def calcular_tasa_emp_desemp(df, condicion=None, agrupacion=['ANO4', 'TRIMESTRE']):
     """
-    Calcula la tasa de empleo o desempleo por las columnas que se pasen en 'agrupacion'.
+    Calcula la tasa de empleo y/o desempleo por las columnas que se pasen en 'agrupacion'.
 
     Parámetros:
-    - df: DataFrame con las columnas 'CONDICION_LABORAL', 'PONDERA' y las que se agrupen
-    - condicion: 'Desocupado' o 'Ocupado'
-    - agrupacion: lista de columnas para agrupar dinámicamente (ej. ['ANO4', 'TRIMESTRE'], o ['REGION'])
+    - df: DataFrame con las columnas 'CONDICION_LABORAL', 'PONDERA' y las que se agrupen.
+    - condicion: 'Desocupado', 'Ocupado' o None (para ambas tasas).
+    - agrupacion: lista de columnas para agrupar dinámicamente.
 
     Devuelve:
-    - DataFrame con la tasa calculada por grupo
+    - DataFrame con la(s) tasa(s) calculada(s) por grupo.
     """
-    nombre_tasa = "Desempleo" if condicion == 'Desocupado' else "Empleo"
 
-    # Asegurarse de que agrupacion es lista (por si pasan string)
+    # Me aseguro que se una lista
     if isinstance(agrupacion, str):
         agrupacion = [agrupacion]
 
-    # Agrupar dinámicamente
-    grupo = df.groupby(agrupacion)
-
-    # Calcular la suma de ponderados por grupo para cada condición
-    df_tasa = grupo.apply(lambda g: pd.Series({
+    # Agrupo y  calculo  sumatorias ponderadas por tipo de empleo
+    df_tasa = df.groupby(agrupacion).apply(lambda g: pd.Series({
         'Desocupado': g[g['CONDICION_LABORAL'] == 'Desocupado']['PONDERA'].sum(),
         'Ocupado': g[g['CONDICION_LABORAL'].str.contains('Ocupado', na=False)]['PONDERA'].sum()
     })).reset_index()
 
-    # Calcular total
+    # Del agrupado calculo el total
     total = df_tasa['Desocupado'] + df_tasa['Ocupado']
 
-    # Calcular tasa
-    df_tasa[f'Tasa de {nombre_tasa}'] = round((df_tasa[condicion] / total) * 100, 2)
+    # Calcular tasas
+    df_tasa['Tasa de Desempleo'] = round((df_tasa['Desocupado'] / total) * 100, 2)
+    df_tasa['Tasa de Empleo'] = round((df_tasa['Ocupado'] / total) * 100, 2)
 
-    return df_tasa.sort_values(by=agrupacion)
+    # Armar columnas a devolver según parámetro
+    if condicion == 'Desocupado':
+        columnas = agrupacion + ['Tasa de Desempleo']
+    elif condicion == 'Ocupado':
+        columnas = agrupacion + ['Tasa de Empleo']
+    elif condicion ==None or 'ambas':
+        columnas = agrupacion + ['Tasa de Desempleo', 'Tasa de Empleo']
+
+    return df_tasa[columnas].sort_values(by=agrupacion)
 
 def listar(df, columna):
     """Devuelve una lista de valores únicos de una columna del DataFrame."""
@@ -205,6 +210,9 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
     st.markdown("### 📄 Tabla: Tasa de Desempleo")
     st.dataframe(df_tasa_desempleo, use_container_width=True)
+    
+    df_tasa_desempleo = agregar_columna_fecha(df_tasa_desempleo)
+    graficar_tasa(df_tasa_desempleo, 'Tasa de Empleo', '📊 Evolución de la Tasa de Empleo')
 
     # ----------------------------------------
     # 3. Evolución de la tasa de empleo
@@ -255,5 +263,33 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")
     st.dataframe(df_ocupados_aglomerado, use_container_width=True)
 
+    
+    # ----------------------------------------
+    # 5. Mapa comparativo - Empleo - Desempleo
+    # ----------------------------------------
+
+    #ARMO EL DATAFRAME - TASA DE EMPLEO- DESEMPLEO X AGLOMERADO COMPARATIVO
+
+    # Calculo tasa de empleo y desempleo, por aglomerado,año,trimestre
+    df_emp_des=calcular_tasa_emp_desemp(df_empleo, condicion=None, agrupacion=['AGLOMERADO_NOMBRE','ANO4', 'TRIMESTRE'])
+
+    # Reordeno por aglomerado,año y trimestre --> Ordeno para cada aglomerado por fecha
+    df_sorted=df_emp_des.sort_values(by=['AGLOMERADO_NOMBRE','ANO4', 'TRIMESTRE'])
+
+    # Me quedo por el primer elemento de cada aglomerado - minima fecha
+    min_date_aglomerado = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='first')
+
+    # Me quedo por el ultimo elemento de cada aglomerado 
+    max_date_aglomerado = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='last')
+
+    #Armo un df para comparar entre primera y ultima fecha
+    emp_des_comp=pd.merge(min_date_aglomerado,max_date_aglomerado,on='AGLOMERADO_NOMBRE',how='inner',suffixes=('_MIN', '_MAX') )
+
+        
+
+
 else:
     st.warning("⚠️ Asegurate de que el dataset esté cargado correctamente en `st.session_state.df_ind`.")
+
+
+    
