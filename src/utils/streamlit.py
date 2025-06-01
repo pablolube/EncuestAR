@@ -1,4 +1,4 @@
-from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, INDIVIDUOS_PROCESSED_DIR
+from src.utils.constants import DATA_SOURCE_DIR,  DATA_PROCESSED_DIR, FILENAME_HOGARES_PROCESSED, FILENAME_INDIVIDUOS_PROCESSED, INDIVIDUOS_PROCESSED_DIR, AGLOMERADOS_NOMBRES
 import streamlit as st
 from pathlib import Path
 from src.procesamientos.individuos import add_extra_data
@@ -183,6 +183,9 @@ def eliminar_archivos():
 
 
 def cargar_df():
+    """
+    Carga en el sesion state un dataframe con ciertas columnas del dataset de individuos procesados
+    """
     try:
         df_ind = pd.DataFrame()
         df_ind = pd.read_csv(INDIVIDUOS_PROCESSED_DIR,
@@ -194,3 +197,55 @@ def cargar_df():
         print('No se pudo cargar el df', type(e).__name__)
     finally:
         return df_ind
+
+
+def get_nombre_aglomerado(id_aglomerados):
+    """
+    Devuelve una lista de nombres unicos de algomerados 
+
+    Args:
+        id_aglomerados: serie de nros de aglomerados
+    """
+    return sorted([AGLOMERADOS_NOMBRES[nro] for nro in id_aglomerados.unique()])
+
+
+def get_nro_aglomerado(aglomerado):
+    """
+    Devuelve el nro de aglomerado si existe sino None. 
+
+    Args:
+        aglomerado: nombre del aglomerado
+    """
+    return next((k for k, v in AGLOMERADOS_NOMBRES.items() if v == aglomerado), None)
+
+
+def suma_dependiente(grupo):
+    """
+    Devuelve la suma de las personas dependientes, consideradas entre 0 y 14 años y mayor o igual a 65 años.
+    """
+    return grupo.loc[(grupo['CH06'].between(0, 14) | (grupo['CH06'] >= 65)), 'PONDERA'].sum()
+
+
+def suma_activa(grupo):
+    """
+    Devuelve la suma de las personas activas, consideradas entre 15 y 64 años.
+    """
+    return grupo.loc[grupo['CH06'].between(15, 64), 'PONDERA'].sum()
+
+
+def get_mediana_ponderada(x):
+    """
+    Devuelve el valor de la mediana ponderada
+    """
+    ordenado = x.sort_values('CH06')
+    acumulado = ordenado['PONDERA'].cumsum()
+    total = ordenado['PONDERA'].sum()
+    return ordenado.loc[acumulado >= total / 2, 'CH06'].iloc[0]
+
+
+def get_media_ponderada(x):
+    """
+    Devuelve el valor de la edad media ponderada rendondeada en 2 decimales.
+    """
+    media = (x['CH06']*x['PONDERA']).sum() / x['PONDERA'].sum()
+    return round(media, 2)
