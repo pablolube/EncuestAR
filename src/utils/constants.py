@@ -15,6 +15,11 @@ FILENAME_INDIVIDUOS_PROCESSED = "individuos_procesados.txt"
 HOGARES_PROCESSED_DIR = DATA_PROCESSED_DIR / FILENAME_HOGARES_PROCESSED
 INDIVIDUOS_PROCESSED_DIR = DATA_PROCESSED_DIR / FILENAME_INDIVIDUOS_PROCESSED
 
+#Archivo JSON MAPA
+
+COORDENADAS_AGLOMERADOS=PROJECT_ROOT/"data" / "Extras"/"aglomerados_coordenadas.json"
+
+
 # Este diccionario contiene los nombres de los aglomerados según su número
 AGLOMERADOS_NOMBRES = {
     2: "Gran La Plata",

@@ -8,6 +8,8 @@ import plotly.express as px
 import pandas as pd
 import streamlit as st
 
+from src.utils.constants import AGLOMERADOS_NOMBRES
+
 # Agrega la carpeta raíz al path si estás corriendo desde fuera del proyecto
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -90,7 +92,7 @@ def agregar_columna_fecha(df):
     df['Fecha'] = df['ANO4'].astype(str) + '-T' + df['TRIMESTRE'].astype(str)
     return df
 
-def graficar_tasa(df, columna_tasa, titulo):
+def graficar_tasa(df,eje_x ,eje_y, titulo):
     """
     Grafica la evolución temporal de una tasa usando Plotly.
 
@@ -99,34 +101,7 @@ def graficar_tasa(df, columna_tasa, titulo):
         columna_tasa (str): Nombre de la columna que contiene la tasa a graficar.
         titulo (str): Título del gráfico.
     """
-    fig = px.line(df, x='Fecha', y=columna_tasa, title=titulo)
-    fig.show()
-    st.plotly_chart(fig)
-
-def agregar_columna_fecha(df):
-    """
-    Agrega una columna 'Fecha' combinando ANO4 y TRIMESTRE para graficar series temporales.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'ANO4' y 'TRIMESTRE'.
-
-    Returns:
-        pd.DataFrame: DataFrame con la columna 'Fecha' como datetime.
-    """
-    df = df.copy()
-    df['Fecha'] = df['ANO4'].astype(str) + '-T' + df['TRIMESTRE'].astype(str)
-    return df
-
-def graficar_tasa(df, columna_tasa, titulo):
-    """
-    Grafica la evolución temporal de una tasa usando Plotly.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'Fecha' y una tasa.
-        columna_tasa (str): Nombre de la columna que contiene la tasa a graficar.
-        titulo (str): Título del gráfico.
-    """
-    fig = px.line(df, x='Fecha', y=columna_tasa, title=titulo)
+    fig = px.line(df, x=eje_x, y=eje_y, title=titulo)
     fig.show()
     st.plotly_chart(fig)
 
@@ -134,9 +109,6 @@ def graficar_tasa(df, columna_tasa, titulo):
 #-----------------------------------------------------------------------------------------------------------------------------
 # STREAMLIT APP: ACTIVIDAD Y EMPLEO
 #-----------------------------------------------------------------------------------------------------------------------------
-import streamlit as st
-import pandas as pd
-from src.utils.constants import AGLOMERADOS_NOMBRES
 
 # Configuración de la página
 st.set_page_config(page_title='Actividad y Empleo', layout="wide")
@@ -212,7 +184,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     st.dataframe(df_tasa_desempleo, use_container_width=True)
     
     df_tasa_desempleo = agregar_columna_fecha(df_tasa_desempleo)
-    graficar_tasa(df_tasa_desempleo, 'Tasa de Empleo', '📊 Evolución de la Tasa de Empleo')
+    graficar_tasa(df_tasa_desempleo,'Fecha', 'Tasa de Desempleo', '📊 Evolución de la Tasa de Desempleo')
 
     # ----------------------------------------
     # 3. Evolución de la tasa de empleo
@@ -237,7 +209,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     st.dataframe(df_tasa_ocupado, use_container_width=True)
 
     df_tasa_ocupado = agregar_columna_fecha(df_tasa_ocupado)
-    graficar_tasa(df_tasa_ocupado, 'Tasa de Empleo', '📊 Evolución de la Tasa de Empleo')
+    graficar_tasa(df_tasa_ocupado,'Fecha', 'Tasa de Empleo', '📊 Evolución de la Tasa Empleo')
 
     # ----------------------------------------
     # 4. Distribución del Empleo por Sector
@@ -285,7 +257,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     #Armo un df para comparar entre primera y ultima fecha
     emp_des_comp=pd.merge(min_date_aglomerado,max_date_aglomerado,on='AGLOMERADO_NOMBRE',how='inner',suffixes=('_MIN', '_MAX') )
 
-        
+    emp_des_comp['var_tasa_Empleo'] = emp_des_comp['Tasa de Empleo_MAX'] - emp_des_comp['Tasa de Empleo_MIN']
+    emp_des_comp['var_tasa_Desempleo'] = emp_des_comp['Tasa de Desempleo_MAX'] - emp_des_comp['Tasa de Desempleo_MIN']
+
+    emp_des_comp = emp_des_comp[['Tasa de Empleo_MIN', 'Tasa de Empleo_MAX', 'var_tasa_Empleo',
+                             'Tasa de Desempleo_MIN', 'Tasa de Desempleo_MAX', 'var_tasa_Desempleo']]
+
 
 
 else:
