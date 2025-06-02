@@ -2,14 +2,16 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 from src.utils.constants import AGLOMERADOS_NOMBRES
+from src.utils.streamlit import get_nombre_aglomerado, get_nro_aglomerado, suma_activa, suma_dependiente, get_media_ponderada, get_mediana_ponderada
 
 st.set_page_config(page_title='Características Demográficas',
                    page_icon=':busts_in_silhouette:')
 
-st.header('Características Demográficas')
-st.markdown(' ### ')
+st.header('Características Demográficas', divider=True)
 
 if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
+
+    df_ind = pd.DataFrame(st.session_state.df_ind)
 
     # Configuración del Sidebar
     secciones = ['Distribución por sexo y edad', 'Edad media por aglomerado',
@@ -22,18 +24,20 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         if tab == secciones[0]:
             st.markdown("### Filtros")
             anio_opcion = st.selectbox(
-                "Año:", st.session_state.df_ind['ANO4'].unique())
+                "Año:", df_ind['ANO4'].unique())
             if anio_opcion is not None:
                 trim_opcion = st.selectbox(
-                    "Trimestre:", st.session_state.df_ind[st.session_state.df_ind['ANO4'] == anio_opcion]['TRIMESTRE'].unique())
+                    "Trimestre:", df_ind[df_ind['ANO4'] == anio_opcion]['TRIMESTRE'].unique())
         elif tab == secciones[2]:
-            st.info("Sin filtros disponibles")
+            aglomerado_opcion = st.selectbox(
+                'Aglomerado:', get_nombre_aglomerado(df_ind['AGLOMERADO']))
 
     # Contenido Central
+
     # Punto 1.3.1
     if tab == secciones[0]:
-        df_filtrado = st.session_state.df_ind.loc[(st.session_state.df_ind['ANO4'] == anio_opcion) & (
-            st.session_state.df_ind['TRIMESTRE'] == trim_opcion) & (st.session_state.df_ind['CH06'] > 0), ['CH06', 'CH04_str']].dropna()
+        df_filtrado = df_ind.loc[(df_ind['ANO4'] == anio_opcion) & (
+            df_ind['TRIMESTRE'] == trim_opcion) & (df_ind['CH06'] > 0), ['CH06', 'CH04_str']].dropna()
         df_filtrado = df_filtrado.rename(
             columns={'CH06': 'EDAD', 'CH04_str': 'SEXO_STR'})
         df_filtrado["GRUPO_EDAD"] = df_filtrado["EDAD"] // 10 * 10
@@ -47,11 +51,10 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         chart = alt.Chart(df_filtrado).mark_bar().encode(
             x=alt.X('GRUPO_EDAD_STR:N', title="RANGO DE EDAD", scale=alt.Scale(
                 domain=etiquetas_ejex), axis=alt.Axis(labelAngle=0)),
-            y=alt.Y('CANTIDAD:Q', title='# de PERSONAS'),
+            y=alt.Y('CANTIDAD:Q', title='# de PERSONAS',
+                    axis=alt.Axis(titleAnchor='end')),
             color=alt.Color('SEXO_STR:N', title=''),
             xOffset='SEXO_STR:N'
-        ).configure_axisY(
-            titleAnchor='end'  # Ajusta la posición vertical
         ).interactive()
 
         st.markdown('### Distribución por sexo y edad')
@@ -63,7 +66,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     if tab == secciones[1]:
 
         # Detección del ultimo año y trimestre cargado
-        periodo_ind = st.session_state.df_ind[['ANO4', 'TRIMESTRE']].drop_duplicates(
+        periodo_ind = df_ind[['ANO4', 'TRIMESTRE']].drop_duplicates(
         ).sort_values(['ANO4', 'TRIMESTRE']).values.tolist()
         ultimo_anio = periodo_ind[-1][0]
         ultimo_trimestre = periodo_ind[-1][1]
@@ -73,14 +76,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
         # Filtrado del dataframe
         columnas = ['CH06', 'AGLOMERADO', 'PONDERA']
-        df_filtrado = st.session_state.df_ind.loc[(st.session_state.df_ind['ANO4'] == ultimo_anio) & (
-            st.session_state.df_ind['TRIMESTRE'] == ultimo_trimestre) & (st.session_state.df_ind['CH06'] > 0), columnas].dropna()
+        df_filtrado = df_ind.loc[(df_ind['ANO4'] == ultimo_anio) & (
+            df_ind['TRIMESTRE'] == ultimo_trimestre) & (df_ind['CH06'] > 0), columnas].dropna()
         df_filtrado['MEDIA_TOTAL'] = round((
             df_filtrado['CH06'] * df_filtrado['PONDERA']).sum() / df_filtrado['PONDERA'].sum(), 2)
-        df_filtrado = df_filtrado.groupby(['AGLOMERADO', 'MEDIA_TOTAL']).apply(
-            lambda x: round(
-                (x['CH06'] * x['PONDERA']).sum() / x['PONDERA'].sum(), 2)
-        ).reset_index(name='EDAD_MEDIA')
+        df_filtrado = df_filtrado.groupby(['AGLOMERADO', 'MEDIA_TOTAL'], group_keys=False).apply(
+            get_media_ponderada, include_groups=False).reset_index(name='EDAD_MEDIA')
         df_filtrado['NOMBRE_AGLOMERADO'] = df_filtrado['AGLOMERADO'].map(
             AGLOMERADOS_NOMBRES)
         df_filtrado['DESVIACION'] = df_filtrado['EDAD_MEDIA'] - \
@@ -90,12 +91,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
         # Parametrización del gráfico de barras horizontales
         barras = alt.Chart(df_filtrado).mark_bar().encode(
-            x=alt.X('EDAD_MEDIA:Q', title='EDAD MEDIA'),
+            x=alt.X('EDAD_MEDIA:Q', title='EDAD MEDIA (AÑOS)'),
             y=alt.Y('NOMBRE_AGLOMERADO:N', sort='-x', title=''),
             color=alt.Color('EDAD_MEDIA:Q', scale=alt.Scale(
                 scheme='blues'), legend=None),
-            tooltip=[alt.Tooltip('EDAD_MEDIA:Q', title='EDAD MEDIA:'), alt.Tooltip(
-                'NOMBRE_AGLOMERADO:N', title='AGLOMERADO:')]
+            tooltip=[alt.Tooltip('NOMBRE_AGLOMERADO:N', title='AGLOMERADO:'), alt.Tooltip(
+                'EDAD_MEDIA:Q', title='EDAD MEDIA:'), alt.Tooltip('MEDIA_TOTAL', title='MEDIA TOTAL'), alt.Tooltip('DESVIACION:Q')]
         ).interactive()
 
         # Parametrización del gráfico de linea vertical
@@ -104,12 +105,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             size=1.5
         ).encode(
             x=alt.X('MEDIA_TOTAL:Q', title=''),
-            color=alt.Color('MEDIA_TOTAL:N', title='MEDIA TOTAL')
+            color=alt.Color('MEDIA_TOTAL:N', title='MEDIA TOTAL',
+                            scale=alt.Scale(range=['#FF4B4B']))
         )
         grafico = barras+linea_media
 
         grafico = grafico.configure_axis(
-            labelAngle=0,
             labelLimit=500
         )
         st.altair_chart(grafico)
@@ -117,6 +118,66 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         # Tabla detalle de Datos
         st.markdown('### Detalle')
         st.dataframe(df_filtrado, hide_index=True)
+
+    # Punto 1.3.3
+    if tab == secciones[2]:
+        columnas = ['CH06', 'AGLOMERADO', 'ANO4', 'TRIMESTRE', 'PONDERA']
+        df_filtrado = df_ind.loc[((df_ind['AGLOMERADO'] == get_nro_aglomerado(aglomerado_opcion)) & (
+            df_ind['CH06'] > 0), columnas)].dropna()
+        df_filtrado['ANIO-TRIM'] = df_filtrado['ANO4'].astype(
+            str)+"-"+df_filtrado['TRIMESTRE'].astype(str)
+        df_filtrado = df_filtrado.groupby('ANIO-TRIM', group_keys=False).apply(lambda g: pd.Series({
+            'DEPENDIENTE': suma_dependiente(g),
+            'ACTIVA': suma_activa(g)
+        }), include_groups=False).reset_index()
+        df_filtrado['DEPENDENCIA_DEMOGRAFICA'] = round(
+            (df_filtrado['DEPENDIENTE'] / df_filtrado['ACTIVA']) * 100, 2)
+        min = df_filtrado['DEPENDENCIA_DEMOGRAFICA'].min()
+        max = df_filtrado['DEPENDENCIA_DEMOGRAFICA'].max()
+
+        # configuración gráfico
+        chart = alt.Chart(df_filtrado).mark_line(
+            point=True
+        ).encode(
+            x=alt.X('ANIO-TRIM:N', title='AÑO-TRIMESTRE',
+                    axis=alt.Axis(labelAngle=0)),
+            y=alt.Y('DEPENDENCIA_DEMOGRAFICA:Q', title='% DEPENDENCIA',
+                    scale=alt.Scale(domain=[min-1, max+1]), axis=alt.Axis(titleAnchor='end')),
+            tooltip=['ANIO-TRIM', 'DEPENDENCIA_DEMOGRAFICA']
+        )
+        text = chart.mark_text(
+            align='center',
+            baseline='bottom',
+            size=15,
+            dy=-10,
+            color='#007ACC'
+        ).encode(
+            text='DEPENDENCIA_DEMOGRAFICA:Q'
+        )
+
+        st.markdown('### Dependencia demográfica')
+        st.markdown(
+            f'_Datos para todos los años y trimestres de **{aglomerado_opcion}**_')
+        st.altair_chart(chart + text, use_container_width=True)
+        st.caption('La **dependencia demográfica** se define como el cociente de la cantidad de población de 0 a 14 años y mayores de 65 (se asumen jubilados) respecto a la población en edad activa (15 a 64 años) multiplicado por 100.')
+        st.markdown('### Detalles')
+        st.dataframe(df_filtrado, hide_index=True)
+
+    # Punto 1.3.4
+    if tab == secciones[3]:
+        columnas = ['CH06', 'ANO4', 'TRIMESTRE', 'PONDERA']
+        df_filtrado = df_ind.loc[(df_ind['CH06'] > 0), columnas].dropna()
+        media_ponderada = df_filtrado.groupby(['ANO4', 'TRIMESTRE'], group_keys=False).apply(
+            get_media_ponderada, include_groups=False).reset_index(name='MEDIA PONDERADA')
+        mediana_ponderada = df_filtrado.groupby(['ANO4', 'TRIMESTRE'], group_keys=False).apply(
+            get_mediana_ponderada, include_groups=False).reset_index(name='MEDIANA PONDERADA')
+        merge = media_ponderada.merge(
+            mediana_ponderada, on=['ANO4', 'TRIMESTRE']).rename(columns={'ANO4': 'AÑO'})
+
+        st.markdown('### Edad Media y Mediana de la población total')
+        st.markdown(
+            '_Datos correspondientes a **todos** los años y trimestres del dataset_')
+        st.dataframe(merge, hide_index=True)
 
 else:
     st.markdown(
