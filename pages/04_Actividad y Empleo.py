@@ -1,17 +1,15 @@
 #-----------------------------------------------------------------------------------------------------------------------------
-# Librerías para el análisis de datos
+# Librerías 
 #-----------------------------------------------------------------------------------------------------------------------------
-import sys
-import os
 import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
 
-from src.utils.constants import AGLOMERADOS_NOMBRES
+from src.utils.constants import AGLOMERADOS_NOMBRES,COORDENADAS_AGLOMERADOS
 
-# Agrega la carpeta raíz al path si estás corriendo desde fuera del proyecto
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -197,8 +195,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         "🗺️ Seleccioná uno o más aglomerados",
         options=aglomerados,
         default=aglomerados,
-        key="multiselect_empleo"
-    )
+        key="multiselect_empleo"    )
 
     df_filtrados_empleo = df_empleo[df_empleo['AGLOMERADO_NOMBRE'].isin(seleccionados_empleo)]
     df_filtrados_empleo = df_filtrados_empleo[df_filtrados_empleo['CONDICION_LABORAL'].isin(condicion_valida)]
@@ -237,36 +234,67 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
     
     # ----------------------------------------
-    # 5. Mapa comparativo - Empleo - Desempleo
+    # 5. Mapa comparativo - PROCESAMIENTO
     # ----------------------------------------
 
-    #ARMO EL DATAFRAME - TASA DE EMPLEO- DESEMPLEO X AGLOMERADO COMPARATIVO
+    # Aplico función de tasa de empleo y desempleo
+    df_emp_des = calcular_tasa_emp_desemp(df_empleo, condicion=None, agrupacion=['AGLOMERADO_NOMBRE', 'ANO4', 'TRIMESTRE'])
 
-    # Calculo tasa de empleo y desempleo, por aglomerado,año,trimestre
-    df_emp_des=calcular_tasa_emp_desemp(df_empleo, condicion=None, agrupacion=['AGLOMERADO_NOMBRE','ANO4', 'TRIMESTRE'])
+    # Ordeno y obtengo primeros y últimos registros por aglomerado
+    df_sorted = df_emp_des.sort_values(by=['AGLOMERADO_NOMBRE', 'ANO4', 'TRIMESTRE'])
+    min_date = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='first')
+    max_date = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='last')
 
-    # Reordeno por aglomerado,año y trimestre --> Ordeno para cada aglomerado por fecha
-    df_sorted=df_emp_des.sort_values(by=['AGLOMERADO_NOMBRE','ANO4', 'TRIMESTRE'])
+    # Merge entre el primer y último registro de cada aglomerado
+    df_emp_des = pd.merge(min_date, max_date, on='AGLOMERADO_NOMBRE', suffixes=('_MIN', '_MAX'))
 
-    # Me quedo por el primer elemento de cada aglomerado - minima fecha
-    min_date_aglomerado = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='first')
+    # Cálculo de variaciones
+    df_emp_des['var_tasa_Empleo'] = df_emp_des['Tasa de Empleo_MAX'] - df_emp_des['Tasa de Empleo_MIN']
+    df_emp_des['var_tasa_Desempleo'] = df_emp_des['Tasa de Desempleo_MAX'] - df_emp_des['Tasa de Desempleo_MIN']
 
-    # Me quedo por el ultimo elemento de cada aglomerado 
-    max_date_aglomerado = df_sorted.drop_duplicates(subset='AGLOMERADO_NOMBRE', keep='last')
+    # Selecciono de columnas
+    df_emp_des = df_emp_des[['AGLOMERADO_NOMBRE','Tasa de Empleo_MIN', 'Tasa de Empleo_MAX', 'var_tasa_Empleo','Tasa de Desempleo_MIN', 'Tasa de Desempleo_MAX', 'var_tasa_Desempleo']]
 
-    #Armo un df para comparar entre primera y ultima fecha
-    emp_des_comp=pd.merge(min_date_aglomerado,max_date_aglomerado,on='AGLOMERADO_NOMBRE',how='inner',suffixes=('_MIN', '_MAX') )
+    # Lectura y limpieza del archivo de coordenadas
+    df_coord = pd.read_json(COORDENADAS_AGLOMERADOS).T
+    df_coord['nombre'] = df_coord['nombre'].str.replace('–', '-', regex=False)
 
-    emp_des_comp['var_tasa_Empleo'] = emp_des_comp['Tasa de Empleo_MAX'] - emp_des_comp['Tasa de Empleo_MIN']
-    emp_des_comp['var_tasa_Desempleo'] = emp_des_comp['Tasa de Desempleo_MAX'] - emp_des_comp['Tasa de Desempleo_MIN']
-
-    emp_des_comp = emp_des_comp[['Tasa de Empleo_MIN', 'Tasa de Empleo_MAX', 'var_tasa_Empleo',
-                             'Tasa de Desempleo_MIN', 'Tasa de Desempleo_MAX', 'var_tasa_Desempleo']]
-
-
-
-else:
-    st.warning("⚠️ Asegurate de que el dataset esté cargado correctamente en `st.session_state.df_ind`.")
-
-
+    # Merge con coordenadas
+    df_emp_des = pd.merge(df_emp_des,df_coord,left_on='AGLOMERADO_NOMBRE',right_on='nombre',how='inner').drop(columns='nombre')
     
+    # ----------------------------------------
+    # 5. Mapa comparativo - STREAMLIT
+    # ----------------------------------------
+    # Elección del usuario
+    opcion = st.radio("Seleccioná la tasa a visualizar", ["Tasa de Empleo", "Tasa de Desempleo"])
+
+    #Creo mapa
+    mapa = folium.Map(location=[-34.5, -58], zoom_start=5)
+
+    # Recorro el df agrego los puntos 
+    for _, row in df_emp_des.iterrows():
+        lat, lon = row['coordenadas']
+
+        if opcion == "Tasa de Empleo":
+            color = "green" if row['var_tasa_Empleo'] > 0 else "red"
+            popup_text = f"{row['AGLOMERADO_NOMBRE']}<br>Variación empleo: {row['var_tasa_Empleo']:.2f}%"
+        else:
+            color = "red" if row['var_tasa_Desempleo'] > 0 else "green"
+            popup_text = f"{row['AGLOMERADO_NOMBRE']}<br>Variación desempleo: {row['var_tasa_Desempleo']:.2f}%"
+
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=8,
+            color=color,
+            fill=True,
+            fill_opacity=0.7,
+            popup=folium.Popup(popup_text, max_width=200)
+        ).add_to(mapa)
+
+        # Mostrar el mapa en Streamlit
+    st_folium(mapa, width=700, height=500)
+else:
+    st.markdown(
+        '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')
+    st.page_link('pages/01_Carga de Datos.py',
+                 label='Carga de Datos', icon='📂')
