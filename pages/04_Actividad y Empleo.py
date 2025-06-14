@@ -1,29 +1,102 @@
 #-----------------------------------------------------------------------------------------------------------------------------
 # Librerías 
 #-----------------------------------------------------------------------------------------------------------------------------
-import matplotlib.pyplot as plt
-import plotly.express as px
-import pandas as pd
-import streamlit as st
-import folium
-from streamlit_folium import st_folium
+#Constantes
 from src.utils.constants import AGLOMERADOS_NOMBRES,COORDENADAS_AGLOMERADOS
 
+#Manejo de datos
+import pandas as pd
+
+#Graficos
+import matplotlib.pyplot as plt
+import plotly.express as px
+
+#Visualizacion Streamlit 
+import streamlit as st
+
+#Mapas
+import folium
+from streamlit_folium import st_folium
 
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------
 
-def grafica_barras(df, titulo="Desocupados por nivel educativo",
-                   xlabel="Cantidad de personas desocupadas",
-                   ylabel="Nivel educativo", color="#E67E22"):
-    fig, ax = plt.subplots()
-    df.plot(kind='barh', ax=ax, color=color)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(titulo)
-    plt.tight_layout()
+
+def format_dot(x: float) -> str:
+    # formatea miles con punto en vez de coma
+    return f"{x:,.0f}".replace(",", ".")
+
+def grafica_pie(df,
+                title="Distribución de personas desocupadas por nivel educativo"):
+    
+    fig = px.pie(
+        df,
+        values='PONDERA',
+        names='NIVEL_ED_str',
+        hole=0.3  # Si querés un donut chart
+    )
+
+    fig.update_traces(
+        textinfo='label+percent',
+        hovertemplate='%{label}<br>Personas: %{value:,.0f}<extra></extra>',
+        textfont_size=14,
+        pull=[0.02]*len(df)  # pequeño desplazamiento para todas
+    )
+
+    fig.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,
+            xanchor='center',
+            font=dict(size=18)
+        ),
+        showlegend=False,
+        margin=dict(t=60, b=30, l=20, r=20)
+    )
+
+    return fig
+
+def grafica_barra(df,
+                       xlabel="Cantidad estimada de personas",
+                       ylabel="Nivel educativo",
+                       title="Distribución de personas desocupadas por nivel educativo"):
+
+    media_valor = df['PONDERA'].mean()
+
+    fig = px.bar(
+        df,
+        x='PONDERA',
+        y='NIVEL_ED_str',
+        orientation='h',
+        text='PONDERA',
+       
+    )
+
+    fig.add_vline(
+        x=media_valor,
+        line_dash="dash",
+        line_color="gray",
+        annotation_text=f"Media: {media_valor:,.0f}",
+        annotation_position="top right",
+        annotation_font_size=12
+    )
+
+    fig.update_traces(
+        texttemplate='%{text:,.0f}',
+        textposition='outside',
+        hovertemplate='%{y}<br>Personas: %{x:,.0f}<extra></extra>'
+    )
+
+    fig.update_layout(
+        title=dict(text=title, x=0.5, xanchor='center', font=dict(size=18)),
+        xaxis_title=xlabel,
+        yaxis_title=ylabel,
+        margin=dict(l=60, r=20, t=60, b=30),
+        height=450
+    )
+
     return fig
 
 #Funciones
@@ -108,11 +181,10 @@ def graficar_tasa(df,eje_x ,eje_y, titulo):
 #-----------------------------------------------------------------------------------------------------------------------------
 
 # Configuración de la página
-st.set_page_config(page_title="Actividad y Empleo", page_icon="📊")
+st.set_page_config(page_title="Actividad y Empleo", page_icon="📊",layout="wide")
 
 # Cabecera
-st.title('📊 Actividad y Empleo en Argentina')
-st.markdown("### Análisis del mercado laboral basado en la Encuesta Permanente de Hogares (EPH)")
+st.title('Actividad y Empleo en Argentina')
 st.markdown('---')
 
 if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
@@ -128,9 +200,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     # Listados
     anio_trim = df_empleo.groupby('ANO4')['TRIMESTRE'].unique().apply(list).to_dict() #Listado año_trimestre
      
-
-
-
     #-----------------------------------------------------------------------------------------------------------------------------
     # Barra lateral (Sidebar)
     #-----------------------------------------------------------------------------------------------------------------------------
@@ -148,39 +217,88 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
 
     #-----------------------------------------------------------------------------------------------------------------------------
-    # Cuerpo - Sección 1: Educación y Desempleo
+    # Sección 1: Educación y Desempleo
     #-----------------------------------------------------------------------------------------------------------------------------
 
     if tab == secciones_emp[0]:
 
-        st.header("1. 📉 Desocupación según Nivel Educativo")
-        st.markdown("### Análisis del mercado laboral basado en la Encuesta Permanente de Hogares (EPH)")
-
+        #-----------------------------------------------------------------------------------------------------------------------------
+        # PROCESAMIENTO DE LA INFORMACION
+        #-----------------------------------------------------------------------------------------------------------------------------
+        
         # Filtro por año, trimestre y condición de desocupación
-        df_filtrado = df_empleo[
+        
+        df_anio_trimestre = df_empleo[
             (df_empleo['ANO4'] == anio) &
-            (df_empleo['TRIMESTRE'] == trimestre) &
-            (df_empleo['CONDICION_LABORAL'] == 'Desocupado')
+            (df_empleo['TRIMESTRE'] == trimestre)
         ]
 
-        # Verificación de datos disponibles
-        if df_filtrado.empty:
-            st.warning("⚠️ No se encontraron datos de personas desocupadas para el año y trimestre seleccionados.")
-        else:
-            # Limpieza de valores nulos en nivel educativo
-            df_filtrado = df_filtrado.dropna(subset=['NIVEL_ED_str'])
+        # Filtro específico: personas desocupadas dentro del período seleccionado
+        df_desocupados = df_anio_trimestre[
+            df_anio_trimestre['CONDICION_LABORAL'] == 'Desocupado'
+        ]
 
-            # Agrupamiento por nivel educativo y suma ponderada
-            df_educacion_desocupado = df_filtrado.groupby('NIVEL_ED_str')['PONDERA'].sum().sort_values(ascending=False)
+        # Limpio valores nulos 
+        df_desocupados = df_desocupados.dropna(subset=['NIVEL_ED_str'])
 
-            # Gráfico
-            st.markdown("### 📊 Gráfico: Distribución de la desocupación por nivel educativo")
-            st.pyplot(grafica_barras(
-                df_educacion_desocupado,
-                titulo=f"Desocupados por Nivel Educativo ({anio} - T{trimestre})",
-                xlabel="Cantidad estimada de personas",
-                ylabel="Nivel educativo"
-            ))
+        # Agrupo por nivel de ocupación
+        df_educacion_desocupado = (df_desocupados.groupby('NIVEL_ED_str')['PONDERA'].sum().reset_index())
+
+        # Ordeno por nivel educativo
+        orden_educativo = ['Primario incompleto','Primario completo','Secundario incompleto','Secundario completo','Superior o universitario','Sin Información','S/D']
+        df_educacion_desocupado['NIVEL_ED_str'] = pd.Categorical(df_educacion_desocupado['NIVEL_ED_str'],categories=orden_educativo,ordered=True)
+        df_educacion_desocupado = df_educacion_desocupado.sort_values('NIVEL_ED_str')
+
+        # Agregar columna de porcentaje
+        df_educacion_desocupado['Porcentaje'] = (df_educacion_desocupado['PONDERA'] / df_educacion_desocupado['PONDERA'].sum() * 100)
+
+        #KPIS
+        total_poblacion = df_anio_trimestre['PONDERA'].sum()
+        total_= df_educacion_desocupado['PONDERA'].sum()
+        total_desocupados = df_educacion_desocupado['PONDERA'].sum()
+        
+        #-----------------------------------------------------------------------------------------------------------------------------
+        # Armo Gráficos
+        #-----------------------------------------------------------------------------------------------------------------------------
+        grafica_barras=grafica_barra(df=df_educacion_desocupado,xlabel="Cantidad estimada de personas", ylabel="Nivel educativo",title="Distribución de personas desocupadas por nivel educativo")
+        grafica_torta=grafica_pie(df_educacion_desocupado)
+       
+        #-----------------------------------------------------------------------------------------------------------------------------
+        # Steamlit
+        #-----------------------------------------------------------------------------------------------------------------------------
+
+        st.header("🎓 Educación y Desempleo")
+        st.info(f"""Para el **año {anio} y trimestre {trimestre}**, se presenta la distribución estimada de personas **desocupadas** según el nivel educativo alcanzado, con base en la Encuesta Permanente de Hogares (EPH).""")
+
+
+        # KPIS
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="🔢 Total de personas",value=f"{total_poblacion:,.0f}")
+
+        with col2:
+            st.metric(label="🔢 Total estimado de personas desocupadas",value=f"{total_desocupados:,.0f}")  
+
+        # Selector de tipo de gráfico
+        tipo_grafico = st.radio("Seleccioná el tipo de gráfico", ["Torta", "Barras"], horizontal=True)
+
+        
+        # Gráfico
+        col1, col2 = st.columns(2)
+        with col1:
+            if tipo_grafico == "Torta":
+                st.plotly_chart(grafica_torta)
+            else:
+                st.plotly_chart(grafica_barras,use_container_width=True)
+    # ----------------------------------------
+    # Tabla resumen
+    # ------------------------------
+        with col2:
+            with st.expander("📋 Tabla detalle: Desocupación por nivel educativo"):
+                st.dataframe(df_educacion_desocupado.style.format({
+                    "Cantidad de Personas": "{:,.0f}",
+                    "Porcentaje": "{:.2f}%"
+                }))
 
 
     # ----------------------------------------
