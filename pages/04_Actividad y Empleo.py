@@ -13,6 +13,8 @@ import plotly.express as px
 
 #Visualizacion Streamlit 
 import streamlit as st
+import altair as alt
+
 
 #Mapas
 import folium
@@ -23,11 +25,7 @@ from streamlit_folium import st_folium
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------
 
-
-def format_dot(x: float) -> str:
-    # formatea miles con punto en vez de coma
-    return f"{x:,.0f}".replace(",", ".")
-
+#Graficos
 def grafica_pie(df,
                 title="Distribución de personas desocupadas por nivel educativo"):
     
@@ -99,6 +97,53 @@ def grafica_barra(df,
 
     return fig
 
+def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC', color=None):
+    """
+    Grafica la evolución temporal de una tasa usando Altair.
+
+    Args:
+        df (pd.DataFrame): DataFrame con columnas de fecha/tasa.
+        eje_x (str): Nombre de la columna para el eje X.
+        eje_y (str): Nombre de la columna con la tasa.
+        titulo (str): Título del gráfico.
+        dominio_y (tuple, optional): Rango del eje Y (min, max).
+        color_linea (str, optional): Color fijo para la línea.
+        color (str, optional): Columna para diferenciar líneas por grupo (ej. 'AGLOMERADO_NOMBRE').
+    """
+
+    # Construcción base del gráfico
+    chart = alt.Chart(df).mark_line(point=True).encode(
+        x=alt.X(f'{eje_x}:N', title='AÑO-TRIMESTRE', axis=alt.Axis(labelAngle=0)),
+        y=alt.Y(f'{eje_y}:Q', title=eje_y,
+                scale=alt.Scale(domain=dominio_y) if dominio_y else alt.Undefined,
+                axis=alt.Axis(titleAnchor='end')),
+        tooltip=[eje_x, eje_y] + ([color] if color else [])
+    )
+
+    # Si se especifica una columna para colorear (como aglomerado), se agrega al gráfico
+    if color:
+        chart = chart.encode(color=alt.Color(f'{color}:N', title=color))
+        text = chart.mark_text(
+            align='left',
+            baseline='middle',
+            dx=5,
+            fontSize=11
+        ).encode(text=alt.Text(f'{eje_y}:Q', format='.1f'))
+    else:
+        chart = chart.mark_line(point=True, color=color_linea)
+        text = chart.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-10,
+            fontSize=13,
+            color=color_linea
+        ).encode(text=alt.Text(f'{eje_y}:Q', format='.1f'))
+
+    # Mostrar gráfico
+    st.markdown(f"### {titulo}")
+    st.altair_chart(chart + text, use_container_width=True)
+
+
 #Funciones
 def mapear_nombres_aglomerados(df) :
     df['AGLOMERADO_NOMBRE'] = df['AGLOMERADO'].map(AGLOMERADOS_NOMBRES)
@@ -162,20 +207,6 @@ def agregar_columna_fecha(df):
     df['Fecha'] = df['ANO4'].astype(str) + '-T' + df['TRIMESTRE'].astype(str)
     return df
 
-def graficar_tasa(df,eje_x ,eje_y, titulo):
-    """
-    Grafica la evolución temporal de una tasa usando Plotly.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'Fecha' y una tasa.
-        columna_tasa (str): Nombre de la columna que contiene la tasa a graficar.
-        titulo (str): Título del gráfico.
-    """
-    fig = px.line(df, x=eje_x, y=eje_y, title=titulo)
-    fig.show()
-    st.plotly_chart(fig)
-
-
 #-----------------------------------------------------------------------------------------------------------------------------
 # STREAMLIT APP: ACTIVIDAD Y EMPLEO
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -196,9 +227,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     # Filtro el Dataset con las variables que voy a utilizar
     df_empleo = st.session_state.df_ind[['AGLOMERADO', 'ANO4', 'TRIMESTRE', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PONDERA', 'PP04A'].copy()]
     df_empleo = mapear_nombres_aglomerados(df_empleo)
+    aglomerados = listar(df_empleo, 'AGLOMERADO_NOMBRE')
                                    
     # Listados
     anio_trim = df_empleo.groupby('ANO4')['TRIMESTRE'].unique().apply(list).to_dict() #Listado año_trimestre
+           
+        
      
     #-----------------------------------------------------------------------------------------------------------------------------
     # Barra lateral (Sidebar)
@@ -214,6 +248,11 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             anio = st.selectbox("Año:", sorted(df_empleo['ANO4'].unique()))
             if anio is not None:
                 trimestre = st.selectbox("Trimestre:", sorted(df_empleo[df_empleo['ANO4'] == anio]['TRIMESTRE'].unique()))
+        
+        if tab == secciones_emp[1]:
+            seleccionados = st.multiselect("🗺️ Seleccioná uno o más aglomerados",options=aglomerados,default=aglomerados,key="desempleo_aglomerados")
+            if not seleccionados:
+                seleccionados = aglomerados
 
 
     #-----------------------------------------------------------------------------------------------------------------------------
@@ -290,79 +329,106 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
                 st.plotly_chart(grafica_torta)
             else:
                 st.plotly_chart(grafica_barras,use_container_width=True)
-    # ----------------------------------------
+    
     # Tabla resumen
-    # ------------------------------
         with col2:
             with st.expander("📋 Tabla detalle: Desocupación por nivel educativo"):
                 st.dataframe(df_educacion_desocupado.style.format({
                     "Cantidad de Personas": "{:,.0f}",
                     "Porcentaje": "{:.2f}%"
                 }))
+        
+        st.markdown("---")
+        st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
 
 
-    # ----------------------------------------
-    # 2. Evolución de la tasa de desempleo
-    # ----------------------------------------
+      
+    # ========================================================================================================================================================================================================================
+    # Sección 2 y 3: Evolución del empleo y desempleo
+    # ========================================================================================================================================================================================================================
+
 
     if tab == secciones_emp[1]:
-        st.markdown('---')
-        st.header("2. 📈 Evolución de la Tasa de Desempleo")
-        st.markdown("Observá cómo evoluciona la tasa de desempleo a lo largo del tiempo para diferentes aglomerados urbanos.")
 
-        df_empleo = mapear_nombres_aglomerados(df_empleo)
-        aglomerados = listar(df_empleo, 'AGLOMERADO_NOMBRE')
+        # ========================================================================================
+        # PROCESAMIENTO DE LA INFORMACIÓN
+        # ========================================================================================
 
-        seleccionados = st.multiselect(
-            "🗺️ Seleccioná uno o más aglomerados",
-            options=aglomerados,
-            default=aglomerados,
-            key="desempleo_aglomerados"
+        # Filtrar por aglomerados seleccionados
+        df_aglomerados = df_empleo[df_empleo['AGLOMERADO_NOMBRE'].isin(seleccionados)]
+
+        # Mantener solo población económicamente activa
+        condiciones_activas = ['Ocupado autónomo', 'Ocupado dependiente', 'Desocupado']
+        df_activos = df_aglomerados[df_aglomerados['CONDICION_LABORAL'].isin(condiciones_activas)]
+
+        # Calcular tasa de DESOCUPACIÓN (total y por aglomerado)
+        df_desemp_total = agregar_columna_fecha(calcular_tasa_emp_desemp(df_activos, condicion='Desocupado'))
+        df_desemp_aglomerado = agregar_columna_fecha(
+            calcular_tasa_emp_desemp(df_activos, condicion='Desocupado',
+                                    agrupacion=['ANO4', 'TRIMESTRE', 'AGLOMERADO_NOMBRE'])
         )
 
-        df_filtrados = df_empleo[df_empleo['AGLOMERADO_NOMBRE'].isin(seleccionados)]
-        condicion_valida = ['Ocupado autónomo', 'Ocupado dependiente', 'Desocupado']
-        df_filtrado = df_filtrados[df_filtrados['CONDICION_LABORAL'].isin(condicion_valida)]
+        # Calcular tasa de EMPLEO (total y por aglomerado)
+        df_ocupados_total = agregar_columna_fecha(calcular_tasa_emp_desemp(df_activos, condicion='Ocupado'))
+        df_ocupados_aglomerado = agregar_columna_fecha(
+            calcular_tasa_emp_desemp(df_activos, condicion='Ocupado',
+                                    agrupacion=['ANO4', 'TRIMESTRE', 'AGLOMERADO_NOMBRE'])
+        )
 
-        df_tasa_desempleo = calcular_tasa_emp_desemp(df_filtrado, condicion='Desocupado')
+        # ========================================================================================
+        # VISUALIZACIÓN CON STREAMLIT
+        # ========================================================================================
 
-        st.markdown("### 📄 Tabla: Tasa de Desempleo")
-        st.dataframe(df_tasa_desempleo, use_container_width=True)
-        
-        df_tasa_desempleo = agregar_columna_fecha(df_tasa_desempleo)
-        graficar_tasa(df_tasa_desempleo,'Fecha', 'Tasa de Desempleo', '📊 Evolución de la Tasa de Desempleo')
+        st.header("📈 Evolución de la Tasa de Empleo y Desempleo")
+        st.info("Esta sección permite analizar la evolución del **mercado laboral argentino** "
+                    "según la Encuesta Permanente de Hogares (EPH). Podés comparar la información a nivel nacional "
+                    "y desagregada por aglomerados urbanos.")
 
-    # ----------------------------------------
-    # 3. Evolución de la tasa de empleo
-    # ----------------------------------------
-        st.markdown('---')
-        st.header("3. 💼 Evolución de la Tasa de Empleo")
-        st.markdown("Visualizá cómo varía la tasa de empleo a lo largo del tiempo para los aglomerados seleccionados.")
+        st.markdown("---")
 
-        seleccionados_empleo = st.multiselect(
-            "🗺️ Seleccioná uno o más aglomerados",
-            options=aglomerados,
-            default=aglomerados,
-            key="multiselect_empleo"    )
+        # ---------- DESOCUPACIÓN ----------
+        st.subheader("Evolución de Desempleo")
+        st.info("Explorá cómo evoluciona la tasa de desempleo por cada aglomerado urbano seleccionado.")
 
-        df_filtrados_empleo = df_empleo[df_empleo['AGLOMERADO_NOMBRE'].isin(seleccionados_empleo)]
-        df_filtrados_empleo = df_filtrados_empleo[df_filtrados_empleo['CONDICION_LABORAL'].isin(condicion_valida)]
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("##### 🔹 Promedio por aglomerados")
+            graficar_tasa(df_desemp_total, 'Fecha', 'Tasa de Desempleo',
+                        'Tasa de Desempleo (Promedio)', color_linea="#1f77b4")  # azul
 
-        df_tasa_ocupado = calcular_tasa_emp_desemp(df_filtrados_empleo, condicion='Ocupado')
+        with col2:
+            st.markdown("##### 🔸 Detallada Por aglomerado")
+            graficar_tasa(df_desemp_aglomerado, 'Fecha', 'Tasa de Desempleo',
+                        'Tasa de Desempleo por Aglomerado', color='AGLOMERADO_NOMBRE')
 
-        st.markdown("### 📄 Tabla: Tasa de Empleo")
-        st.dataframe(df_tasa_ocupado, use_container_width=True)
+        st.markdown("---")
 
-        df_tasa_ocupado = agregar_columna_fecha(df_tasa_ocupado)
-        graficar_tasa(df_tasa_ocupado,'Fecha', 'Tasa de Empleo', '📊 Evolución de la Tasa Empleo')
+        # ---------- EMPLEO ----------
+        st.subheader("💼 Evolución Tasa de Empleo")
+        st.info("Explorá cómo evoluciona la tasa de empleo por cada aglomerado urbano seleccionado.")
 
-    # ----------------------------------------
-    # 4. Distribución del Empleo por Sector
-    # ----------------------------------------
-    if tab == secciones_emp[2]:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("##### 🔹 Promedio por aglomerados")
+            graficar_tasa(df_ocupados_total, 'Fecha', 'Tasa de Empleo',
+                        'Tasa de Empleo (Promedio)', color_linea="#d62728")  
+
+        with col2:
+            st.markdown("##### 🔸 Detallada Por Aglomerado")
+            graficar_tasa(df_ocupados_aglomerado, 'Fecha', 'Tasa de Empleo',
+                        'Tasa de Empleo por Aglomerado', color='AGLOMERADO_NOMBRE')
+
+        st.markdown("---")
+        st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
+
+    # ========================================================================================================================================================================================================================
+    # Sección 4: Distribución del Empleo por Sector
+    # ========================================================================================================================================================================================================================
+
+    if tab == secciones_emp[2] :
         st.markdown('---')
         st.header("4. 🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
-        st.markdown("Explorá cómo se distribuyen los empleos según el sector dentro de cada aglomerado urbano.")
+        st.info("Explorá cómo se distribuyen los empleos según el sector dentro de cada aglomerado urbano.")
 
         df_empleo.rename(columns={'PP04A': 'Tipo_empleo'}, inplace=True)
         tipo_empleo_dict = {1: 'Estatal', 2: 'Privado', 3: 'Otro tipo'}
