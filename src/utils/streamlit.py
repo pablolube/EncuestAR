@@ -197,6 +197,28 @@ def cargar_df():
         print('No se pudo cargar el df', type(e).__name__)
     finally:
         return df_ind
+    
+def cargar_df_hogares():
+    """
+    Carga un DataFrame con ciertas columnas del dataset de hogares procesados.
+    """
+    try:
+        df_hogar = pd.DataFrame()
+        df_hogar = pd.read_csv(HOGARES_PROCESSED_DIR, delimiter=';', low_memory=False)
+
+        # Selecciono solo las columnas necesarias para tu análisis
+        columnas_hogar = [
+            'CODUSU', 'NRO_HOGAR', 'ANO4', 'TRIMESTRE', 'AGLOMERADO',
+            'PONDERA', 'II7', 'II7_ESP', 'IV3', 'IV9', 'IV12_3', 'TIPO_HOGAR',
+            'CONDICION_DE_HABITABILIDAD'
+        ]
+        df_hogar = df_hogar.loc[:, columnas_hogar]
+
+    except Exception as e:
+        print('No se pudo cargar el df de hogares', type(e).__name__)
+    finally:
+        return df_hogar
+
 
 
 def get_nombre_aglomerado(id_aglomerados):
