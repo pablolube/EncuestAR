@@ -207,15 +207,19 @@ def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC
     st.markdown(f"### {titulo}")
     st.altair_chart(chart + text, use_container_width=True)
 
-def graficar_empleo_por_sector(df, titulo= "Distribución del Empleo por Sector en Aglomerados Urbanos"):
+
+def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector en Aglomerados Urbanos"):
     """
     Genera un gráfico de barras apiladas horizontales que muestra la distribución porcentual
-    del empleo (Estatal, Privado, Otro tipo) por aglomerado.
+    del empleo (Estatal, Privado, Otro tipo) por aglomerado, con porcentajes sobre las barras
+    y total al final de cada barra. Controla la altura y agrega scroll si es necesario.
 
     Args:
         df (pd.DataFrame): DataFrame con columnas 'AGLOMERADO_NOMBRE', '% Estatal', '% Privado' y '% Otro tipo'.
         titulo (str): Título del gráfico.
     """
+    alto = max(400, min(40 * len(df) + 100, 800))
+
     fig = px.bar(
         df,
         y="AGLOMERADO_NOMBRE",
@@ -223,17 +227,43 @@ def graficar_empleo_por_sector(df, titulo= "Distribución del Empleo por Sector 
         orientation='h',
         title=titulo,
         labels={"value": "Porcentaje", "AGLOMERADO_NOMBRE": "Aglomerado"},
-        height=40 * len(df) + 200  # Ajuste dinámico del alto
+        height=alto
     )
+
     fig.update_layout(
         barmode='stack',
         xaxis_title="Porcentaje de Empleo",
         yaxis_title="",
         legend_title="Tipo de Empleo",
-        template="plotly_white"
+        template="plotly_white",
+        margin=dict(l=150, r=40, t=60, b=40),
     )
-    st.plotly_chart(fig, use_container_width=True)
 
+    fig.update_traces(
+        texttemplate='%{x:.1f}%',  # Mostrar porcentaje con 1 decimal
+        textposition='inside',
+        insidetextanchor='middle',
+        cliponaxis=False,
+    )
+
+    # Calcular totales para poner anotaciones al final de cada barra
+    totales = df[["% Estatal", "% Privado", "% Otro tipo"]].sum(axis=1)
+
+    anotaciones = []
+    for i, total in enumerate(totales):
+        anotaciones.append(dict(
+            x=total + 2,  # desplazado a la derecha del final de la barra
+            y=df["AGLOMERADO_NOMBRE"].iloc[i],
+            text=f"{total:.1f}%",
+            showarrow=False,
+            font=dict(color="black", size=12),
+            xanchor='left',
+            yanchor='middle',
+        ))
+
+    fig.update_layout(annotations=anotaciones)
+
+    return fig
 
 
 
@@ -478,17 +508,25 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         tabla['% Estatal'] = round((tabla['Estatal'] / tabla['Total_ocupados']) * 100, 2)
         tabla['% Privado'] = round((tabla['Privado'] / tabla['Total_ocupados']) * 100, 2)
         tabla['% Otro tipo'] = round((tabla['Otro tipo'] / tabla['Total_ocupados']) * 100, 2)
-
-        #Filtro por desocupados
-        st.header("🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
-        st.info("Explorá cómo se distribuyen los empleos según el sector dentro de cada aglomerado urbano.")
-    
         df_ocupados_aglomerado = tabla[['Total_ocupados', '% Estatal', '% Privado', '% Otro tipo']].reset_index()
-        
-        st.plotly_chart(graficar_empleo_por_sector(df_ocupados_aglomerado))
 
-        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")        
+   
+
+        # ========================================================================================
+        # PROCESAMIENTO DE LA INFORMACIÓN
+        # ========================================================================================
+        
+        st.header("🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
+        st.info("Explorá cómo se distribuyen los empleo según el sector dentro de cada aglomerado urbano.")
+
+        
+        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")
         st.dataframe(df_ocupados_aglomerado, use_container_width=True)
+        
+        fig = graficar_empleo_por_sector(df_ocupados_aglomerado)
+        st.plotly_chart(fig, use_container_width=True)
+        
+       
 
     
     # ----------------------------------------
