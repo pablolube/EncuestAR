@@ -143,6 +143,33 @@ def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC
     st.markdown(f"### {titulo}")
     st.altair_chart(chart + text, use_container_width=True)
 
+def graficar_empleo_por_sector(df, titulo= "Distribución del Empleo por Sector en Aglomerados Urbanos"):
+    """
+    Genera un gráfico de barras apiladas horizontales que muestra la distribución porcentual
+    del empleo (Estatal, Privado, Otro tipo) por aglomerado.
+
+    Args:
+        df (pd.DataFrame): DataFrame con columnas 'AGLOMERADO_NOMBRE', '% Estatal', '% Privado' y '% Otro tipo'.
+        titulo (str): Título del gráfico.
+    """
+    fig = px.bar(
+        df,
+        y="AGLOMERADO_NOMBRE",
+        x=["% Estatal", "% Privado", "% Otro tipo"],
+        orientation='h',
+        title=titulo,
+        labels={"value": "Porcentaje", "AGLOMERADO_NOMBRE": "Aglomerado"},
+        height=40 * len(df) + 200  # Ajuste dinámico del alto
+    )
+    fig.update_layout(
+        barmode='stack',
+        xaxis_title="Porcentaje de Empleo",
+        yaxis_title="",
+        legend_title="Tipo de Empleo",
+        template="plotly_white"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
 
 #Funciones
 def mapear_nombres_aglomerados(df) :
@@ -319,7 +346,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             st.metric(label="🔢 Total estimado de personas desocupadas",value=f"{total_desocupados:,.0f}")  
 
         # Selector de tipo de gráfico
-        tipo_grafico = st.radio("Seleccioná el tipo de gráfico", ["Torta", "Barras"], horizontal=True)
+        tipo_grafico = st.segmented_control(label="Seleccioná el tipo de gráfico", options=["Torta", "Barras"], selection_mode='single')
 
         
         # Gráfico
@@ -424,27 +451,39 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     # ========================================================================================================================================================================================================================
     # Sección 4: Distribución del Empleo por Sector
     # ========================================================================================================================================================================================================================
-
+    
     if tab == secciones_emp[2] :
-        st.markdown('---')
-        st.header("4. 🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
-        st.info("Explorá cómo se distribuyen los empleos según el sector dentro de cada aglomerado urbano.")
-
+        
+        # ========================================================================================
+        # PROCESAMIENTO DE LA INFORMACIÓN
+        # ========================================================================================
+        
+        #Renombro columna  a 'Tipo de empleo
         df_empleo.rename(columns={'PP04A': 'Tipo_empleo'}, inplace=True)
+
+        #Renombro  valores con diccionario
         tipo_empleo_dict = {1: 'Estatal', 2: 'Privado', 3: 'Otro tipo'}
         df_empleo['Tipo_empleo'] = df_empleo['Tipo_empleo'].map(tipo_empleo_dict)
 
+        #Filtro por ocupados
         df_ocupado = df_empleo[df_empleo['CONDICION_LABORAL'].str.contains('Ocupado', na=False)]
+
+        #Armo mi tabla Estatal,Privado, Otro Tipo
         tabla = df_ocupado.groupby(['AGLOMERADO_NOMBRE', 'Tipo_empleo'])['PONDERA'].sum().unstack(fill_value=0)
         tabla['Total_ocupados'] = tabla.sum(axis=1)
-
         tabla['% Estatal'] = round((tabla['Estatal'] / tabla['Total_ocupados']) * 100, 2)
         tabla['% Privado'] = round((tabla['Privado'] / tabla['Total_ocupados']) * 100, 2)
         tabla['% Otro tipo'] = round((tabla['Otro tipo'] / tabla['Total_ocupados']) * 100, 2)
 
+        #Filtro por desocupados
+        st.header("🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
+        st.info("Explorá cómo se distribuyen los empleos según el sector dentro de cada aglomerado urbano.")
+    
         df_ocupados_aglomerado = tabla[['Total_ocupados', '% Estatal', '% Privado', '% Otro tipo']].reset_index()
+        
+        st.plotly_chart(graficar_empleo_por_sector(df_ocupados_aglomerado))
 
-        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")
+        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")        
         st.dataframe(df_ocupados_aglomerado, use_container_width=True)
 
     
@@ -452,6 +491,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     # 5. Mapa comparativo - PROCESAMIENTO
     # ----------------------------------------
    
+    
     if tab == secciones_emp[3]:
         # Aplico función de tasa de empleo y desempleo
         df_emp_des = calcular_tasa_emp_desemp(df_empleo, condicion=None, agrupacion=['AGLOMERADO_NOMBRE', 'ANO4', 'TRIMESTRE'])
@@ -482,9 +522,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     # 5. Mapa comparativo - STREAMLIT
     # ----------------------------------------
         # Elección del usuario
-        opcion = st.radio("Seleccioná la tasa a visualizar", ["Tasa de Empleo", "Tasa de Desempleo"])
-
-        #Creo mapa
+        opcion = st.segmented_control(label="Seleccioná Tasa",options=["Tasa de Empleo", "Tasa de Desempleo"],default="Tasa de Empleo")
         mapa = folium.Map(location=[-34.5, -58], zoom_start=5)
 
         # Recorro el df agrego los puntos 
