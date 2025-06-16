@@ -1,5 +1,5 @@
 import streamlit as st
-from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos, cargar_df
+from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos, cargar_df,cargar_df_hogares
 from src.utils.constants import DATA_SOURCE_DIR
 import datetime
 
@@ -95,6 +95,7 @@ if 'date_range' in st.session_state:
             st.markdown(
                 f"El sistema contiene información desde el **{fecha_inicio[1]}/{fecha_inicio[0]}** hasta el **{fecha_fin[1]}/{fecha_fin[0]}** (trimestre/año).")
             st.session_state.df_ind = cargar_df()
+            st.session_state.df_hogares = cargar_df_hogares()
         else:
             st.warning(
                 "No fue posible determinar las fechas porque los archivos cargados no contienen información temporal válida", icon="⚠️")

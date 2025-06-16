@@ -25,6 +25,70 @@ from streamlit_folium import st_folium
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------
 
+
+#Funciones
+def mapear_nombres_aglomerados(df) :
+    df['AGLOMERADO_NOMBRE'] = df['AGLOMERADO'].map(AGLOMERADOS_NOMBRES)
+    return df
+
+def calcular_tasa_emp_desemp(df, condicion=None, agrupacion=['ANO4', 'TRIMESTRE']):
+    """
+    Calcula la tasa de empleo y/o desempleo por las columnas que se pasen en 'agrupacion'.
+
+    Parámetros:
+    - df: DataFrame con las columnas 'CONDICION_LABORAL', 'PONDERA' y las que se agrupen.
+    - condicion: 'Desocupado', 'Ocupado' o None (para ambas tasas).
+    - agrupacion: lista de columnas para agrupar dinámicamente.
+
+    Devuelve:
+    - DataFrame con la(s) tasa(s) calculada(s) por grupo.
+    """
+
+    # Me aseguro que se una lista
+    if isinstance(agrupacion, str):
+        agrupacion = [agrupacion]
+
+    # Agrupo y  calculo  sumatorias ponderadas por tipo de empleo
+    df_tasa = df.groupby(agrupacion).apply(lambda g: pd.Series({
+        'Desocupado': g[g['CONDICION_LABORAL'] == 'Desocupado']['PONDERA'].sum(),
+        'Ocupado': g[g['CONDICION_LABORAL'].str.contains('Ocupado', na=False)]['PONDERA'].sum()
+    })).reset_index()
+
+    # Del agrupado calculo el total
+    total = df_tasa['Desocupado'] + df_tasa['Ocupado']
+
+    # Calcular tasas
+    df_tasa['Tasa de Desempleo'] = round((df_tasa['Desocupado'] / total) * 100, 2)
+    df_tasa['Tasa de Empleo'] = round((df_tasa['Ocupado'] / total) * 100, 2)
+
+    # Armar columnas a devolver según parámetro
+    if condicion == 'Desocupado':
+        columnas = agrupacion + ['Tasa de Desempleo']
+    elif condicion == 'Ocupado':
+        columnas = agrupacion + ['Tasa de Empleo']
+    elif condicion ==None or 'ambas':
+        columnas = agrupacion + ['Tasa de Desempleo', 'Tasa de Empleo']
+
+    return df_tasa[columnas].sort_values(by=agrupacion)
+
+def listar(df, columna):
+    """Devuelve una lista de valores únicos de una columna del DataFrame."""
+    return df[columna].unique().tolist()
+
+def agregar_columna_fecha(df):
+    """
+    Agrega una columna 'Fecha' combinando ANO4 y TRIMESTRE para graficar series temporales.
+
+    Args:
+        df (pd.DataFrame): DataFrame con columnas 'ANO4' y 'TRIMESTRE'.
+
+    Returns:
+        pd.DataFrame: DataFrame con la columna 'Fecha' como datetime.
+    """
+    df = df.copy()
+    df['Fecha'] = df['ANO4'].astype(str) + '-T' + df['TRIMESTRE'].astype(str)
+    return df
+
 #Graficos
 def grafica_pie(df,
                 title="Distribución de personas desocupadas por nivel educativo"):
@@ -171,68 +235,8 @@ def graficar_empleo_por_sector(df, titulo= "Distribución del Empleo por Sector 
     st.plotly_chart(fig, use_container_width=True)
 
 
-#Funciones
-def mapear_nombres_aglomerados(df) :
-    df['AGLOMERADO_NOMBRE'] = df['AGLOMERADO'].map(AGLOMERADOS_NOMBRES)
-    return df
 
-def calcular_tasa_emp_desemp(df, condicion=None, agrupacion=['ANO4', 'TRIMESTRE']):
-    """
-    Calcula la tasa de empleo y/o desempleo por las columnas que se pasen en 'agrupacion'.
 
-    Parámetros:
-    - df: DataFrame con las columnas 'CONDICION_LABORAL', 'PONDERA' y las que se agrupen.
-    - condicion: 'Desocupado', 'Ocupado' o None (para ambas tasas).
-    - agrupacion: lista de columnas para agrupar dinámicamente.
-
-    Devuelve:
-    - DataFrame con la(s) tasa(s) calculada(s) por grupo.
-    """
-
-    # Me aseguro que se una lista
-    if isinstance(agrupacion, str):
-        agrupacion = [agrupacion]
-
-    # Agrupo y  calculo  sumatorias ponderadas por tipo de empleo
-    df_tasa = df.groupby(agrupacion).apply(lambda g: pd.Series({
-        'Desocupado': g[g['CONDICION_LABORAL'] == 'Desocupado']['PONDERA'].sum(),
-        'Ocupado': g[g['CONDICION_LABORAL'].str.contains('Ocupado', na=False)]['PONDERA'].sum()
-    })).reset_index()
-
-    # Del agrupado calculo el total
-    total = df_tasa['Desocupado'] + df_tasa['Ocupado']
-
-    # Calcular tasas
-    df_tasa['Tasa de Desempleo'] = round((df_tasa['Desocupado'] / total) * 100, 2)
-    df_tasa['Tasa de Empleo'] = round((df_tasa['Ocupado'] / total) * 100, 2)
-
-    # Armar columnas a devolver según parámetro
-    if condicion == 'Desocupado':
-        columnas = agrupacion + ['Tasa de Desempleo']
-    elif condicion == 'Ocupado':
-        columnas = agrupacion + ['Tasa de Empleo']
-    elif condicion ==None or 'ambas':
-        columnas = agrupacion + ['Tasa de Desempleo', 'Tasa de Empleo']
-
-    return df_tasa[columnas].sort_values(by=agrupacion)
-
-def listar(df, columna):
-    """Devuelve una lista de valores únicos de una columna del DataFrame."""
-    return df[columna].unique().tolist()
-
-def agregar_columna_fecha(df):
-    """
-    Agrega una columna 'Fecha' combinando ANO4 y TRIMESTRE para graficar series temporales.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'ANO4' y 'TRIMESTRE'.
-
-    Returns:
-        pd.DataFrame: DataFrame con la columna 'Fecha' como datetime.
-    """
-    df = df.copy()
-    df['Fecha'] = df['ANO4'].astype(str) + '-T' + df['TRIMESTRE'].astype(str)
-    return df
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # STREAMLIT APP: ACTIVIDAD Y EMPLEO
