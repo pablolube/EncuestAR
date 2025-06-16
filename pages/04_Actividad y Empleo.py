@@ -10,6 +10,7 @@ import pandas as pd
 #Graficos
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 
 #Visualizacion Streamlit 
 import streamlit as st
@@ -208,63 +209,66 @@ def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC
     st.altair_chart(chart + text, use_container_width=True)
 
 
-def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector en Aglomerados Urbanos"):
-    """
-    Genera un gráfico de barras apiladas horizontales que muestra la distribución porcentual
-    del empleo (Estatal, Privado, Otro tipo) por aglomerado, con porcentajes sobre las barras
-    y total al final de cada barra. Controla la altura y agrega scroll si es necesario.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'AGLOMERADO_NOMBRE', '% Estatal', '% Privado' y '% Otro tipo'.
-        titulo (str): Título del gráfico.
-    """
+def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector en Aglomerados"):
+    # Calcula dinámicamente la altura del gráfico según la cantidad de filas
     alto = max(400, min(40 * len(df) + 100, 800))
 
+    # Crea un gráfico de barras apiladas horizontales con Plotly Express
     fig = px.bar(
         df,
-        y="AGLOMERADO_NOMBRE",
-        x=["% Estatal", "% Privado", "% Otro tipo"],
-        orientation='h',
-        title=titulo,
-        labels={"value": "Porcentaje", "AGLOMERADO_NOMBRE": "Aglomerado"},
-        height=alto
+        y="AGLOMERADO_NOMBRE",          # Eje Y: nombres de los aglomerados
+        x=["% Estatal", "% Privado", "% Otro tipo"],  # Eje X: los porcentajes para cada tipo de empleo
+        orientation='h',                # Barra horizontal
+        title=titulo,                  # Título del gráfico
+        labels={"value": "Porcentaje", "AGLOMERADO_NOMBRE": "Aglomerado"},  # Etiquetas de ejes
+        height=alto,                   # Altura dinámica calculada
+        color_discrete_map={           # Colores específicos para cada tipo de empleo
+            "% Estatal": "#636EFA",
+            "% Privado": "#EF553B",
+            "% Otro tipo": "#00CC96"
+        }
     )
 
+    # Configura el layout del gráfico
     fig.update_layout(
-        barmode='stack',
-        xaxis_title="Porcentaje de Empleo",
-        yaxis_title="",
-        legend_title="Tipo de Empleo",
-        template="plotly_white",
-        margin=dict(l=150, r=40, t=60, b=40),
+        barmode='stack',              # Apila las barras para mostrar la suma total por aglomerado
+        xaxis_title="Porcentaje de Empleo",  # Título eje X
+        yaxis_title="",               # Sin título eje Y para mejor estética
+        legend_title="Tipo de Empleo",# Título de la leyenda
+        template="plotly_white",      # Tema blanco limpio
+        margin=dict(l=160, r=100, t=80, b=40),  # Márgenes (más margen derecho para texto adicional)
+        xaxis=dict(range=[0, 110])    # Rango extendido en X para mostrar texto fuera de la barra (102%)
     )
 
+    # Configura el texto dentro de las barras apiladas
     fig.update_traces(
-        texttemplate='%{x:.1f}%',  # Mostrar porcentaje con 1 decimal
-        textposition='inside',
-        insidetextanchor='middle',
-        cliponaxis=False,
+        texttemplate='%{x:.1f}%',      # Muestra porcentaje con un decimal
+        textposition='inside',         # Texto dentro de la barra
+        insidetextanchor='middle',     # Centrado en la barra
+        cliponaxis=False,              # Permite que el texto salga del área del eje sin cortarse
     )
 
-    # Calcular totales para poner anotaciones al final de cada barra
-    totales = df[["% Estatal", "% Privado", "% Otro tipo"]].sum(axis=1)
+    # Obtiene la columna con total de ocupados absolutos para cada aglomerado
+    totales_ocupados = df["Total_ocupados"]
 
     anotaciones = []
-    for i, total in enumerate(totales):
+    # Recorre cada aglomerado para crear anotaciones con el total absoluto
+    for i, total in enumerate(totales_ocupados):
         anotaciones.append(dict(
-            x=total + 2,  # desplazado a la derecha del final de la barra
-            y=df["AGLOMERADO_NOMBRE"].iloc[i],
-            text=f"{total:.1f}%",
-            showarrow=False,
-            font=dict(color="black", size=12),
-            xanchor='left',
-            yanchor='middle',
+            x=102,                   # Posición fija un poco a la derecha del 100% para el texto
+            y=df["AGLOMERADO_NOMBRE"].iloc[i],  # Aglomerado correspondiente (eje Y)
+            text=f"{int(total):,}",      # Texto con total formateado con separadores de miles
+            showarrow=False,          # Sin flechas apuntando
+            font=dict(color="black", size=12, family="Arial"),  # Estilo de la fuente
+            xanchor='left',           # Ancla el texto a la izquierda para que empiece justo en x=102
+            yanchor='middle',         # Centrado vertical respecto al eje Y
         ))
 
+    # Añade las anotaciones al layout del gráfico
     fig.update_layout(annotations=anotaciones)
 
+    # Devuelve la figura lista para mostrarse en Streamlit o en cualquier interfaz Plotly
     return fig
-
 
 
 
@@ -443,13 +447,13 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         st.header("📈 Evolución de la Tasa de Empleo y Desempleo")
         st.info("Esta sección permite analizar la evolución del **mercado laboral argentino** "
                     "según la Encuesta Permanente de Hogares (EPH). Podés comparar la información a nivel nacional "
-                    "y desagregada por aglomerados urbanos.")
+                    "y desagregada por aglomerados.")
 
         st.markdown("---")
 
         # ---------- DESOCUPACIÓN ----------
         st.subheader("Evolución de Desempleo")
-        st.info("Explorá cómo evoluciona la tasa de desempleo por cada aglomerado urbano seleccionado.")
+        st.info("Explorá cómo evoluciona la tasa de desempleo por cada aglomerado seleccionado.")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -466,7 +470,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
         # ---------- EMPLEO ----------
         st.subheader("💼 Evolución Tasa de Empleo")
-        st.info("Explorá cómo evoluciona la tasa de empleo por cada aglomerado urbano seleccionado.")
+        st.info("Explorá cómo evoluciona la tasa de empleo por cada aglomerado  seleccionado.")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -513,20 +517,24 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
    
 
         # ========================================================================================
-        # PROCESAMIENTO DE LA INFORMACIÓN
+        # PRESENTACION STREAMLIT
         # ========================================================================================
-        
         st.header("🏛️ Distribución del Empleo por Sector (Estatal, Privado u Otro)")
-        st.info("Explorá cómo se distribuyen los empleo según el sector dentro de cada aglomerado urbano.")
+        st.info("Explorá cómo se distribuyen los empleo según el sector dentro de cada aglomerado.")
 
-        
-        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")
+        #Muestro Tabla 
+        st.markdown("### 📄 Tabla: Porcentaje de Empleo por Sector y Aglomerado")       
         st.dataframe(df_ocupados_aglomerado, use_container_width=True)
         
+        #Muestro Gráfico
         fig = graficar_empleo_por_sector(df_ocupados_aglomerado)
+        st.markdown('<div style="max-height:700px; overflow-y:auto;">', unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
-        
-       
+        st.markdown('</div>', unsafe_allow_html=True)
+            
+        st.markdown("---")
+        st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
+      
 
     
     # ----------------------------------------
@@ -587,9 +595,11 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
                 popup=folium.Popup(popup_text, max_width=200)
             ).add_to(mapa)
 
-            # Mostrar el mapa en Streamlit
+        # Mostrar el mapa en Streamlit
         st_folium(mapa, width=700, height=500)
-
+        
+        st.markdown("---")
+        st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
 
 else:
     st.markdown(
