@@ -111,7 +111,8 @@ def validar_y_cargar(archivos):
 
     if not archivos:
         mensajes.append(("warning", "⚠️ No se seleccionaron archivos para cargar."))
-        return mensajes
+        st.session_state["mensajes_carga"] = mensajes
+        return
 
     for uploaded_file in archivos:
         file_name = uploaded_file.name
@@ -141,19 +142,18 @@ def validar_y_cargar(archivos):
             mensajes.append(("warning", f"⚠️ El archivo '{file_name}' tiene una fecha inválida."))
             continue
 
+        # Acumular para chequeo de pares
+        clave = (año, trimestre)
+        pares.setdefault(clave, set()).add(tipo)
+
         # Ruta de guardado
         file_path = Path(DATA_SOURCE_DIR) / file_name
         if file_path.exists():
-            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' ya existe."))
             continue
 
         # Guardar archivo
         with open(file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
-
-        # Acumular para chequeo de pares
-        clave = (año, trimestre)
-        pares.setdefault(clave, set()).add(tipo)
 
     # Chequear consistencia de pares hogar-individual
     inconsistencias = []
@@ -170,7 +170,7 @@ def validar_y_cargar(archivos):
     if not any(mensaje[0] == "warning" for mensaje in mensajes):
         mensajes.append(("success", "✅ Archivos validados y cargados correctamente."))
     else:
-        mensajes.append(("error", "❌ Algunos archivos no cumplen con los requisitos. Verifique los archivos cargados."))
+        mensajes.append(("error", "❌ No se han podido validar los archivos. Verificá que sean los correctos. Utilizá el botón \"Eliminar Archivos\" antes de realizar una nueva carga."))
 
     st.session_state["mensajes_carga"] = mensajes
 

@@ -45,9 +45,9 @@ st.markdown("""
         <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
 """, unsafe_allow_html=True)
 
-uploaded_files = st.file_uploader( "**Seleccioná el o los archivos de EPH desde tu dispositivo desde 'Browse Files'**", accept_multiple_files=True)
+uploaded_files = st.file_uploader( "**Seleccioná los archivos de EPH desde tu dispositivo desde 'Browse Files'**", accept_multiple_files=True)
 
-st.markdown( "**Cargá los datos seleccionados. Inclui un mismo año y trimestre para cada tipo de archivo**")    
+st.markdown( "**Cargá los datos seleccionados. Verificá que incluya un mismo año y trimestre para cada tipo de archivo**")    
 
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
           on_click = validar_y_cargar, args=(uploaded_files,))
