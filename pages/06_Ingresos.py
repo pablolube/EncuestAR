@@ -3,17 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 from datetime import datetime
-
-
-st.set_page_config(page_title='Ingresos', layout="wide")
-st.title('Cantidad y porcentajes de hogares que se encuentran por debajo de la línea de pobreza y por debajo de la línea de indigencia')
-st.markdown("Análisis basado en datos de la EPH")
-st.markdown('---')
-
+from src.utils.streamlit import cargar_df_hogares 
+from src.utils.constants import DATA_SOURCE_DIR
+import re
 
 # Funciones Auxiliares
-
-anios_muestra = ('2016','2017','2018','2019','2020','2021','2022','2023','2024')
 
 TRIMESTRES = {
     1: (1,2,3),
@@ -57,3 +51,63 @@ def calculo_promedio_canasta_trimestre(trimestre_ingresado, anio_ingresado, ruta
         'linea_pobreza': float(prom_pobreza),
         'linea_indigencia': float(prom_indigencia)
     }
+
+def extraer_anios_trimestres_hogares():
+    """Extrae combinaciones (año, trimestre) de nombres de los archivos disponibles."""
+    
+    archivos_hogar = []
+    
+    # Listar los archivos en el directorio, no verificamos si esta vacio, porque siempre tiene al menos .gitkeep
+    for archivo in DATA_SOURCE_DIR.iterdir():
+        if archivo.name.endswith(".txt"):
+            nombre = archivo.name.lower()
+            if "hogar" in nombre:
+                archivos_hogar.append(archivo)
+    # no reviso individuos ya que ya se revisa si existen los pares y solo necesito del archivo hogares
+    
+    patron = re.compile(r'T([1-4])(\d{2})')
+    anios_trimestres = set()
+
+    for archivo in archivos_hogar:
+        coincidencia = patron.search(archivo.name.upper())
+        if coincidencia:
+            trimestre, anio_dos_digitos = coincidencia.groups()
+            anio = 2000 + int(anio_dos_digitos)
+            anios_trimestres.add((anio, int(trimestre)))
+
+    return sorted(anios_trimestres)
+
+#--------------STREAMLIT-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+
+st.set_page_config(page_title='Ingresos', layout="wide")
+st.title('Ingresos')
+st.markdown("Análisis basado en datos de la EPH: Pobreza e indigencia")
+st.markdown('---')
+
+
+if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
+
+    df_ind = pd.DataFrame(st.session_state.df_ind)
+    
+    st.markdown("📊 Análisis de Archivo - Selección de Período")
+    
+    opciones_disponibles = extraer_anios_trimestres_hogares()
+    if not opciones_disponibles:
+        st.warning("No se encontraron archivos válidos con información de año y trimestre.")
+        
+    # Uso format_func para que se muestre en un formato mas claro 
+    seleccion = st.selectbox("📅 Seleccioná un período disponible (año y trimestre):", opciones_disponibles, format_func=lambda x: f"{x[0]} - Trimestre {x[1]}") 
+    
+    anio, trimestre = seleccion
+    
+    st.session_state["anio"] = anio
+    st.session_state["trimestre"] = trimestre
+    
+    st.success(f"Seleccionaste: Año {anio}, Trimestre {trimestre}")
+#--------Si no existen datos cargados------------------------------------------------------------------
+else:
+    st.markdown(
+        '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')
+    st.page_link('pages/01_Carga de Datos.py',
+                 label='Carga de Datos', icon='📂')
