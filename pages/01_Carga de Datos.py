@@ -1,5 +1,5 @@
 import streamlit as st
-from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos, cargar_df,cargar_df_hogares
+from src.utils.streamlit import actualizar, validar_y_cargar, eliminar_archivos, cargar_df,cargar_df_hogares
 from src.utils.constants import DATA_SOURCE_DIR
 import datetime
 import streamlit.components.v1 as components
@@ -47,10 +47,10 @@ st.markdown("""
 
 uploaded_files = st.file_uploader( "**Seleccioná el o los archivos de EPH desde tu dispositivo desde 'Browse Files'**", accept_multiple_files=True)
 
-st.markdown( "**Cargá los datos seleccionados**")    
+st.markdown( "**Cargá los datos seleccionados. Inclui un mismo año y trimestre para cada tipo de archivo**")    
 
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
-          on_click=cargar_archivos, args=(uploaded_files,))
+          on_click = validar_y_cargar, args=(uploaded_files,))
 
 # Mensajes de carga de archivos
 if "mensajes_carga" in st.session_state:
@@ -59,7 +59,7 @@ if "mensajes_carga" in st.session_state:
     # Limpiar después de mostrar
     del st.session_state["mensajes_carga"]
 
-st.markdown( "**Actualizá para procesar, eliminá para desechar los archivos actuales**")    
+st.markdown( "**Actualizá para procesar, eliminá antes de modificar los archivos actuales**")    
 
 # Botón para eliminar archivos cargados
 col1, col2 = st.columns(2)
@@ -137,7 +137,6 @@ for archivo in DATA_SOURCE_DIR.iterdir():
             archivos_indiv.append(archivo)
 
 # Función para imprimir archivos clasificados
-
 
 def imprimir_archivos(titulo, archivos):
     if archivos:

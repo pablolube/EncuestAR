@@ -98,56 +98,81 @@ def actualizar():
         # Si ocurre un error, guardo el mensaje de error
         st.session_state["mensaje_actualizacion"] = (
             "error", f"❌ Error al actualizar archivos: {e}")
-
-
-def cargar_archivos(archivos):
+        
+def validar_y_cargar(archivos):
     """
-    Carga archivos en el directorio de datos especificado. Solo se permiten archivos .txt que contengan
-    'hogares' o 'individuos' en el nombre. Si el archivo ya existe, muestra un mensaje de advertencia.
-
-    Args:
-        archivos (list): Lista de archivos subidos por el usuario.
+    Valida, guarda y chequea los archivos cargados.
+    - Solo permite .txt con 'hogar' o 'individual' en el nombre.
+    - Verifica que cada año-trimestre tenga ambos tipos de archivo.
+    - Devuelve mensajes para mostrar en Streamlit.
     """
-    if "mensajes_carga" in st.session_state:
-        del st.session_state["mensajes_carga"]
-
     mensajes = []
+    pares = {}  # (año, trimestre) -> set('hogar', 'individual')
 
-    if archivos:
-        for uploaded_file in archivos:
-            file_name = uploaded_file.name
-            lower_name = file_name.lower()
+    if not archivos:
+        mensajes.append(("warning", "⚠️ No se seleccionaron archivos para cargar."))
+        return mensajes
 
-            # Verifica si es .txt y contiene 'hogares' o 'individuos'
-            if not (file_name.endswith(".txt") and ("hogar" in lower_name or "individual" in lower_name)):
-                mensajes.append(
-                    ("warning",
-                     f"⚠️ El archivo '{file_name}' fue ignorado. Solo se aceptan archivos .txt de la EPH.")
-                )
-                continue
+    for uploaded_file in archivos:
+        file_name = uploaded_file.name
+        lower_name = file_name.lower()
+        partes = file_name.split('_')
 
-            file_path = Path(DATA_SOURCE_DIR) / file_name
+        # Validar formato general
+        if not (file_name.endswith(".txt") and ("hogar" in lower_name or "individual" in lower_name)):
+            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' fue ignorado (nombre o extensión incorrecta)."))
+            continue
 
-            if file_path.exists():
-                mensajes.append(
-                    ("warning",
-                     f"⚠️ El archivo '{file_name}' ya existe. No se guardó.")
-                )
-                continue
+        if len(partes) != 3:
+            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' fue ignorado (estructura del nombre inválida)."))
+            continue
 
-            with open(file_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+        tipo = partes[1]
+        fecha = partes[2].replace(".txt", "")
 
-            mensajes.append(
-                ("success", f"✅ {file_name} guardado en {file_path}")
-            )
+        if not (fecha.startswith("T") and len(fecha) == 4):
+            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' fue ignorado (fecha inválida: '{fecha}')."))
+            continue
+
+        try:
+            trimestre = int(fecha[1])     # T124 → 1
+            año = int(fecha[2:])          # T124 → 24
+        except ValueError:
+            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' tiene una fecha inválida."))
+            continue
+
+        # Ruta de guardado
+        file_path = Path(DATA_SOURCE_DIR) / file_name
+        if file_path.exists():
+            mensajes.append(("warning", f"⚠️ El archivo '{file_name}' ya existe."))
+            continue
+
+        # Guardar archivo
+        with open(file_path, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        # Acumular para chequeo de pares
+        clave = (año, trimestre)
+        pares.setdefault(clave, set()).add(tipo)
+
+    # Chequear consistencia de pares hogar-individual
+    inconsistencias = []
+    for (año, trimestre), tipos in pares.items():
+        if tipos != {'hogar', 'individual'}:
+            faltantes = {'hogar', 'individual'} - tipos
+            for faltante in faltantes:
+                mensajes.append((
+                    "warning",
+                    f"⚠️ Falta archivo de {faltante} para el Año {año}, Trimestre {trimestre}"
+                ))
+                inconsistencias.append((año, trimestre, faltante))
+
+    if not any(mensaje[0] == "warning" for mensaje in mensajes):
+        mensajes.append(("success", "✅ Archivos validados y cargados correctamente."))
     else:
-        mensajes.append(
-            ("warning", "⚠️ No se seleccionaron archivos para cargar.")
-        )
+        mensajes.append(("error", "❌ Algunos archivos no cumplen con los requisitos. Verifique los archivos cargados."))
 
     st.session_state["mensajes_carga"] = mensajes
-
 
 def eliminar_archivos():
     """
