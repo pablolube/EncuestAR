@@ -283,9 +283,6 @@ def evolucion_regimen_tenencia(df, anio, aglomerado_seleccionado, tipos_tenencia
 
 #------------------------------------------------------------------------------------------------------
 
-# --- Cargar datos si no están en session_state ---
-if 'df_hogares' not in st.session_state:
-    st.session_state.df_hogares = cargar_df_hogares()
 
 # --- Verificar datos cargados ---
 if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
@@ -467,9 +464,8 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
         resultado = evolucion_regimen_tenencia(df, anio_opcion, aglomerado_opcion, seleccion_tenencia)
 
 
-
-
 else:
-   st.warning("⚠️ No hay datos cargados. Por favor, cargue los datos desde la pestaña correspondiente.")
-   st.markdown("[Ir a Carga de Datos](pages/01_Carga_de_Datos.py)")
-
+    st.markdown(
+        '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')
+    st.page_link('pages/01_Carga de Datos.py',
+                 label='Carga de Datos', icon='📂')

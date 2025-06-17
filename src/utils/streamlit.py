@@ -201,6 +201,7 @@ def eliminar_archivos():
             st.session_state["mensaje_eliminacion"] = (
                 "success", f"🗑️ {total_eliminados} archivo(s) eliminados correctamente.")
             del st.session_state.df_ind
+            del st.session_state.df_hogares
 
     except Exception as e:
         st.session_state["mensaje_eliminacion"] = (
