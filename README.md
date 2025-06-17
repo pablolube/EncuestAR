@@ -26,7 +26,6 @@ code/
 │   ├── raw/                         # Archivos de datos originales en formato .txt.
 │   └── processed/                   # Archivos de datos procesados en formato .txt.
 ├── notebooks/                       # Carpeta para almacenar notebooks Jupyter para análisis exploratorio.
-│   ├── 4-Actividad y empleo.ipynb/  # Análisis y exploración de datos relacionados con pages de Streamlit.
 │   ├── hogares-individuos.ipynb     # Análisis y exploración de datos de hogares e individuos.                
 │   ├── individuos.ipynb             # Análisis y exploración de datos relacionados con individuos.
 │   └── hogares.ipynb                # Análisis y exploración de datos relacionados con hogares.
@@ -36,7 +35,7 @@ code/
 │   ├── 03_Características de la Vivienda.py # Página para visualizar los resultados.
 │   ├── 04_Actividad y empleo.py             # Página para visualizar los resultados.
 │   ├── 05_Educación.py                      # Página para visualizar los resultados.
-│   └── 06_Ingresoss.ipynb                   # Página para visualizar los resultados.
+│   └── 06_Ingresos.ipynb                   # Página para visualizar los resultados.
 ├── src/
 │   ├── consultas/                # Funciones para realizar consultas sobre los datos.
 │   │   └── consultas.py          # Contiene las funciones para realizar consultas sobre los datos de la EPH.
