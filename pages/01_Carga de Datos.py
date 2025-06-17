@@ -2,6 +2,18 @@ import streamlit as st
 from src.utils.streamlit import actualizar, cargar_archivos, eliminar_archivos, cargar_df,cargar_df_hogares
 from src.utils.constants import DATA_SOURCE_DIR
 import datetime
+import streamlit.components.v1 as components
+
+# Configuración de la página
+# Forzar scroll al top
+components.html(
+    """
+    <script>
+        window.parent.scrollTo(0, 0);
+    </script>
+    """,
+    height=0,
+)
 
 # Cargar Font Awesome desde CDN
 st.markdown("""
@@ -11,16 +23,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Sección principal
-st.markdown('<h2 style"color:#D35400;">🗂️ Carga de Datos</h2>',
+st.markdown('<h2 style"color:#D35400;">🗂️ Carga y actualización de Datos</h2>',
             unsafe_allow_html=True)
 
+st.markdown( "**Espacio para que seleccionar los archivos de EPH desde tu dispositivo, cargarlos y procesarlos para su posterior análisis**")    
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
 # Complemento de carga de archivos--------------------------------------------------------------------
 
 # Carga de Archivos
-st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i>  Carga y Actualización de Datos </h4>',
+st.markdown('<h4><i class="fas fa-upload" style="color:#E67E22;"></i>  Subí tus archivos aquí </h4>',
             unsafe_allow_html=True)
 
 # Link a tutoriales
@@ -32,9 +45,9 @@ st.markdown("""
         <i class="fas fa-link" style="color:#E67E22;"></i> ¿Cómo cargar datos en la App? </a>.</p>
 """, unsafe_allow_html=True)
 
+uploaded_files = st.file_uploader( "**Seleccioná el o los archivos de EPH desde tu dispositivo desde 'Browse Files'**", accept_multiple_files=True)
 
-uploaded_files = st.file_uploader(
-    "**Seccioná el o los archivos desde tu dispositivo:**", accept_multiple_files=True)
+st.markdown( "**Cargá los datos seleccionados**")    
 
 st.button("📤 Cargar Archivos", key="b_cargar_archivos",
           on_click=cargar_archivos, args=(uploaded_files,))
@@ -46,13 +59,15 @@ if "mensajes_carga" in st.session_state:
     # Limpiar después de mostrar
     del st.session_state["mensajes_carga"]
 
+st.markdown( "**Actualizá para procesar, eliminá para desechar los archivos actuales**")    
+
 # Botón para eliminar archivos cargados
 col1, col2 = st.columns(2)
 with col1:
-    st.button("🗑️ Eliminar Todos los Archivos Cargados",
-              key="b_eliminar", on_click=eliminar_archivos)
+    st.button("🔄 Actualizar y procesar datos", key="b_actualizar", on_click=actualizar)
 with col2:
-    st.button("🔄 Actualizar", key="b_actualizar", on_click=actualizar)
+    st.button("🗑️ Eliminar los archivos actuales", key="b_eliminar", on_click=eliminar_archivos)
+
 
 # Mensaje de eliminación
 if "mensaje_eliminacion" in st.session_state:
@@ -158,10 +173,10 @@ st.markdown("""
 st.markdown(
     " 1) Seleccioná el o los archivos de tu ordenador (encontrarás el link de descarga de archivos EPH en la **sección de Inicio**)")
 st.markdown(
-    "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar Todos los Archivos Cargados** y repetí el paso 1).")
+    "2) Cargá los archivos, desde el botón **Cargar Archivos**. Si ya tenés archivos cargados y necesitas cambiarlos, podés eliminarlos desde el botón **Eliminar los archivos actuales** y repetí el paso 1).")
 
 st.markdown(
-    "3) Actualizá el sistema, desde el botón **Actualizar**. Esto permitirá que los archivos cargados se procesen.")
+    "3) Actualizá el sistema, desde el botón **Actualizar y procesar datos**. Esto permitirá que los archivos cargados se procesen.")
 
 
 # Espacio
