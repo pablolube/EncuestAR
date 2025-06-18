@@ -11,6 +11,10 @@ import io
 st.set_page_config(page_title="Educación", page_icon="🎓", layout="wide")
 
 st.title('🎓 Educación')
+
+st.info(f"""Se presentan distintas representaciones gráficas relativas al nivel educativo alcanzado, con base en la Encuesta Permanente de Hogares (EPH).""")
+
+
 st.markdown(
     """
     <hr style="height:3px;border:none;border-radius:3px;
@@ -24,6 +28,12 @@ st.markdown(
 def punto_educacion_1(df_ind):
     """
     Muestra el nivel educativo alcanzado por año.
+
+    Args:
+        df_ind (pd.DataFrame): DataFrame que contiene la información de los individuos.
+
+    Returns:
+        None: Muestra un gráfico y una tabla con el nivel educativo alcanzado por año.
 
     """
     st.markdown("### Nivel educativo alcanzado por año")
@@ -93,7 +103,13 @@ def punto_educacion_1(df_ind):
 # ---------------------- EDUCACIÓN - PUNTO 2 ----------------------
 
 def punto_educacion_2(df_ind):
-    """ Muestra el nivel educativo alcanzado por grupo etario.      
+    """ Muestra el nivel educativo alcanzado por grupo etario.   
+        Args:
+        df_ind (pd.DataFrame): DataFrame que contiene la información de los individuos.
+
+    Returns:
+        None: Muestra un gráfico y una tabla con el nivel educativo alcanzado por grupo etario.
+
     """
 
     st.markdown("### Nivel educativo mayormente alcanzado por grupo etario")
@@ -177,6 +193,11 @@ def punto_educacion_3(df_ind):
     """ 
     Esta función utiliza la función generar_ranking_hogares_universitarios para obtener el ranking.
     Muestra el ranking en una tabla y permite descargarlo como CSV.
+
+    Args:
+        df_ind (pd.DataFrame): DataFrame que contiene la información de los individuos.
+    Returns:
+        None: Muestra un ranking de aglomerados con mayor porcentaje de hogares con universitarios
 
     """
 
@@ -288,7 +309,13 @@ def alfabetismo_porcentaje(df_ind):
 def punto_educacion_4(df_ind):
     """
     Muestra el porcentaje de alfabetización en personas mayores a 6 años por año y trimestre.
-    Permite seleccionar años y muestra un gráfico de barras horizontales apiladas.      
+    Permite seleccionar años y muestra un gráfico de barras horizontales apiladas.   
+
+    Args:
+        df_ind (pd.DataFrame): DataFrame que contiene la información de los individuos.
+    
+    Returns:
+        None: Muestra un gráfico y una tabla con el porcentaje de alfabetización.
     """
     # Título de la sección
     st.markdown("### 📖 Porcentaje de alfabetización en personas mayores a 6 años")
@@ -406,3 +433,7 @@ else:
     st.page_link('pages/01_Carga de Datos.py',
                  label='Carga de Datos', icon='📂')
 
+#---------------------------------------------------------------------------------------------
+
+st.markdown("---")
+st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
