@@ -29,6 +29,19 @@ from streamlit_folium import st_folium
 
 #Funciones
 def mapear_nombres_aglomerados(df) :
+    """
+    Asigna los nombres correspondientes a los códigos de aglomerados en el DataFrame.
+
+    Utiliza un diccionario (AGLOMERADOS_NOMBRES) para mapear los valores de la columna
+    'AGLOMERADO' a una nueva columna 'AGLOMERADO_NOMBRE'.
+
+    Parámetros:
+        df (pd.DataFrame): DataFrame que contiene una columna 'AGLOMERADO' con códigos numéricos.
+
+    Retorna:
+        pd.DataFrame: El mismo DataFrame con una nueva columna 'AGLOMERADO_NOMBRE' que contiene
+                      los nombres descriptivos de los aglomerados.
+    """  
     df['AGLOMERADO_NOMBRE'] = df['AGLOMERADO'].map(AGLOMERADOS_NOMBRES)
     return df
 
@@ -91,8 +104,21 @@ def agregar_columna_fecha(df):
     return df
 
 #Graficos
-def grafica_pie(df,
-                title="Distribución de personas desocupadas por nivel educativo"):
+def grafica_pie(df,title="Distribución de personas desocupadas por nivel educativo"):
+    """
+    Genera un gráfico de torta (pie chart) o de dona (donut chart) que muestra la distribución 
+    de personas desocupadas según su nivel educativo.
+
+    Parámetros:
+        df (pd.DataFrame): DataFrame que debe contener las columnas 'PONDERA' (peso de cada persona)
+                           y 'NIVEL_ED_str' (nivel educativo en formato texto).
+        title (str, opcional): Título del gráfico. Por defecto es 
+                               "Distribución de personas desocupadas por nivel educativo".
+
+    Retorna:
+        plotly.graph_objs._figure.Figure: Figura interactiva de Plotly representando 
+                                          la distribución de personas por nivel educativo.
+    """
     
     fig = px.pie(
         df,
@@ -125,6 +151,26 @@ def grafica_barra(df,
                        xlabel="Cantidad estimada de personas",
                        ylabel="Nivel educativo",
                        title="Distribución de personas desocupadas por nivel educativo"):
+    
+
+    """
+    Genera un gráfico de barras horizontales que muestra la cantidad estimada de personas 
+    desocupadas según su nivel educativo. También incluye una línea vertical indicando 
+    el valor medio de la variable 'PONDERA'.
+
+    Parámetros:
+        df (pd.DataFrame): DataFrame que debe contener las columnas 'PONDERA' 
+                           (peso o cantidad estimada de personas) y 'NIVEL_ED_str' 
+                           (nivel educativo en formato texto).
+        xlabel (str, opcional): Etiqueta del eje X. Por defecto es "Cantidad estimada de personas".
+        ylabel (str, opcional): Etiqueta del eje Y. Por defecto es "Nivel educativo".
+        title (str, opcional): Título del gráfico. Por defecto es 
+                               "Distribución de personas desocupadas por nivel educativo".
+
+    Retorna:
+        plotly.graph_objs._figure.Figure: Figura interactiva de Plotly con las barras 
+                                          y la línea de promedio.
+    """
 
     media_valor = df['PONDERA'].mean()
 
@@ -210,6 +256,30 @@ def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC
 
 
 def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector en Aglomerados"):
+    """
+    Genera un gráfico de barras apiladas horizontales que muestra la distribución porcentual 
+    del empleo por sector (Estatal, Privado, Otro tipo) en diferentes aglomerados urbanos. 
+    Además, incluye anotaciones con el total absoluto de personas ocupadas por aglomerado.
+
+    Parámetros:
+        df (pd.DataFrame): DataFrame que debe contener las siguientes columnas:
+            - 'AGLOMERADO_NOMBRE': Nombre del aglomerado urbano.
+            - '% Estatal': Porcentaje de empleo en el sector estatal.
+            - '% Privado': Porcentaje de empleo en el sector privado.
+            - '% Otro tipo': Porcentaje de empleo en otros tipos de ocupación.
+            - 'Total_ocupados': Cantidad absoluta de personas ocupadas en el aglomerado.
+
+        titulo (str, opcional): Título principal del gráfico. Por defecto es 
+                                "Distribución del Empleo por Sector en Aglomerados".
+
+    Retorna:
+        plotly.graph_objs._figure.Figure: Objeto Plotly con el gráfico generado, listo 
+                                          para visualizarse en Streamlit o cualquier frontend.
+    """
+
+
+
+
     # Calcula dinámicamente la altura del gráfico según la cantidad de filas
     alto = max(400, min(40 * len(df) + 100, 800))
 
@@ -558,48 +628,88 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         df_emp_des['var_tasa_Empleo'] = df_emp_des['Tasa de Empleo_MAX'] - df_emp_des['Tasa de Empleo_MIN']
         df_emp_des['var_tasa_Desempleo'] = df_emp_des['Tasa de Desempleo_MAX'] - df_emp_des['Tasa de Desempleo_MIN']
 
-        # Selecciono de columnas
-        df_emp_des = df_emp_des[['AGLOMERADO_NOMBRE','Tasa de Empleo_MIN', 'Tasa de Empleo_MAX', 'var_tasa_Empleo','Tasa de Desempleo_MIN', 'Tasa de Desempleo_MAX', 'var_tasa_Desempleo']]
+          # Agrego columnas de fecha para el popup
+        df_emp_des['anio_ini'] = df_emp_des['ANO4_MIN']
+        df_emp_des['trim_ini'] = df_emp_des['TRIMESTRE_MIN']
+        df_emp_des['anio_fin'] = df_emp_des['ANO4_MAX']
+        df_emp_des['trim_fin'] = df_emp_des['TRIMESTRE_MAX']
+
+        # Selección de columnas
+        df_emp_des = df_emp_des[[
+            'AGLOMERADO_NOMBRE', 'Tasa de Empleo_MIN', 'Tasa de Empleo_MAX', 'var_tasa_Empleo',
+            'Tasa de Desempleo_MIN', 'Tasa de Desempleo_MAX', 'var_tasa_Desempleo',
+            'anio_ini', 'trim_ini', 'anio_fin', 'trim_fin'
+        ]]
 
         # Lectura y limpieza del archivo de coordenadas
         df_coord = pd.read_json(COORDENADAS_AGLOMERADOS).T
         df_coord['nombre'] = df_coord['nombre'].str.replace('–', '-', regex=False)
 
         # Merge con coordenadas
-        df_emp_des = pd.merge(df_emp_des,df_coord,left_on='AGLOMERADO_NOMBRE',right_on='nombre',how='inner').drop(columns='nombre')
-    
-    # ----------------------------------------
-    # 5. Mapa comparativo - STREAMLIT
-    # ----------------------------------------
-        # Elección del usuario
-        opcion = st.segmented_control(label="Seleccioná Tasa",options=["Tasa de Empleo", "Tasa de Desempleo"],default="Tasa de Empleo")
+        df_emp_des = pd.merge(df_emp_des, df_coord, left_on='AGLOMERADO_NOMBRE', right_on='nombre', how='inner').drop(columns='nombre')
+
+        # ----------------------------------------
+        # 5. Mapa comparativo - STREAMLIT
+        # ----------------------------------------
+
+        opcion = st.segmented_control(
+            label="Seleccioná Tasa",
+            options=["Tasa de Empleo", "Tasa de Desempleo"],
+            default="Tasa de Empleo"
+        )
+
+        st.markdown(f"**🗺️ Mapa de variación de {opcion.lower()} entre los extremos temporales disponibles**")
+
         mapa = folium.Map(location=[-34.5, -58], zoom_start=5)
 
-        # Recorro el df agrego los puntos 
+        # Recorro el df y agrego los puntos
         for _, row in df_emp_des.iterrows():
             lat, lon = row['coordenadas']
+            inicio = f"{row['anio_ini']} T{row['trim_ini']}"
+            fin = f"{row['anio_fin']} T{row['trim_fin']}"
 
             if opcion == "Tasa de Empleo":
-                color = "green" if row['var_tasa_Empleo'] > 0 else "red"
-                popup_text = f"{row['AGLOMERADO_NOMBRE']}<br>Variación empleo: {row['var_tasa_Empleo']:.2f}%"
+                variacion = row['var_tasa_Empleo']
+                tasa_ini = row['Tasa de Empleo_MIN']
+                tasa_fin = row['Tasa de Empleo_MAX']
+                color = "green" if variacion > 0 else "red"
+                titulo = "📊 Variación Empleo"
             else:
-                color = "red" if row['var_tasa_Desempleo'] > 0 else "green"
-                popup_text = f"{row['AGLOMERADO_NOMBRE']}<br>Variación desempleo: {row['var_tasa_Desempleo']:.2f}%"
+                variacion = row['var_tasa_Desempleo']
+                tasa_ini = row['Tasa de Desempleo_MIN']
+                tasa_fin = row['Tasa de Desempleo_MAX']
+                color = "red" if variacion > 0 else "green"
+                titulo = "📉 Variación Desempleo"
+
+            # Escalar tamaño del círculo
+            radio = max(4, min(15, abs(variacion) * 2))
+
+            # Formato del popup
+            popup_html = f"""
+            <div style="font-family: Arial; font-size: 13px;">
+                <strong>📍 {row['AGLOMERADO_NOMBRE']}</strong><br>
+                <strong>{titulo}</strong><br>
+                Periodo: <em>{inicio} → {fin}</em><br>
+                Tasa inicial: {tasa_ini:.2f}%<br>
+                Tasa final: {tasa_fin:.2f}%<br>
+                Variación: <span style="color:{color}; font-weight:bold;">{variacion:.2f}%</span>
+            </div>
+            """
 
             folium.CircleMarker(
                 location=[lat, lon],
-                radius=8,
+                radius=radio,
                 color=color,
                 fill=True,
                 fill_opacity=0.7,
-                popup=folium.Popup(popup_text, max_width=200)
+                popup=folium.Popup(popup_html, max_width=250)
             ).add_to(mapa)
 
-        # Mostrar el mapa en Streamlit
+        # Mostrar el mapa fuera del bucle
         st_folium(mapa, width=700, height=500)
-        
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
+
 
 else:
     st.markdown(
