@@ -2,7 +2,8 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 from src.utils.constants import *
-from src.utils.streamlit import get_nombre_aglomerado
+from src.consultas.consultas import generar_ranking_hogares_universitarios
+import io
 
 #----------------------------------------titulo----------------------
 
@@ -172,16 +173,129 @@ def punto_educacion_2(df_ind):
                 st.dataframe(
                     df_grupo[['Nivel educativo', 'Cantidad', 'Porcentaje']].reset_index(drop=True),
                     hide_index=True)
+                
+# ------------------------PUNTO 3---------------------------------
+
+def punto_educacion_3(df_ind):
+
+    st.markdown("### 🏆 Ranking de aglomerados con mayor % de hogares con universitarios completos")
+
+    # Convertir DataFrame a lista de diccionarios (porque así lo espera la función)
+    data_dict = df_ind.to_dict(orient='records')
+
+    # Obtener ranking
+    ranking_list = generar_ranking_hogares_universitarios(data_dict)
+
+    # Verificamos que el resultado no esté vacío
+    if not ranking_list:
+        st.warning("⚠️ El ranking no contiene datos.")
+        return
+
+    # Convertir a DataFrame
+    df_ranking = pd.DataFrame(ranking_list)
+
+    # Mostrar tabla
+    st.dataframe(df_ranking, hide_index=True)
+
+    # Exportar como CSV
+    csv_buffer = io.StringIO()
+    df_ranking.to_csv(csv_buffer, index=False)
+    csv_bytes = csv_buffer.getvalue().encode("utf-8")
+
+    # Botón de descarga
+    st.download_button(
+        label="📥 Descargar ranking en CSV",
+        data=csv_bytes,
+        file_name="ranking_aglomerados.csv",
+        mime="text/csv"
+    )
+
+# ------------------------PUNTO 4---------------------------------
+
+def alfabetismo_df(df_ind):
+    """
+    Calcula estadísticas de alfabetismo por año y trimestre desde un DataFrame.
+    Devuelve un DataFrame con columnas: 
+    ['ANO4', 'TRIMESTRE', 'Alfabetos', 'No Alfabetos', 'Total', '% Alfabetos', '% Analfabetos'].
+    """
+
+    df_ind['PONDERA'] = df_ind['PONDERA'].astype(int)
+    df_filtrado = df_ind[
+        (df_ind['CH06'].astype(int) >= 6) & (df_ind['CH09'].isin(['1', '2']))
+    ].copy()
+
+    df_filtrado['alfabetismo'] = df_filtrado['CH09'].replace({
+        '1': 'Alfabetos',
+        '2': 'No Alfabetos'})
+
+    agrupado = (
+        df_filtrado
+        .groupby(['ANO4', 'TRIMESTRE', 'alfabetismo'])['PONDERA']
+        .sum()
+        .reset_index())
+
+    tabla_total = agrupado.pivot_table(
+        index=['ANO4', 'TRIMESTRE'],
+        columns='alfabetismo',
+        values='PONDERA',
+        fill_value=0).reset_index()
+
+    # Asegurarse que existan las columnas necesarias
+    for col in ['Alfabetos', 'No Alfabetos']:
+        if col not in tabla_total.columns:
+            tabla_total[col] = 0
+
+    tabla_total['Total'] = tabla_total['Alfabetos'] + tabla_total['No Alfabetos']
+
+    # Evitar división por cero
+    tabla_total['% Alfabetos'] = tabla_total.apply(
+        lambda row: round((row['Alfabetos'] / row['Total'] * 100), 2) if row['Total'] > 0 else 0, axis=1)
+
+    tabla_total['% Analfabetos'] = tabla_total.apply(
+        lambda row: round((row['No Alfabetos'] / row['Total'] * 100), 2) if row['Total'] > 0 else 0, axis=1)
+
+    return tabla_total
+
+def punto_educacion_4(df_ind):
+
+    st.markdown("### Alfabetización en personas mayores a 6 años")
+
+    df_alf = alfabetismo_df(df_ind)
+    df_alf.rename(columns={'ANO4': 'Año', 'TRIMESTRE': 'Trimestre'}, inplace=True)
+    df_alf['Periodo'] = df_alf['Año'].astype(str) + df_alf['Trimestre'].astype(str)
+
+    anios_disponibles = sorted(df_alf['Año'].unique())
+
+    seleccion = st.multiselect(
+        "Seleccioná los años a mostrar:",
+        options=anios_disponibles,
+        default=anios_disponibles
+    )
+
+    df_filtrado = df_alf[df_alf['Año'].isin(seleccion)].copy()
+
+    # Crear gráfico Altair
+    chart = alt.Chart(df_filtrado).mark_line(point=True).encode(
+        x=alt.X('Periodo:N', title='Periodo (Año-Trimestre)', sort=None),
+        y=alt.Y('% Alfabetos:Q', title='Porcentaje de Alfabetismo'),
+        color=alt.Color('Año:N', title='Año', scale=alt.Scale(scheme='category10')),
+        tooltip=['Año', 'Trimestre', '% Alfabetos']
+    ).properties(
+        width=700,
+        height=400
+    ).interactive()
+
+    st.altair_chart(chart, use_container_width=True)
 
 
-# ------------------------ESTRUCTURA DE LA PAGINA------------------
+# ------------------------ESTRUCTURA DE LA PAGINA---------------------------------------------------
 
 if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
     df_ind = pd.DataFrame(st.session_state.df_ind)
 
     # Configuración del Sidebar
-    secciones = ['Nivel educativo alcanzado por año', 'Nivel educativo mayormente alcanzado por grupo etario', '3', '4']
+    secciones = ['Nivel educativo por año', 'Nivel educativo por grupo etario', 'Ranking hogares con estudios superiores' ,'Alfabetización en personas mayores a 6 años']
     st.sidebar.markdown("### Secciones")
     tab = st.sidebar.radio("Seleccionar sección:", secciones)
 
@@ -191,6 +305,12 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     
     if tab == secciones[1]:
         punto_educacion_2(df_ind)
+    
+    if tab == secciones[2]:
+        punto_educacion_3(df_ind)
+    
+    if tab == secciones[3]:
+        punto_educacion_4(df_ind)
 
 else:
     st.markdown(

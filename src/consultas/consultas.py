@@ -260,7 +260,8 @@ def generar_ranking_hogares_universitarios(individuos, min_universitarios=2, top
 
     # Calculo porcentajes y muestro ranking
     ranking = calcular_porcentajes(resultados)
-    imprimir_tabla_ranking(ranking, cantidad=top_n)
+
+    return ranking[:top_n]  # Retorno solo los primeros 'top_n' resultados ordenados 
 
 
 # -----------------------------------------------------------------------------------
