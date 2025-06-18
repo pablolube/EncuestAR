@@ -13,7 +13,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
 
     df_ind = pd.DataFrame(st.session_state.df_ind)
 
-    # Configuración del Sidebar
+    # --------------------- Configuración del Sidebar ---------------------------------------------
     secciones = ['Distribución por sexo y edad', 'Edad media por aglomerado',
                  'Dependencia demográfica', 'Media y mediana total']
 
@@ -32,9 +32,8 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             aglomerado_opcion = st.selectbox(
                 'Aglomerado:', get_nombre_aglomerado(df_ind['AGLOMERADO']))
 
-    # Contenido Central
-
-    # Punto 1.3.1
+    # ------------------------------ CONTENIDO CENTRAL ---------------------------------------------
+    # -------------------------------- Punto 1.3.1 -------------------------------------------------
     if tab == secciones[0]:
         df_filtrado = df_ind.loc[(df_ind['ANO4'] == anio_opcion) & (
             df_ind['TRIMESTRE'] == trim_opcion) & (df_ind['CH06'] > 0), ['CH06', 'CH04_str']].dropna()
@@ -62,7 +61,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             f'_Datos correspondientes al **Año: {anio_opcion} - Trimestre: {trim_opcion}**_')
         st.altair_chart(chart, use_container_width=True)
 
-    # Punto 1.3.2
+    # ------------------------------ Punto 1.3.2 -----------------------------------------------
     if tab == secciones[1]:
 
         # Detección del ultimo año y trimestre cargado
@@ -119,7 +118,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         st.markdown('### Detalle')
         st.dataframe(df_filtrado, hide_index=True)
 
-    # Punto 1.3.3
+    # --------------------------- Punto 1.3.3 ------------------------------------------------------
     if tab == secciones[2]:
         columnas = ['CH06', 'AGLOMERADO', 'ANO4', 'TRIMESTRE', 'PONDERA']
         df_filtrado = df_ind.loc[((df_ind['AGLOMERADO'] == get_nro_aglomerado(aglomerado_opcion)) & (
@@ -163,7 +162,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         st.markdown('### Detalles')
         st.dataframe(df_filtrado, hide_index=True)
 
-    # Punto 1.3.4
+    # ------------------------ Punto 1.3.4 -------------------------------------------------------
     if tab == secciones[3]:
         columnas = ['CH06', 'ANO4', 'TRIMESTRE', 'PONDERA']
         df_filtrado = df_ind.loc[(df_ind['CH06'] > 0), columnas].dropna()
@@ -173,11 +172,38 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             get_mediana_ponderada, include_groups=False).reset_index(name='MEDIANA PONDERADA')
         merge = media_ponderada.merge(
             mediana_ponderada, on=['ANO4', 'TRIMESTRE']).rename(columns={'ANO4': 'AÑO'})
+        merge['AÑO-TRIM'] = merge['AÑO'].astype(
+            str)+"-"+merge['TRIMESTRE'].astype(str)
+        merge = merge.loc[:, ['AÑO-TRIM',
+                              'MEDIA PONDERADA', 'MEDIANA PONDERADA']]
 
+        merge_melted = merge.melt(id_vars='AÑO-TRIM',
+                                  value_vars=['MEDIA PONDERADA',
+                                              'MEDIANA PONDERADA'],
+                                  var_name='Tipo',
+                                  value_name='Valor')
+
+        # configuración gráfico
+        chart = alt.Chart(merge_melted).mark_line(point=True).encode(
+            x=alt.X('AÑO-TRIM:N', title='AÑO-TRIMESTRE',
+                    axis=alt.Axis(labelAngle=0)),
+            y=alt.Y('Valor:Q', title='EDAD (AÑOS)',
+                    axis=alt.Axis(titleAnchor='end')),
+            # Aquí se define el color con leyenda
+            color=alt.Color('Tipo:N', title='Medida'),
+            tooltip=['AÑO-TRIM', 'Tipo', 'Valor']
+        ).properties(
+            title='Edad Media y Mediana de la población total'
+        )
+
+        # Muestro el dataframe
         st.markdown('### Edad Media y Mediana de la población total')
         st.markdown(
             '_Datos correspondientes a **todos** los años y trimestres del dataset_')
         st.dataframe(merge, hide_index=True)
+
+        # Gráfico
+        st.altair_chart(chart, use_container_width=True)
 
 else:
     st.markdown(
