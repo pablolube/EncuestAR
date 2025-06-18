@@ -317,9 +317,9 @@ def calcular_porcentajes(resultados):
     lista = []
     for aglomerado, (propietarias, total) in resultados.items():
         if total > 0:
-            porcentaje = (propietarias / total) * 100
+            porcentaje = ((propietarias / total) * 100)
         else:
-            porcentaje = 0.0
+            porcentaje = "0.0%"
         nombre = AGLOMERADOS_NOMBRES.get(aglomerado, "Nombre no disponible")
         lista.append((aglomerado, nombre, porcentaje))
 

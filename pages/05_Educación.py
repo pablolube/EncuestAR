@@ -167,7 +167,10 @@ def punto_educacion_2(df_ind):
 # ------------------------PUNTO 3---------------------------------
 
 def punto_educacion_3(df_ind):
-    """ Muestra un ranking de aglomerados con mayor porcentaje de hogares con universitarios completos.
+    """ 
+    Esta función utiliza la función generar_ranking_hogares_universitarios para obtener el ranking.
+    Muestra el ranking en una tabla y permite descargarlo como CSV.
+
     """
 
     st.markdown("### 🏆 Ranking de aglomerados con mayor % de hogares con universitarios completos")
@@ -175,7 +178,7 @@ def punto_educacion_3(df_ind):
     # Barra de selección para cantidad de filas a mostrar
     cantidad = st.selectbox(
         "¿Cuántos aglomerados querés visualizar y descargar?",
-        options = [5, 10, 15, 20],
+        options = [5, 10, 15, 20, 25, 30],
         index = 0
     )
 
@@ -191,15 +194,24 @@ def punto_educacion_3(df_ind):
         return
 
     # Convertir a DataFrame
-    df_ranking = pd.DataFrame(ranking_list)
+    df_ranking = pd.DataFrame(ranking_list, columns=[
+    'Código Aglomerado',
+    'Nombre Aglomerado',
+    '% Hogares con Nivel Universitario/Superior'
+    ])
+
+    # Formateo a dos decimales para impresion
+    df_ranking['% Hogares con Nivel Universitario/Superior'] = df_ranking['% Hogares con Nivel Universitario/Superior'].map(lambda x: f"{x:.2f}").astype(str) + '%'
 
     # Mostrar tabla
-    st.dataframe(df_ranking, hide_index=True)
-
-    # Exportar como CSV
+    st.dataframe(df_ranking.style.set_properties(**{
+        'text-align': 'center'
+    }), hide_index=True)
+    
+    # Exportar a CSV con UTF-8 con BOM para que Excel lea bien los tildes
     csv_buffer = io.StringIO()
-    df_ranking.to_csv(csv_buffer, index=False)
-    csv_bytes = csv_buffer.getvalue().encode("utf-8")
+    df_ranking.to_csv(csv_buffer, index=False, encoding='utf-8-sig') 
+    csv_bytes = csv_buffer.getvalue().encode("utf-8-sig")  
 
     # Botón de descarga
     st.download_button(
@@ -211,80 +223,84 @@ def punto_educacion_3(df_ind):
 
 
 # ------------------------PUNTO 4---------------------------------
-
-def alfabetismo_df(df_ind):
+def alfabetismo_porcentaje(df_ind):
     """
-    Calcula estadísticas de alfabetismo por año y trimestre desde un DataFrame.
-    Devuelve un DataFrame con columnas: 
-    ['ANO4', 'TRIMESTRE', 'Alfabetos', 'No Alfabetos', 'Total', '% Alfabetos', '% Analfabetos'].
+    Calcula el % de alfabetizados y no alfabetizados por año y trimestre para personas de 6 años o más.
+    Retorna un DataFrame con columnas: Año, Trimestre, Alfabetos, No Alfabetos, Total, % Alfabetos, % No Alfabetos
     """
+    df = df_ind.copy()
+    df = df[df['CH06'].astype(int) >= 6]
+    df = df[df['CH09'].isin(['1', '2'])]
 
-    df_ind['PONDERA'] = df_ind['PONDERA'].astype(int)
-    df_filtrado = df_ind[
-        (df_ind['CH06'].astype(int) >= 6) & (df_ind['CH09'].isin(['1', '2']))
-    ].copy()
-
-    df_filtrado['alfabetismo'] = df_filtrado['CH09'].replace({
-        '1': 'Alfabetos',
-        '2': 'No Alfabetos'})
+    df['CH09'] = df['CH09'].replace({'1': 'Alfabetos', '2': 'No Alfabetos'})
+    df['PONDERA'] = df['PONDERA'].astype(int)
 
     agrupado = (
-        df_filtrado
-        .groupby(['ANO4', 'TRIMESTRE', 'alfabetismo'])['PONDERA']
+        df.groupby(['ANO4', 'TRIMESTRE', 'CH09'])['PONDERA']
         .sum()
-        .reset_index())
+        .reset_index()
+        .pivot_table(index=['ANO4', 'TRIMESTRE'], columns='CH09', values='PONDERA', fill_value=0)
+        .reset_index()
+    )
 
-    tabla_total = agrupado.pivot_table(
-        index=['ANO4', 'TRIMESTRE'],
-        columns='alfabetismo',
-        values='PONDERA',
-        fill_value=0).reset_index()
+    if 'Alfabetos' not in agrupado.columns:
+        agrupado['Alfabetos'] = 0
+    if 'No Alfabetos' not in agrupado.columns:
+        agrupado['No Alfabetos'] = 0
 
-    # Asegurarse que existan las columnas necesarias
-    for col in ['Alfabetos', 'No Alfabetos']:
-        if col not in tabla_total.columns:
-            tabla_total[col] = 0
+    agrupado['Total'] = agrupado['Alfabetos'] + agrupado['No Alfabetos']
+    agrupado['% Alfabetos'] = (agrupado['Alfabetos'] / agrupado['Total'] * 100).round(2)
+    agrupado['% No Alfabetos'] = (agrupado['No Alfabetos'] / agrupado['Total'] * 100).round(2)
 
-    tabla_total['Total'] = tabla_total['Alfabetos'] + tabla_total['No Alfabetos']
-
-    # Evitar división por cero
-    tabla_total['% Alfabetos'] = tabla_total.apply(
-        lambda row: round((row['Alfabetos'] / row['Total'] * 100), 2) if row['Total'] > 0 else 0, axis=1)
-
-    tabla_total['% Analfabetos'] = tabla_total.apply(
-        lambda row: round((row['No Alfabetos'] / row['Total'] * 100), 2) if row['Total'] > 0 else 0, axis=1)
-
-    return tabla_total
+    return agrupado
 
 def punto_educacion_4(df_ind):
-    """ Muestra el porcentaje de alfabetización en personas mayores a 6 años.
-    """
+    st.markdown("### 📊 Porcentaje de alfabetización en personas mayores a 6 años")
 
-    st.markdown("### Alfabetización en personas mayores a 6 años")
+    # Procesamiento de datos
+    df_alf = alfabetismo_porcentaje(df_ind)
+    df_alf.rename(columns={'ANO4': 'Año'}, inplace=True)
 
+    # Selección de años
     anios_disponibles = sorted(df_ind['ANO4'].dropna().unique())
-
-    df_alf = alfabetismo_df(df_ind)
-    df_alf.rename(columns={'ANO4': 'Año', 'TRIMESTRE': 'Trimestre'}, inplace=True)
-
     seleccion = st.multiselect(
-        "Seleccioná los años a mostrar:",
+        "Seleccioná los años a visualizar:",
         options=anios_disponibles,
-        default=anios_disponibles[0]
+        default=anios_disponibles
     )
 
     df_filtrado = df_alf[df_alf['Año'].isin(seleccion)].copy()
 
-    # Crear gráfico Altair
-    chart = alt.Chart(df_filtrado).mark_line(point=True).encode(
-        x=alt.X('Año:N', title='Año-Trimestre', sort=None),
-        y=alt.Y('% Alfabetos:Q', title='Porcentaje de Alfabetismo'),
-        color=alt.Color('Año:N', title='Año', scale=alt.Scale(scheme='category10')),
-        tooltip=['Año', 'Trimestre', '% Alfabetos']
-    ).properties(
-        width=700,
-        height=400
-    ).interactive()
+    if df_filtrado.empty:
+        st.warning("⚠️ No hay datos disponibles para los años seleccionados.")
+        return
+
+    # Convertir a formato largo
+    df_largo = df_filtrado.melt(
+        id_vars=['Año'],
+        value_vars=['% Alfabetos', '% No Alfabetos'],
+        var_name='Condición',
+        value_name='Porcentaje'
+    )
+
+    # Asegurarse de que Porcentaje es numérico
+    df_largo['Porcentaje'] = pd.to_numeric(df_largo['Porcentaje'], errors='coerce')
+    df_largo.dropna(subset=['Porcentaje'], inplace=True)
+
+    # Ordenar años descendente (opcional)
+    df_largo['Año'] = df_largo['Año'].astype(str)
+    df_largo.sort_values(by='Año', ascending=False, inplace=True)
+
+    # Gráfico de barras horizontales apiladas
+    chart = alt.Chart(df_largo).mark_bar().encode(
+        x=alt.X('Porcentaje:Q', title='Porcentaje'),
+        y=alt.Y('Año:N', sort='-x', title='Año'),
+        color=alt.Color('Condición:N',
+                        scale=alt.Scale(domain=['% Alfabetos', '% No Alfabetos'],
+                                        range=['#2ca02c', '#d62728']),
+                        legend=alt.Legend(title="Condición")),
+        tooltip=['Año', 'Condición', 'Porcentaje']
+    ).properties(width=600, height=300) 
 
     st.altair_chart(chart, use_container_width=True)
 
