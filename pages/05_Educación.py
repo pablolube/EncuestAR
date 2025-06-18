@@ -1,6 +1,7 @@
 import streamlit as st
 import altair as alt
 import pandas as pd
+from src.utils.streamlit import *
 from src.utils.constants import *
 from src.consultas.consultas import generar_ranking_hogares_universitarios
 import io
@@ -21,7 +22,10 @@ st.markdown(
 # ---------------------- EDUCACIÓN - PUNTO 1 ----------------------
 
 def punto_educacion_1(df_ind):
+    """
+    Muestra el nivel educativo alcanzado por año.
 
+    """
     st.markdown("### Nivel educativo alcanzado por año")
     
     opciones_anio = sorted(df_ind["ANO4"].dropna().unique())
@@ -55,25 +59,38 @@ def punto_educacion_1(df_ind):
     st.markdown(f'_Distribución para el año **{anio_opcion}**_')
     st.altair_chart(chart, use_container_width=True)
 
+    # Calcular porcentajes antes del gráfico
+    df_educ['Porcentaje'] = (df_educ['Cantidad'] / df_educ['Cantidad'].sum() * 100).round(2)
+
+    # Crear una columna con el texto 'Nivel educativo (xx%)'
+    df_educ['Etiqueta'] = df_educ.apply(
+        lambda row: f"{row['Nivel educativo']} ({row['Porcentaje']}%)", axis=1
+    )
+
+    # Gráfico de torta con etiquetas en tooltip
     pie = alt.Chart(df_educ).mark_arc().encode(
         theta=alt.Theta(field="Cantidad", type="quantitative"),
-        color=alt.Color("Nivel educativo:N", 
+        color=alt.Color("Etiqueta:N", 
                         scale=alt.Scale(scheme='orangered'),  
                         legend=alt.Legend(title="Nivel educativo")),
-        tooltip=['Nivel educativo', 'Cantidad']).properties(width=350, height=350)
-
+        tooltip=['Nivel educativo', 'Porcentaje']
+    ).properties(width=300, height=300)
+    
     # Pie y tabla uno al lado del otro
     col1, col2 = st.columns(2)
 
     with col1:
-        st.altair_chart(pie, use_container_width=True)
+        st.altair_chart(pie)
 
     with col2:
-        st.dataframe(df_educ, hide_index=True)
+        st.dataframe(df_educ[['Nivel educativo', 'Cantidad']], hide_index=True)
 
 # ---------------------- EDUCACIÓN - PUNTO 2 ----------------------
 
 def punto_educacion_2(df_ind):
+    """ Muestra el nivel educativo alcanzado por grupo etario.      
+    """
+
     st.markdown("### Nivel educativo mayormente alcanzado por grupo etario")
 
     anio_min = df_ind["ANO4"].min()
@@ -150,14 +167,23 @@ def punto_educacion_2(df_ind):
 # ------------------------PUNTO 3---------------------------------
 
 def punto_educacion_3(df_ind):
+    """ Muestra un ranking de aglomerados con mayor porcentaje de hogares con universitarios completos.
+    """
 
     st.markdown("### 🏆 Ranking de aglomerados con mayor % de hogares con universitarios completos")
 
+    # Barra de selección para cantidad de filas a mostrar
+    cantidad = st.selectbox(
+        "¿Cuántos aglomerados querés visualizar y descargar?",
+        options = [5, 10, 15, 20],
+        index = 0
+    )
+
     # Convertir DataFrame a lista de diccionarios (porque así lo espera la función)
-    data_dict = df_ind.to_dict(orient='records')
+    data_dict = df_ind.astype(str).to_dict(orient='records')
 
     # Obtener ranking
-    ranking_list = generar_ranking_hogares_universitarios(data_dict)
+    ranking_list = generar_ranking_hogares_universitarios(data_dict, top_n=cantidad)
 
     # Verificamos que el resultado no esté vacío
     if not ranking_list:
@@ -182,6 +208,7 @@ def punto_educacion_3(df_ind):
         file_name="ranking_aglomerados.csv",
         mime="text/csv"
     )
+
 
 # ------------------------PUNTO 4---------------------------------
 
@@ -230,26 +257,27 @@ def alfabetismo_df(df_ind):
     return tabla_total
 
 def punto_educacion_4(df_ind):
+    """ Muestra el porcentaje de alfabetización en personas mayores a 6 años.
+    """
 
     st.markdown("### Alfabetización en personas mayores a 6 años")
 
+    anios_disponibles = sorted(df_ind['ANO4'].dropna().unique())
+
     df_alf = alfabetismo_df(df_ind)
     df_alf.rename(columns={'ANO4': 'Año', 'TRIMESTRE': 'Trimestre'}, inplace=True)
-    df_alf['Periodo'] = df_alf['Año'].astype(str) + df_alf['Trimestre'].astype(str)
-
-    anios_disponibles = sorted(df_alf['Año'].unique())
 
     seleccion = st.multiselect(
         "Seleccioná los años a mostrar:",
         options=anios_disponibles,
-        default=anios_disponibles
+        default=anios_disponibles[0]
     )
 
     df_filtrado = df_alf[df_alf['Año'].isin(seleccion)].copy()
 
     # Crear gráfico Altair
     chart = alt.Chart(df_filtrado).mark_line(point=True).encode(
-        x=alt.X('Periodo:N', title='Periodo (Año-Trimestre)', sort=None),
+        x=alt.X('Año:N', title='Año-Trimestre', sort=None),
         y=alt.Y('% Alfabetos:Q', title='Porcentaje de Alfabetismo'),
         color=alt.Color('Año:N', title='Año', scale=alt.Scale(scheme='category10')),
         tooltip=['Año', 'Trimestre', '% Alfabetos']

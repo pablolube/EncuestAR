@@ -337,7 +337,7 @@ def imprimir_tabla_ranking(porcentajes_por_aglomerado, cantidad=None):
         cantidad (int, opcional): Número de filas a mostrar. Si es None, muestra todas.
     """
     # Defino encabezados y calcular ancho dinámico
-    encabezados = ["Puesto", "Código", "Aglomerado", "% Propietarios"]
+    encabezados = ["Puesto", "Código", "Aglomerado", "% Porcentaje"]
     formatos = ["{:<6}", "{:<6}", "{:<35}", "{:>15}"]
     header = "  ".join(fmt.format(txt)
                        for fmt, txt in zip(formatos, encabezados))
