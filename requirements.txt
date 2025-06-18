@@ -4,6 +4,6 @@ streamlit==1.44.1
 matplotlib==3.10.3
 plotly==6.1.2
 altair==5.5.0
-folium
-streamlit-folium
+folium==0.19.6
+streamlit-folium==0.25.0
 

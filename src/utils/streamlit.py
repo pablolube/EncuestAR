@@ -234,7 +234,7 @@ def cargar_df_hogares():
         columnas_hogar = [
             'CODUSU', 'NRO_HOGAR', 'ANO4', 'TRIMESTRE', 'AGLOMERADO',
             'PONDERA', 'II7', 'II7_ESP', 'IV3', 'IV9', 'IV12_3', 'TIPO_HOGAR',
-            'CONDICION_DE_HABITABILIDAD'
+            'CONDICION_DE_HABITABILIDAD','IX_TOT','ITF'
         ]
         df_hogar = df_hogar.loc[:, columnas_hogar]
 
