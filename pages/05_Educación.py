@@ -80,10 +80,15 @@ def punto_educacion_1(df_ind):
     col1, col2 = st.columns(2)
 
     with col1:
+        st.markdown("**📊 Distribución del nivel educativo alcanzado**")
         st.altair_chart(pie)
 
     with col2:
+        st.markdown("**📋 Detalle por nivel educativo**")
         st.dataframe(df_educ[['Nivel educativo', 'Cantidad']], hide_index=True)
+
+    st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
 
 # ---------------------- EDUCACIÓN - PUNTO 2 ----------------------
 
@@ -110,6 +115,8 @@ def punto_educacion_2(df_ind):
         options=list(grupos_etarios.keys()),
         default=list(grupos_etarios.keys())
     )
+
+    st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
     df_todos = []
 
@@ -173,13 +180,16 @@ def punto_educacion_3(df_ind):
 
     """
 
-    st.markdown("### 🏆 Ranking de aglomerados con mayor % de hogares con universitarios completos")
-
-    # Barra de selección para cantidad de filas a mostrar
-    cantidad = st.selectbox(
-        "¿Cuántos aglomerados querés visualizar y descargar?",
-        options = [5, 10, 15, 20, 25, 30],
-        index = 0
+    st.markdown("### 🎓 Ranking de aglomerados con mayor % de hogares con universitarios completos")
+   
+    # Deslizador horizontal de 0 a 45
+    cantidad = st.slider(
+        "**🔍 ¿Cuántos aglomerados querés visualizar y descargar?**",
+        min_value=0,
+        max_value=45,
+        value=10,
+        step=1,
+        help="Usá el deslizador para elegir un valor. Va de naranja (bajo) a rojo (alto)."
     )
 
     # Convertir DataFrame a lista de diccionarios (porque así lo espera la función)
@@ -215,11 +225,33 @@ def punto_educacion_3(df_ind):
 
     # Botón de descarga
     st.download_button(
-        label="📥 Descargar ranking en CSV",
+        label="**📥 Descargar ranking en CSV**",
         data=csv_bytes,
         file_name="ranking_aglomerados.csv",
         mime="text/csv"
     )
+
+    # Gráfico de barras por aglomerado
+
+    st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+    st.markdown("**📊 Visualización del ranking de aglomerados**")
+
+    # Convertir columna de porcentaje a numérico (quitando el símbolo % si está)
+    df_ranking['% Numérico'] = df_ranking['% Hogares con Nivel Universitario/Superior'].str.replace('%', '').astype(float)
+
+    # Ordenar para gráfico
+    df_ranking = df_ranking.sort_values('% Numérico', ascending=True)
+
+    # Gráfico de barras horizontales
+    barras = alt.Chart(df_ranking).mark_bar().encode(
+        x=alt.X('% Numérico:Q', title='Porcentaje de hogares con nivel universitario o superior'),
+        y=alt.Y('Nombre Aglomerado:N', sort='-x', title='Aglomerado'),
+        color=alt.Color('% Numérico:Q', scale=alt.Scale(scheme='orangered'), legend=None),
+        tooltip=['Nombre Aglomerado', '% Hogares con Nivel Universitario/Superior']
+    ).properties(width=600, height=400)
+
+    st.altair_chart(barras, use_container_width=True)
 
 # ------------------------PUNTO 4---------------------------------
 def alfabetismo_porcentaje(df_ind):
@@ -259,7 +291,7 @@ def punto_educacion_4(df_ind):
     Permite seleccionar años y muestra un gráfico de barras horizontales apiladas.      
     """
     # Título de la sección
-    st.markdown("### 📊 Porcentaje de alfabetización en personas mayores a 6 años")
+    st.markdown("### 📖 Porcentaje de alfabetización en personas mayores a 6 años")
 
     # Procesamiento de datos
     df_alf = alfabetismo_porcentaje(df_ind)
@@ -303,10 +335,46 @@ def punto_educacion_4(df_ind):
                                         range=['#1f77b4', '#ff7f0e']),
                         legend=alt.Legend(title="Condición")),
         tooltip=['Año', 'Condición', 'Porcentaje']
-    ).properties(width=350, height=100)
+    ).properties(width=350, height=150)
 
     st.altair_chart(chart, use_container_width=True)
 
+    st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
+
+#grafico de evolucion temporal
+    df_lineas = df_filtrado.melt(
+        id_vars=['Año', 'TRIMESTRE'],
+        value_vars=['% Alfabetos', '% No Alfabetos'],
+        var_name='Condición',
+        value_name='Porcentaje'
+    )
+    df_lineas['Periodo'] = df_lineas['Año'].astype(str) + 'T' + df_lineas['TRIMESTRE'].astype(str)
+
+    lineas = alt.Chart(df_lineas).mark_line(point=True).encode(
+        x=alt.X('Periodo:N', title='Periodo (Año-Trimestre)', sort=None),
+        y=alt.Y('Porcentaje:Q', title='Porcentaje'),
+        color=alt.Color(
+            'Condición:N',
+            scale=alt.Scale(domain=['% Alfabetos', '% No Alfabetos'],
+                            range=['#1f77b4', '#ff7f0e']),
+            legend=alt.Legend(title="Condición")
+        ),
+        tooltip=['Periodo', 'Condición', alt.Tooltip('Porcentaje:Q', format=".2f")]
+    ).properties(
+        width=350,
+        height=350,
+        title='	📉 Evolución trimestral del porcentaje de alfabetización'
+    )
+
+    # Organizacion grafico evolutivo y tabla
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.altair_chart(lineas, use_container_width=True)
+
+    with col2:
+        st.markdown("📋 **Tabla de alfabetización por año**")
+        st.dataframe(df_alf[['Año', 'Alfabetos', 'No Alfabetos']], hide_index=True)
 
 # ------------------------ESTRUCTURA DE LA PAGINA---------------------------------------------------
 
