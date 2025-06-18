@@ -72,13 +72,13 @@ def punto_educacion_1(df_ind):
         st.dataframe(df_educ, hide_index=True)
 
 # ---------------------- EDUCACIÓN - PUNTO 2 ----------------------
+
 def punto_educacion_2(df_ind):
     st.markdown("### Nivel educativo mayormente alcanzado por grupo etario")
 
-    anios_min = (df_ind["ANO4"].dropna().min())
-    anios_max = (df_ind["ANO4"].dropna().max())
-
-    st.markdown(f"**Se analiza la información del año {anios_min} a {anios_max}**")
+    anio_min = df_ind["ANO4"].min()
+    anio_max = df_ind["ANO4"].max()
+    st.markdown(f"**Se analiza la información del año {anio_min} a {anio_max}**")
 
     grupos_etarios = {
         '20–30': (20, 30),
@@ -99,10 +99,12 @@ def punto_educacion_2(df_ind):
     for grupo in seleccion:
         edad_min, edad_max = grupos_etarios[grupo]
         df_filtro = df_ind[
-            (df_ind['CH06'] >= edad_min) & (df_ind['CH06'] < edad_max) & df_ind['NIVEL_ED_str'].notna()
+            (df_ind['CH06'] >= edad_min) &
+            (df_ind['CH06'] < edad_max) &
+            df_ind['NIVEL_ED_str'].notna()
         ]
         if not df_filtro.empty:
-            df_educ = df_filtro.groupby('NIVEL_ED_str', as_index=False).agg({'PONDERA': 'sum'})
+            df_educ = df_filtro.groupby('NIVEL_ED_str', as_index=False)['PONDERA'].sum()
             df_educ['Grupo etario'] = grupo
             df_todos.append(df_educ)
 
@@ -110,44 +112,18 @@ def punto_educacion_2(df_ind):
         df_todos = pd.concat(df_todos, ignore_index=True)
         df_todos.rename(columns={'NIVEL_ED_str': 'Nivel educativo', 'PONDERA': 'Cantidad'}, inplace=True)
 
-        # Marcar el más común con ✔️
-        idx_max = df_todos.groupby('Grupo etario')['Cantidad'].idxmax()
-        df_destacados = df_todos.loc[idx_max]
-
-        # Colorear: azul para más común, grises para el resto
-        niveles = sorted(df_todos['Nivel educativo'].unique())
-        grises = ['#b0b0b0', '#a0a0a0', '#909090', '#808080', '#707070', '#606060', '#505050', '#404040']
-        gris_map = {niv: grises[i % len(grises)] for i, niv in enumerate(niveles)}
-        azul = '#1f77b4'
-
-        # Crear set de combinaciones destacadas
-        combinaciones_destacadas = set(zip(df_destacados['Grupo etario'], df_destacados['Nivel educativo']))
-
-        # Asignar color según combinación
-        def asignar_color(grupo, nivel):
-            return azul if (grupo, nivel) in combinaciones_destacadas else gris_map.get(nivel, 'gray')
-
-        df_todos['Color'] = df_todos.apply(
-            lambda row: asignar_color(row['Grupo etario'], row['Nivel educativo']),
-            axis=1
-        )
-
-        # Gráfico
         chart = alt.Chart(df_todos).mark_bar().encode(
             x=alt.X('Grupo etario:N',
                     sort=list(grupos_etarios.keys()),
                     title='Grupo etario',
                     axis=alt.Axis(labelAngle=0, labelFontWeight='bold', titleFontWeight='bold')),
-            
             y=alt.Y('Nivel educativo:N',
                     sort='-x',
                     title='Nivel educativo',
                     axis=alt.Axis(labelFontSize=9, labelFontWeight='bold', titleFontWeight='bold')),
-
             color=alt.Color('Cantidad:Q',
                             scale=alt.Scale(scheme='oranges'),
                             legend=alt.Legend(title="Cantidad")),
-
             tooltip=['Grupo etario', 'Nivel educativo', 'Cantidad']
         ).properties(width=650, height=300)
 
@@ -157,7 +133,6 @@ def punto_educacion_2(df_ind):
 
     st.markdown("### 📋 Detalle por grupo etario")
 
-    # Determinar cuántas columnas por fila (por ejemplo, 3)
     columnas_por_fila = 3
     grupo_chunks = [seleccion[i:i + columnas_por_fila] for i in range(0, len(seleccion), columnas_por_fila)]
 
@@ -166,14 +141,12 @@ def punto_educacion_2(df_ind):
         for col, grupo in zip(cols, fila):
             df_grupo = df_todos[df_todos['Grupo etario'] == grupo].copy()
             df_grupo = df_grupo.sort_values(by='Cantidad', ascending=False)
-            df_grupo['Porcentaje'] = (df_grupo['Cantidad'] / df_grupo['Cantidad'].sum() * 100).round(2)  
-
+            df_grupo['Porcentaje'] = (df_grupo['Cantidad'] / df_grupo['Cantidad'].sum() * 100).round(2)
             with col:
                 st.markdown(f"**Grupo {grupo}**")
-                st.dataframe(
-                    df_grupo[['Nivel educativo', 'Cantidad', 'Porcentaje']].reset_index(drop=True),
-                    hide_index=True)
-                
+                st.dataframe(df_grupo[['Nivel educativo', 'Cantidad', 'Porcentaje']], hide_index=True)
+
+
 # ------------------------PUNTO 3---------------------------------
 
 def punto_educacion_3(df_ind):
