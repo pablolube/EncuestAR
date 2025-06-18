@@ -4,10 +4,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from datetime import datetime
 from src.utils.streamlit import cargar_df_hogares 
-from src.utils.constants import DATA_SOURCE_DIR
-from src.utils.constants import TRIMESTRES
-from src.utils.constants import RUTA_ARCHIVO_CANASTA
-import re
+from src.utils.constants import DATA_SOURCE_DIR, TRIMESTRES, RUTA_ARCHIVO_CANASTA
 
 # Funciones Auxiliares
 
@@ -50,6 +47,8 @@ def extraer_anios_trimestres_hogares(df):
         
         Parametro:
             df: dataframe procesado en carga de datos que une los archivos cargados
+        Retorna:
+            Lista de tuplas de anios-trimestres disponibles
     """
     #Listado año_trimestre
     anio_trim = df.groupby('ANO4')['TRIMESTRE'].unique().apply(list).to_dict() 
@@ -59,17 +58,45 @@ def extraer_anios_trimestres_hogares(df):
 
 def cantidad_porcentaje_pobreza(df_hogares, anio, trimestre, promedio_canasta_actual):
     
-    filtro_fecha_cantidad_personas = [(df_hogares['ANO4'] == anio) & (df_hogares['TRIMESTRE']) & (int(df_hogares['IX_Tot']) == 4)]
+    filtro_fecha_cantidad_personas = ((df_hogares['ANO4'] == anio) & 
+                                      (df_hogares['TRIMESTRE'] == trimestre) & 
+                                      (df_hogares['IX_TOT'] == 4))
+    
     df_filtrado = df_hogares[filtro_fecha_cantidad_personas]
     
     # Eliminar CODUSU duplicados
     df_filtrado = df_filtrado.drop_duplicates(subset='CODUSU', keep='first')
     
     hogares_totales = df_filtrado['PONDERA'].sum()
-    hogares_pobreza = df_filtrado[df_filtrado['ITF'] > promedio_canasta_actual['linea_pobreza']]['PONDERA'].sum()
-    hogares_indigencia = df_filtrado[df_filtrado['ITF'] > promedio_canasta_actual['linea_indigencia']]['PONDERA'].sum()
+
+    filtro_pobreza = ((df_filtrado['ITF'] <= promedio_canasta_actual['linea_pobreza']) &
+                      (df_filtrado['ITF'] > promedio_canasta_actual['linea_indigencia'])
+                    )
+    hogares_pobreza = df_filtrado[filtro_pobreza]['PONDERA'].sum()
+    hogares_indigencia = df_filtrado[df_filtrado['ITF'] <= promedio_canasta_actual['linea_indigencia']]['PONDERA'].sum()
 
     # Porcentajes
+    
+    porcentaje_pobreza = (hogares_pobreza / hogares_totales) * 100 if hogares_totales else 0
+    porcentaje_indigencia = (hogares_indigencia / hogares_totales) * 100 if hogares_totales else 0
+    
+    resultado = {
+        'hogares_totales': {
+            'cantidad': int(hogares_totales),
+            'porcentaje': 100.0
+        },
+        'pobreza': {
+            'cantidad': int(hogares_pobreza),
+            'porcentaje': round(float(porcentaje_pobreza),2)
+        },
+        'indigencia': {
+            'cantidad': int(hogares_indigencia),
+            'porcentaje': round(float(porcentaje_indigencia),2)
+        }
+    }
+    
+    return resultado
+
     
 #--------------STREAMLIT-------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
@@ -81,14 +108,14 @@ st.markdown('---')
 
 # --- Verificar datos cargados ---
 if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
-    df_hg = st.session_state.df_hogares.copy()
+    df_hg = st.session_state.get('df_hogares').copy()
     
     st.markdown("📊 Análisis de Archivo - Selección de Período")
     
     opciones_disponibles = extraer_anios_trimestres_hogares(df_hg)
     if not opciones_disponibles:
         st.warning("No se encontraron archivos válidos con información de año y trimestre.")
-    else:   
+    else:  
         # Uso format_func para que se muestre en un formato mas claro ya que se utilizara su formato original de tupla despues
         seleccion = st.selectbox("📅 Seleccioná un período disponible (año y trimestre):", opciones_disponibles, format_func=lambda x: f"{x[0]} - Trimestre {x[1]}") 
         
@@ -97,10 +124,15 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
         st.session_state["anio_P7"] = anio
         st.session_state["trimestre_P7"] = trimestre
 
-        st.session_state.promedio_canasta = calculo_promedio_canasta_trimestre(int(trimestre), int(anio), RUTA_ARCHIVO_CANASTA)
-        st.write(st.session_state.get('promedio_canasta'))     
+        promedio_canasta = calculo_promedio_canasta_trimestre(
+            int(trimestre), int(anio), RUTA_ARCHIVO_CANASTA
+        )
+        st.session_state.promedio_canasta = promedio_canasta
+        st.write(promedio_canasta)     
            
+        dic_total = cantidad_porcentaje_pobreza(df_hg, anio, trimestre, promedio_canasta)
         
+        st.markdown(dic_total)
 #--------Si no existen datos cargados------------------------------------------------------------------
 else:
     st.markdown(
