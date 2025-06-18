@@ -360,7 +360,8 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     #-----------------------------------------------------------------------------------------------------------------------------
 
     # Filtro el Dataset con las variables que voy a utilizar
-    df_empleo = st.session_state.df_ind[['AGLOMERADO', 'ANO4', 'TRIMESTRE', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PONDERA', 'PP04A'].copy()]
+    df_empleo = st.session_state.df_ind[['AGLOMERADO', 'ANO4', 'TRIMESTRE', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PONDERA', 'PP04A']].copy()
+
     df_empleo = mapear_nombres_aglomerados(df_empleo)
     aglomerados = listar(df_empleo, 'AGLOMERADO_NOMBRE')
                                    
