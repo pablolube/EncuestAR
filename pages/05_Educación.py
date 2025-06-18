@@ -221,7 +221,6 @@ def punto_educacion_3(df_ind):
         mime="text/csv"
     )
 
-
 # ------------------------PUNTO 4---------------------------------
 def alfabetismo_porcentaje(df_ind):
     """
@@ -230,9 +229,9 @@ def alfabetismo_porcentaje(df_ind):
     """
     df = df_ind.copy()
     df = df[df['CH06'].astype(int) >= 6]
-    df = df[df['CH09'].isin(['1', '2'])]
+    df = df[df['CH09'].isin([1, 2])]
 
-    df['CH09'] = df['CH09'].replace({'1': 'Alfabetos', '2': 'No Alfabetos'})
+    df['CH09'] = df['CH09'].replace({1: 'Alfabetos', 2: 'No Alfabetos'})
     df['PONDERA'] = df['PONDERA'].astype(int)
 
     agrupado = (
@@ -255,6 +254,11 @@ def alfabetismo_porcentaje(df_ind):
     return agrupado
 
 def punto_educacion_4(df_ind):
+    """
+    Muestra el porcentaje de alfabetización en personas mayores a 6 años por año y trimestre.
+    Permite seleccionar años y muestra un gráfico de barras horizontales apiladas.      
+    """
+    # Título de la sección
     st.markdown("### 📊 Porcentaje de alfabetización en personas mayores a 6 años")
 
     # Procesamiento de datos
@@ -272,7 +276,7 @@ def punto_educacion_4(df_ind):
     df_filtrado = df_alf[df_alf['Año'].isin(seleccion)].copy()
 
     if df_filtrado.empty:
-        st.warning("⚠️ No hay datos disponibles para los años seleccionados.")
+        st.warning("⚠ No hay datos disponibles para los años seleccionados.")
         return
 
     # Convertir a formato largo
@@ -282,7 +286,6 @@ def punto_educacion_4(df_ind):
         var_name='Condición',
         value_name='Porcentaje'
     )
-
     # Asegurarse de que Porcentaje es numérico
     df_largo['Porcentaje'] = pd.to_numeric(df_largo['Porcentaje'], errors='coerce')
     df_largo.dropna(subset=['Porcentaje'], inplace=True)
@@ -297,10 +300,10 @@ def punto_educacion_4(df_ind):
         y=alt.Y('Año:N', sort='-x', title='Año'),
         color=alt.Color('Condición:N',
                         scale=alt.Scale(domain=['% Alfabetos', '% No Alfabetos'],
-                                        range=['#2ca02c', '#d62728']),
+                                        range=['#1f77b4', '#ff7f0e']),
                         legend=alt.Legend(title="Condición")),
         tooltip=['Año', 'Condición', 'Porcentaje']
-    ).properties(width=600, height=300) 
+    ).properties(width=350, height=100)
 
     st.altair_chart(chart, use_container_width=True)
 
