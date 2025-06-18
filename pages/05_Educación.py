@@ -72,7 +72,12 @@ def punto_educacion_1(df_ind):
 
 # ---------------------- EDUCACIÓN - PUNTO 2 ----------------------
 def punto_educacion_2(df_ind):
-    st.markdown("### Nivel educativo más común alcanzado por grupo etario")
+    st.markdown("### Nivel educativo mayormente alcanzado por grupo etario")
+
+    anios_min = (df_ind["ANO4"].dropna().min())
+    anios_max = (df_ind["ANO4"].dropna().max())
+
+    st.markdown(f"**Se analiza la información del año {anios_min} a {anios_max}**")
 
     grupos_etarios = {
         '20–30': (20, 30),
@@ -176,7 +181,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     df_ind = pd.DataFrame(st.session_state.df_ind)
 
     # Configuración del Sidebar
-    secciones = ['Nivel educativo alcanzado por año', 'Nivel educativo más común alcanzado por grupo etario', '3', '4']
+    secciones = ['Nivel educativo alcanzado por año', 'Nivel educativo mayormente alcanzado por grupo etario', '3', '4']
     st.sidebar.markdown("### Secciones")
     tab = st.sidebar.radio("Seleccionar sección:", secciones)
 
