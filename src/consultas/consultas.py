@@ -462,7 +462,7 @@ def aglomerado_con_mayor_cantidad_viviendas_precarias(datos_hogares):
 # -----------------------------------------------------------------------------------
 
 
-def imprimo_info_porcentual_educacionsuperior_aglomerado(resultado):
+def imprimir_info_porcentual_educacionsuperior_aglomerado(resultado):
     """
     Imprime el porcentaje de personas mayores de 18 años que cursaron al menos nivel universitario o superior,
     agrupado por aglomerado.
@@ -523,9 +523,7 @@ def info_porcentual_educacionsuperior_aglomerado(data):
         resultado[row["AGLOMERADO"]] = round((nivel_sup / total) *
                                              100, 2) if total > 0 else 0.0
 
-    # Imprimo resultados
-    imprimo_info_porcentual_educacionsuperior_aglomerado(resultado)
-
+    return resultado
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 8 (ANÁLISIS) - HOGARES
