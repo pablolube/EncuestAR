@@ -163,20 +163,30 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             """
         )
         
-        df = cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas)
+        df_hogares_pobres_indigentes = cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas)
+
+
+        # Muestra de la tabla generada
+        st.markdown("### 🏠 Distribución de hogares")
+        for _, row in df_hogares_pobres_indigentes.iterrows():
+            st.markdown(f"- **{row['Categoria']}**: {int(row['Cantidad']):,} hogares ({row['Porcentaje']:.2f}%)")
 
         # Selector de tipo de gráfico
-        tipo_grafico = st.segmented_control(label="Seleccioná el tipo de gráfico", options=["Torta", "Barras"], selection_mode='single')
-        
-        # Muestra de la tabla generada
-        st.dataframe(df)
+        # Título con buen tamaño
+        st.markdown("### 📊 Gráfico")
 
+        # Control con label obligatorio, pero discreto
+        tipo_grafico = st.segmented_control(
+            label="Seleccioná un tipo de grafico a mostrar",  # obligatorio pero visualmente menos prominente
+            options=['Torta', 'Barras'],
+            selection_mode='single'
+        )
         # Muestra del grafico seleccionado
         if tipo_grafico == 'Torta':
             #  gráfico de torta
             figura, ax = plt.subplots()
             ax.pie(
-                df['Porcentaje'], labels=df['Categoria'], 
+                df_hogares_pobres_indigentes['Porcentaje'], labels=df_hogares_pobres_indigentes['Categoria'], 
                 autopct='%1.1f%%', 
                 startangle=90, 
                 colors=['#4CAF50', '#FFC107', '#F44336'] 
@@ -192,8 +202,8 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             fig, ax = plt.subplots()   
             
             ax.bar(
-                df['Categoria'], 
-                df['Cantidad'],
+                df_hogares_pobres_indigentes['Categoria'], 
+                df_hogares_pobres_indigentes['Cantidad'],
                 color=['#4CAF50', '#FFC107', '#F44336'],
                 width=0.4
             )
