@@ -11,14 +11,7 @@ import altair as alt
 #  Funciones auxiliares 
 #-------------------------------------------------------------------------------------------------------
 
-# Items 1.4.1 y 1.4.2
-#def contar_viviendas_por_anio(df, anio):
-#    df_anio = df[df["ANO4"] == anio]
-#    if df_anio.empty:
-#        return None
-#    df_unicos = df_anio.drop_duplicates(subset="CODUSU")
-#    total_viviendas = df_unicos["PONDERA"].sum()
-#    return total_viviendas
+# Item 1.4.1
 def contar_viviendas_por_anio(df, anio=None):
     """
      Calcula la cantidad total de viviendas ponderadas para un año determinado, 
@@ -34,7 +27,7 @@ def contar_viviendas_por_anio(df, anio=None):
          anio (int, opcional): Año para el cual se desea calcular la cantidad de viviendas.
              Si se omite, se consideran todos los años presentes en el DataFrame.
 
-     Returns:
+     Retorna:
          float: Cantidad total de viviendas ponderadas (suma de 'PONDERA' para hogares únicos).
      """
     if anio is not None:
@@ -44,7 +37,9 @@ def contar_viviendas_por_anio(df, anio=None):
     # Sumamos los ponderadores de esas viviendas únicas
     total_viviendas_ponderadas = df_unicos["PONDERA"].sum()
     return total_viviendas_ponderadas
+#-----------------------------------------------------------------------------------------------------------
 
+# Item 1.4.2
 def tipo_vivienda_proporcion(df, anio= None):
     """
     Calcula la proporción de cada tipo de hogar en un DataFrame, para un año específico si se indica.
@@ -58,7 +53,7 @@ def tipo_vivienda_proporcion(df, anio= None):
         anio (int, opcional): Año para el cual se desea calcular la proporción. Si se omite, 
             se consideran todos los años presentes en el DataFrame.
 
-    Returns:
+    Retorna:
         pandas.Series or None: Serie con las proporciones de cada tipo de hogar. Devuelve `None` 
         si no hay datos disponibles tras el filtrado.
     """
@@ -67,6 +62,7 @@ def tipo_vivienda_proporcion(df, anio= None):
     if df.empty:
         return None
     return df["TIPO_HOGAR"].value_counts(normalize=True).sort_values(ascending=False)
+#-----------------------------------------------------------------------------------------------------------
 
 # Item 1.4.3 
 def material_piso_por_aglomerado_detallado(df_hogares, anio=None):
@@ -80,7 +76,7 @@ def material_piso_por_aglomerado_detallado(df_hogares, anio=None):
         df_hogares (pd.DataFrame): DataFrame con los datos de hogares provenientes de la EPH.
         anio (int or None): Año a filtrar. Si es None, se incluyen todos los años disponibles.
 
-    Returns:
+    Retorna:
         pd.DataFrame or None: DataFrame con columnas:
             - "Aglomerado": nombre del aglomerado
             - "Material": material predominante del piso
@@ -127,11 +123,42 @@ def material_piso_por_aglomerado_detallado(df_hogares, anio=None):
 
     return resultado[["Aglomerado", "Material", "Cantidad de viviendas con el material predominante", "Porcentaje"]]
 
-
-#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------
 
 # Item 1.4.4
 def calcular_proporcion_bano_por_aglomerado(df_hogar, AGLOMERADOS_NOMBRES, anio=None):
+    """
+    Calcula la proporción de viviendas con baño por aglomerado para un año dado o para todos los años.
+
+    Este cálculo se realiza sobre los hogares únicos (por 'CODUSU' y 'NRO_HOGAR'), considerando
+    la variable 'IV9' que indica si la vivienda cuenta con baño (1 = sí). Si se especifica un año,
+    se filtran los datos para ese año; de lo contrario, se usa todo el DataFrame.
+
+    Parámetros
+    ----------
+    df_hogar : pandas.DataFrame
+        DataFrame que contiene los datos de hogares provenientes de la EPH, con al menos las columnas
+        'CODUSU', 'NRO_HOGAR', 'ANO4', 'AGLOMERADO' y 'IV9'.
+    
+    AGLOMERADOS_NOMBRES : dict
+        Diccionario que mapea los códigos de aglomerado (int) a sus nombres (str).
+        Si se provee, se agrega una columna con los nombres de aglomerados al resultado.
+
+    anio : int, optional
+        Año específico para filtrar los datos (por la columna 'ANO4').
+        Si se omite, se calculan las proporciones usando todos los años disponibles.
+
+    Retorna
+    -------
+    pandas.DataFrame
+        DataFrame con las columnas:
+        - 'AGLOMERADO': código del aglomerado
+        - 'total_viviendas': cantidad total de viviendas relevadas en ese aglomerado
+        - 'viviendas_con_bano': cantidad de viviendas con baño (IV9 == 1)
+        - 'proporcion': proporción de viviendas con baño (cantidad por aglomerado con baño/cantidad total de viviendas del aglomerado)
+        - 'nombre_aglomerado': nombre del aglomerado (si se proporciona el diccionario de nombres)
+    """
+    
     if anio is not None:
         df = df_hogar[df_hogar['ANO4'] == anio].copy()
     else:
@@ -168,17 +195,45 @@ def mostrar_grafico_proporcion_bano(resumen, usar_nombres=True):
     plt.xticks(rotation=45)
     st.pyplot(fig)
 #------------------------------------------------------------------------------------------------------
+
 # Item 1.4.5
 def evolucion_regimen_tenencia(df, anio, aglomerado_seleccionado, tipos_tenencia):
     """
-    Muestra la evolución trimestral del régimen de tenencia de viviendas para un aglomerado específico
-    en un año determinado, utilizando datos ponderados por hogar.
+    Muestra la evolución trimestral del régimen de tenencia de viviendas para un aglomerado
+    específico en un año determinado, utilizando datos ponderados.
 
-    Args:
-        df (pd.DataFrame): DataFrame de hogares de la EPH.
-        anio (int): Año seleccionado por el usuario.
-        aglomerado_seleccionado (int): Código del aglomerado a analizar.
-        tipos_tenencia (list[str] or None): Lista de tipos de tenencia a incluir. Si es None, se usan todos.
+    La función filtra los datos del DataFrame de hogares según el aglomerado y el año indicados,
+    y clasifica las viviendas según el régimen de tenencia (propietario, inquilino, etc.). Luego,
+    agrupa los datos por trimestre y tipo de tenencia, suma los valores ponderados, y calcula
+    la proporción relativa de cada tipo dentro de cada trimestre. Finalmente, muestra una tabla
+    y un gráfico de barras con los resultados.
+
+    Parámetros
+    ----------
+    df : pandas.DataFrame
+        DataFrame con los datos de hogares de la EPH, debe contener las columnas:
+        'AGLOMERADO', 'ANO4', 'TRIMESTRE', 'II7', 'II7_ESP', 'PONDERA'.
+
+    anio : int
+        Año a analizar (por ejemplo, 2023).
+
+    aglomerado_seleccionado : int
+        Código del aglomerado a mostrar.
+
+    tipos_tenencia : list of str or None
+        Lista con los nombres de los tipos de tenencia a incluir en el análisis.
+        Si es None, se incluyen todos los tipos posibles.
+
+    Retorna
+    -------
+    None
+        La función no retorna nada explícitamente, pero muestra un gráfico
+        en pantalla usando Streamlit.
+
+    Notas
+    -----
+    - Los valores de la variable II7 indican el régimen de tenencia y se mapean a etiquetas legibles.
+    - Si no hay datos ponderados disponibles para el filtro aplicado, se muestra un mensaje de advertencia.
     """
 
     if anio is None:
