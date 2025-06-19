@@ -12,7 +12,7 @@ st.set_page_config(page_title="Educación", page_icon="🎓", layout="wide")
 
 st.title('🎓 Educación')
 
-st.info(f"""Se presentan distintas representaciones gráficas relativas al nivel educativo alcanzado, con base en la Encuesta Permanente de Hogares (EPH).""")
+st.info("""Se presentan distintas representaciones gráficas relativas al nivel educativo alcanzado, con base en la Encuesta Permanente de Hogares (EPH).""")
 
 
 st.markdown(
@@ -201,10 +201,22 @@ def punto_educacion_3(df_ind):
 
     """
 
-    st.markdown("### 🎓 Ranking de aglomerados con mayor % de hogares con universitarios completos")
-   
-    # Deslizador horizontal de 0 a 45
-    cantidad = st.slider(
+    st.markdown("### 🎓 Ranking de aglomerados con mayor % de hogares con nivel universitario completo")
+
+    st.info("En esta sección podés filtrar los datos según la cantidad de universitarios por hogar y el número de aglomerados a mostrar, para su posterior visualización y descarga.")
+
+    # Selector cantidad de universitarios por hogar
+    cant_universitarios = st.slider(
+        "**Seleccioná la cantidad de universitarios por hogar a filtrar**",
+        min_value=0,
+        max_value=10,
+        value=2,
+        step=1,
+        help="Usá el deslizador para elegir un valor. Va de naranja (bajo) a rojo (alto)."
+    )
+
+    # Selector cantidad de aglomerados a mostrar
+    cant_aglomerados = st.slider(
         "**🔍 ¿Cuántos aglomerados querés visualizar y descargar?**",
         min_value=0,
         max_value=45,
@@ -217,7 +229,7 @@ def punto_educacion_3(df_ind):
     data_dict = df_ind.astype(str).to_dict(orient='records')
 
     # Obtener ranking
-    ranking_list = generar_ranking_hogares_universitarios(data_dict, top_n=cantidad)
+    ranking_list = generar_ranking_hogares_universitarios(data_dict, cant_universitarios, cant_aglomerados)
 
     # Verificamos que el resultado no esté vacío
     if not ranking_list:

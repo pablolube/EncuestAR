@@ -654,3 +654,8 @@ else:
         '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')
     st.page_link('pages/01_Carga de Datos.py',
                  label='Carga de Datos', icon='📂')
+
+#---------------------------------------------------------------------------------------------
+
+st.markdown("---")
+st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
