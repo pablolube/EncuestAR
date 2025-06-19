@@ -136,6 +136,7 @@ def punto_educacion_2(df_ind):
 
     df_todos = []
 
+    # Filtro resultados por grupo etario
     for grupo in seleccion:
         edad_min, edad_max = grupos_etarios[grupo]
         df_filtro = df_ind[
@@ -152,6 +153,7 @@ def punto_educacion_2(df_ind):
         df_todos = pd.concat(df_todos, ignore_index=True)
         df_todos.rename(columns={'NIVEL_ED_str': 'Nivel educativo', 'PONDERA': 'Cantidad'}, inplace=True)
 
+        # Grafico 
         chart = alt.Chart(df_todos).mark_bar().encode(
             x=alt.X('Grupo etario:N',
                     sort=list(grupos_etarios.keys()),
@@ -171,17 +173,18 @@ def punto_educacion_2(df_ind):
     else:
         st.warning("No hay datos disponibles para los grupos seleccionados.")
 
+    # Tablas dinamicas por grupo seleccionado por el user, con detalles de la data
     st.markdown("### 📋 Detalle por grupo etario")
 
     columnas_por_fila = 3
-    grupo_chunks = [seleccion[i:i + columnas_por_fila] for i in range(0, len(seleccion), columnas_por_fila)]
+    grupo_seleccionado = [seleccion[i:i + columnas_por_fila] for i in range(0, len(seleccion), columnas_por_fila)]
 
-    for fila in grupo_chunks:
+    for fila in grupo_seleccionado:
         cols = st.columns(len(fila))
         for col, grupo in zip(cols, fila):
             df_grupo = df_todos[df_todos['Grupo etario'] == grupo].copy()
             df_grupo = df_grupo.sort_values(by='Cantidad', ascending=False)
-            df_grupo['Porcentaje'] = (df_grupo['Cantidad'] / df_grupo['Cantidad'].sum() * 100).round(2)
+            df_grupo['Porcentaje'] = (df_grupo['Cantidad'] / df_grupo['Cantidad'].sum() * 100).round(2).astype(str) + "%"
             with col:
                 st.markdown(f"**Grupo {grupo}**")
                 st.dataframe(df_grupo[['Nivel educativo', 'Cantidad', 'Porcentaje']], hide_index=True)
@@ -208,7 +211,7 @@ def punto_educacion_3(df_ind):
     # Selector cantidad de universitarios por hogar
     cant_universitarios = st.slider(
         "**Seleccioná la cantidad de universitarios por hogar a filtrar**",
-        min_value=0,
+        min_value=1,
         max_value=10,
         value=2,
         step=1,
@@ -236,22 +239,22 @@ def punto_educacion_3(df_ind):
         st.warning("⚠️ El ranking no contiene datos.")
         return
 
-    # Convertir a DataFrame
+    # Convertir a DataFrame y renombrar encabezado
     df_ranking = pd.DataFrame(ranking_list, columns=[
     'Código Aglomerado',
     'Nombre Aglomerado',
     '% Hogares con Nivel Universitario/Superior'
     ])
 
-    # Formateo a dos decimales para impresion
+    # Formateo a dos decimales porcentuales para impresion
     df_ranking['% Hogares con Nivel Universitario/Superior'] = df_ranking['% Hogares con Nivel Universitario/Superior'].map(lambda x: f"{x:.2f}").astype(str) + '%'
 
-    # Mostrar tabla
+    # Previsualizacion de la tabla, para revision por parte del user antes de su descarga.
     st.dataframe(df_ranking.style.set_properties(**{
         'text-align': 'center'
     }), hide_index=True)
     
-    # Exportar a CSV con UTF-8 con BOM para que Excel lea bien los tildes
+    # Exportar a CSV con UTF-8 para que Excel lea bien los tildes
     csv_buffer = io.StringIO()
     df_ranking.to_csv(csv_buffer, index=False, encoding='utf-8-sig') 
     csv_bytes = csv_buffer.getvalue().encode("utf-8-sig")  
@@ -265,9 +268,7 @@ def punto_educacion_3(df_ind):
     )
 
     # Gráfico de barras por aglomerado
-
     st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
-
     st.markdown("**📊 Visualización del ranking de aglomerados**")
 
     # Convertir columna de porcentaje a numérico (quitando el símbolo % si está)
@@ -289,29 +290,39 @@ def punto_educacion_3(df_ind):
 # ------------------------PUNTO 4---------------------------------
 def alfabetismo_porcentaje(df_ind):
     """
-    Calcula el % de alfabetizados y no alfabetizados por año y trimestre para personas de 6 años o más.
+    Calcula el % de alfabetizados y no alfabetizados por año para personas de 6 años o más.
+    
     Retorna un DataFrame con columnas: Año, Trimestre, Alfabetos, No Alfabetos, Total, % Alfabetos, % No Alfabetos
+    
     """
-    df = df_ind.copy()
-    df = df[df['CH06'].astype(int) >= 6]
-    df = df[df['CH09'].isin([1, 2])]
+    # Filtro data segun condiciones etarias y que dispongan de la informacion necesaria para los calculos
+    df_filtrado = df_ind.copy()
+    df_filtrado = df_filtrado[df_filtrado['CH06'].astype(int) >= 6]
+    df_filtrado = df_filtrado[df_filtrado['CH09'].isin([1, 2])]
 
-    df['CH09'] = df['CH09'].replace({1: 'Alfabetos', 2: 'No Alfabetos'})
-    df['PONDERA'] = df['PONDERA'].astype(int)
+    # Renombro datos y aseguro tipo de variables
+    df_filtrado['CH09'] = df_filtrado['CH09'].replace({1: 'Alfabetos', 2: 'No Alfabetos'})
+    df_filtrado['PONDERA'] = df_filtrado['PONDERA'].astype(int)
 
+    # Reorganizo la tabla (uso pivot) para que:
+    # Cada fila sea un par único de (ANO4, TRIMESTRE).
+    # Las celdas contienen la suma de PONDERA correspondiente.
+    # Si falta un valor, lo reemplaza por 0.
     agrupado = (
-        df.groupby(['ANO4', 'TRIMESTRE', 'CH09'])['PONDERA']
+        df_filtrado.groupby(['ANO4', 'TRIMESTRE', 'CH09'])['PONDERA']
         .sum()
         .reset_index()
         .pivot_table(index=['ANO4', 'TRIMESTRE'], columns='CH09', values='PONDERA', fill_value=0)
         .reset_index()
     )
-
+    
+    # Si no hay data, aseguro columnas y resultados.
     if 'Alfabetos' not in agrupado.columns:
         agrupado['Alfabetos'] = 0
     if 'No Alfabetos' not in agrupado.columns:
         agrupado['No Alfabetos'] = 0
 
+    # Calculo resultados porcentuales
     agrupado['Total'] = agrupado['Alfabetos'] + agrupado['No Alfabetos']
     agrupado['% Alfabetos'] = (agrupado['Alfabetos'] / agrupado['Total'] * 100).round(2)
     agrupado['% No Alfabetos'] = (agrupado['No Alfabetos'] / agrupado['Total'] * 100).round(2)
@@ -332,7 +343,7 @@ def punto_educacion_4(df_ind):
     # Título de la sección
     st.markdown("### 📖 Porcentaje de alfabetización en personas mayores a 6 años")
 
-    # Procesamiento de datos
+    # Proceso datos con funcion auxiliar
     df_alf = alfabetismo_porcentaje(df_ind)
     df_alf.rename(columns={'ANO4': 'Año'}, inplace=True)
 
@@ -344,24 +355,25 @@ def punto_educacion_4(df_ind):
         default=anios_disponibles
     )
 
-    df_filtrado = df_alf[df_alf['Año'].isin(seleccion)].copy()
 
-    if df_filtrado.empty:
+    df_visible = df_alf[df_alf['Año'].isin(seleccion)].copy()
+
+    if df_visible.empty:
         st.warning("⚠ No hay datos disponibles para los años seleccionados.")
         return
 
-    # Convertir a formato largo
-    df_largo = df_filtrado.melt(
+    # Convertir df a formato largo, para graficos
+    df_largo = df_visible.melt(
         id_vars=['Año'],
         value_vars=['% Alfabetos', '% No Alfabetos'],
         var_name='Condición',
-        value_name='Porcentaje'
-    )
-    # Asegurarse de que Porcentaje es numérico
+        value_name='Porcentaje')
+
+    # Aseguro que Porcentaje es numérico
     df_largo['Porcentaje'] = pd.to_numeric(df_largo['Porcentaje'], errors='coerce')
     df_largo.dropna(subset=['Porcentaje'], inplace=True)
 
-    # Ordenar años descendente (opcional)
+    # Ordeno por año descendente
     df_largo['Año'] = df_largo['Año'].astype(str)
     df_largo.sort_values(by='Año', ascending=False, inplace=True)
 
@@ -380,13 +392,14 @@ def punto_educacion_4(df_ind):
 
     st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)
 
-#grafico de evolucion temporal
-    df_lineas = df_filtrado.melt(
+    # Grafico adicional de evolucion temporal (lineas)
+    df_lineas = df_visible.melt(
         id_vars=['Año', 'TRIMESTRE'],
         value_vars=['% Alfabetos', '% No Alfabetos'],
         var_name='Condición',
         value_name='Porcentaje'
     )
+
     df_lineas['Periodo'] = df_lineas['Año'].astype(str) + 'T' + df_lineas['TRIMESTRE'].astype(str)
 
     lineas = alt.Chart(df_lineas).mark_line(point=True).encode(
@@ -405,7 +418,7 @@ def punto_educacion_4(df_ind):
         title='	📉 Evolución trimestral del porcentaje de alfabetización'
     )
 
-    # Organizacion grafico evolutivo y tabla
+    # Organizacion grafico evolutivo y tabla en columnas alineadas
     col1, col2 = st.columns(2)
 
     with col1:
@@ -439,6 +452,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     if tab == secciones[3]:
         punto_educacion_4(df_ind)
 
+# Informo si no se cargaron los datasets, derivo a pagina de carga
 else:
     st.markdown(
         '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')
