@@ -58,7 +58,7 @@ def extraer_anios_trimestres_hogares(df):
     return [(anio, trim) for anio, trimestres in anio_trim.items() for trim in trimestres]
     
 
-def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas_actual):
+def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas_actual, incluir_ceros):
     """
         Funcion que filtra un dataframe con datos de hogares donde correspondan al periodo ingresado
         y el hogar posea 4 miembros 
@@ -66,6 +66,7 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
             dataframe de hogares
             Anio, trimestre del periodo a buscar los datos
             Promedio_lineas_actual: promedio de la linea de pobreza e indigencia en ese trimestre
+            incluir_ceros: booleano para determinar si se filtran o no los ceros
         Retorna:
             Dataframe con los valores cantidad y porcentaje de pobreza e indigencia en el periodo seleccionado
     """
@@ -80,7 +81,9 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
     
     # Eliminar filas con ITF nulo antes de hacer filtros de pobreza/indigencia
     df_filtrado = df_filtrado.dropna(subset=['ITF'])
-    df_filtrado = df_filtrado[df_filtrado['ITF'] > 0]
+    
+    if not incluir_ceros:
+        df_filtrado = df_filtrado[df_filtrado['ITF'] > 0]
     
     # Eliminar CODUSU duplicados
     df_filtrado = df_filtrado.drop_duplicates(subset='CODUSU', keep='first')
@@ -126,13 +129,14 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
 
 st.set_page_config(page_title='Ingresos', layout="wide")
 st.title('💰 Ingresos')
+st.markdown("📊 Análisis de Archivo - Selección de Período")
 st.markdown('---')
 
 # --- Verificar datos cargados ---
 if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
     df_hogares = st.session_state.get('df_hogares').copy()
     
-    st.markdown("📊 Análisis de Archivo - Selección de Período")
+
     
     opciones_disponibles = extraer_anios_trimestres_hogares(df_hogares)
     if not opciones_disponibles:
@@ -163,9 +167,20 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             """
         )
         
-        df_hogares_pobres_indigentes = cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas)
-
-
+        # Aviso informativo sobre el campo ITF
+        st.markdown(
+            """
+            <div style='background-color:#fff3cd;padding:10px 15px;border-left:5px solid #ffa502;border-radius:5px'>
+            ⚠️ <strong>Nota sobre los ingresos:</strong> Muchos hogares tienen ITF = 0 (Ingreso Total Familiar), lo que puede deberse 
+            a ingresos nulos o falta de respuesta. Este análisis no utiliza los ponderadores alternativos.
+            </div>
+            """, unsafe_allow_html=True
+        )
+        st.markdown('')
+        incluir_ceros = st.toggle("Incluir hogares con ITF = 0", value=False)
+    
+        df_hogares_pobres_indigentes = cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas, incluir_ceros)
+        
         # Muestra de la tabla generada
         st.markdown("### 🏠 Distribución de hogares")
         for _, row in df_hogares_pobres_indigentes.iterrows():
@@ -179,7 +194,8 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
         tipo_grafico = st.segmented_control(
             label="Seleccioná un tipo de grafico a mostrar",  # obligatorio pero visualmente menos prominente
             options=['Torta', 'Barras'],
-            selection_mode='single'
+            selection_mode='single',
+            default='Torta'
         )
         # Muestra del grafico seleccionado
         if tipo_grafico == 'Torta':
@@ -196,7 +212,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
 
             # Mostrar gráfico en Streamlit
             st.pyplot(figura)
-                          
+                         
         elif tipo_grafico == 'Barras':
             # Barras
             fig, ax = plt.subplots()   
@@ -212,7 +228,9 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             ax.set_ylabel('Cantidad de Hogares')
             ax.set_title('Distribución de hogares de 4 integrantes según situación económica')
 
+
             st.pyplot(fig) 
+
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
 
