@@ -8,21 +8,23 @@ from src.utils.constants import DATA_SOURCE_DIR, TRIMESTRES, RUTA_ARCHIVO_CANAST
 
 # Funciones Auxiliares
 
-def calculo_promedio_canasta_trimestre(trimestre_ingresado, anio_ingresado, ruta):
+def calculo_promedio_lineas_trimestre(trimestre_ingresado, anio_ingresado, ruta):
     
     """
     Calcula los promedios trimestrales de las líneas de indigencia y pobreza.
 
     Parámetros:
-        trimestre (int): Número de trimestre (1 al 4).
-        anio (int): Año deseado.
+        trimestre_ingresado (int): Número de trimestre (1 al 4).
+        anio_ingresado (int): Año deseado.
         ruta (Path): Ruta al archivo CSV.
 
     Retorna:
         dict: Diccionario con los valores promedio de 'linea_pobreza' y 'linea_indigencia'.
     """
-    
-    df_canasta_basica = pd.read_csv(ruta)
+    try:
+        df_canasta_basica = pd.read_csv(ruta)
+    except Exception as e:
+        raise FileNotFoundError(f"No se pudo leer el archivo en {ruta}: {e}")
 
     meses_trimestre = TRIMESTRES[trimestre_ingresado]
     
@@ -56,29 +58,41 @@ def extraer_anios_trimestres_hogares(df):
     return [(anio, trim) for anio, trimestres in anio_trim.items() for trim in trimestres]
     
 
-def cantidad_porcentaje_pobreza(df_hogares, anio, trimestre, promedio_canasta_actual):
-    
+def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas_actual):
+    """
+        Funcion que filtra un dataframe con datos de hogares donde correspondan al periodo ingresado
+        y el hogar posea 4 miembros 
+        Parametro:
+            dataframe de hogares
+            Anio, trimestre del periodo a buscar los datos
+            Promedio_lineas_actual: promedio de la linea de pobreza e indigencia en ese trimestre
+        Retorna:
+            Dataframe con los valores cantidad y porcentaje de pobreza e indigencia en el periodo seleccionado
+    """
     filtro_fecha_cantidad_personas = ((df_hogares['ANO4'] == anio) & 
                                       (df_hogares['TRIMESTRE'] == trimestre) & 
                                       (df_hogares['IX_TOT'] == 4))
     
     df_filtrado = df_hogares[filtro_fecha_cantidad_personas]
     
-    # Eliminar CODUSU duplicados
-    df_filtrado = df_filtrado.drop_duplicates(subset='CODUSU', keep='first')
+    
+
     
     # Eliminar filas con ITF nulo antes de hacer filtros de pobreza/indigencia
     df_filtrado = df_filtrado.dropna(subset=['ITF'])
     df_filtrado = df_filtrado[df_filtrado['ITF'] > 0]
     
+    # Eliminar CODUSU duplicados
+    df_filtrado = df_filtrado.drop_duplicates(subset='CODUSU', keep='first')
+    
     hogares_totales = df_filtrado['PONDERA'].sum()
 
     # Clasificaciones
-    filtro_pobreza = ((df_filtrado['ITF'] <= promedio_canasta_actual['linea_pobreza']) &
-                      (df_filtrado['ITF'] > promedio_canasta_actual['linea_indigencia']))
+    filtro_pobreza = ((df_filtrado['ITF'] <= promedio_lineas_actual['linea_pobreza']) &
+                      (df_filtrado['ITF'] > promedio_lineas_actual['linea_indigencia']))
 
-    filtro_indigencia = df_filtrado['ITF'] <= promedio_canasta_actual['linea_indigencia']
-    filtro_no_pobres = df_filtrado['ITF'] > promedio_canasta_actual['linea_pobreza']
+    filtro_indigencia = df_filtrado['ITF'] <= promedio_lineas_actual['linea_indigencia']
+    filtro_no_pobres = df_filtrado['ITF'] > promedio_lineas_actual['linea_pobreza']
 
     hogares_pobreza = df_filtrado[filtro_pobreza]['PONDERA'].sum()
     hogares_indigencia = df_filtrado[filtro_indigencia]['PONDERA'].sum()
@@ -116,30 +130,40 @@ st.markdown('---')
 
 # --- Verificar datos cargados ---
 if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
-    df_hg = st.session_state.get('df_hogares').copy()
+    df_hogares = st.session_state.get('df_hogares').copy()
     
     st.markdown("📊 Análisis de Archivo - Selección de Período")
     
-    opciones_disponibles = extraer_anios_trimestres_hogares(df_hg)
+    opciones_disponibles = extraer_anios_trimestres_hogares(df_hogares)
     if not opciones_disponibles:
         st.warning("No se encontraron archivos válidos con información de año y trimestre.")
     else:  
         # Uso format_func para que se muestre en un formato mas claro ya que se utilizara su formato original de tupla despues
         seleccion = st.selectbox("📅 Seleccioná un período disponible (año y trimestre):", opciones_disponibles, format_func=lambda x: f"{x[0]} - Trimestre {x[1]}") 
         
-        anio, trimestre = seleccion
+        if seleccion:
+            anio, trimestre = seleccion
 
         st.info(f"""Para el **año {anio} y trimestre {trimestre}**, se presenta la cantidad y porcentaje de **hogares de 4 integrantes** con ingresos bajo la linea de pobreza e indigencia, con base en la Encuesta Permanente de Hogares (EPH).""")
         
         st.session_state["anio_P7"] = anio
         st.session_state["trimestre_P7"] = trimestre
 
-        promedio_canasta = calculo_promedio_canasta_trimestre(
+        promedio_lineas = calculo_promedio_lineas_trimestre(
             int(trimestre), int(anio), RUTA_ARCHIVO_CANASTA
         )
-        st.session_state.promedio_canasta = promedio_canasta
+        st.session_state.promedio_lineas = promedio_lineas
 
-        df = cantidad_porcentaje_pobreza(df_hg, anio, trimestre, promedio_canasta)
+        st.markdown("### 🧾 Líneas de pobreza e indigencia para el período seleccionado")
+        
+        st.info(
+            f"""
+            - **Línea de pobreza**: ${promedio_lineas['linea_pobreza']:,.2f}  
+            - **Línea de indigencia**: ${promedio_lineas['linea_indigencia']:,.2f}
+            """
+        )
+        
+        df = cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio_lineas)
 
         # Selector de tipo de gráfico
         tipo_grafico = st.segmented_control(label="Seleccioná el tipo de gráfico", options=["Torta", "Barras"], selection_mode='single')
