@@ -387,9 +387,7 @@ def procesar_y_mostrar_porcentajes(datos_hogares):
         print("❌ Error: no hay datos con tenencia válida para calcular porcentajes.")
         return
 
-    # 3) Imprime el ranking
-    imprimir_tabla_ranking(porcentajes, cantidad=None)
-
+    return porcentajes    
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 6 (ANÁLISIS) - HOGAR
@@ -529,7 +527,7 @@ def info_porcentual_educacionsuperior_aglomerado(data):
 # FUNCIONES PUNTO 8 (ANÁLISIS) - HOGARES
 # -----------------------------------------------------------------------------------
 
-def imprimo_ranking_inquilinos_por_region(ranking):
+def imprimir_ranking_inquilinos_por_region(ranking):
     """
     Imprime el ranking de regiones según el porcentaje de inquilinos.
     """
@@ -590,8 +588,7 @@ def ranking_inquilinos_por_region(data_hogares):
     # Ordenar de mayor a menor porcentaje
     ranking.sort(key=lambda x: x[1], reverse=True)
 
-    # Imprimo el ranking
-    imprimo_ranking_inquilinos_por_region(ranking)
+    return ranking 
 
 # -----------------------------------------------------------------------------------
 # FUNCIONES PUNTO 9 (ANÁLISIS) - INDIVIDUOS
