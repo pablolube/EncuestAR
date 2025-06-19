@@ -812,7 +812,7 @@ def imprimir_porcentaje_secundario_incompleto(datos, aglo1, aglo2):
 # FUNCIONES PUNTO 11 (ANÁLISIS) - HOGAR
 # -----------------------------------------------------------------------------------
 
-def obtener_dats_ultimo_trimestre(anio, data):
+def obtener_datos_ultimo_trimestre(anio, data):
     """
     Obtiene los registros correspondientes al último trimestre disponible de un año específico.
 
@@ -869,7 +869,7 @@ def aglomerado_mayor_menor_vivienda_precario(anio, data):
 
     """
 
-    dats_ultimo_trimestre = obtener_dats_ultimo_trimestre(anio, data)
+    dats_ultimo_trimestre = obtener_datos_ultimo_trimestre(anio, data)
 
     # si el data set no tiene datos de ese anio o directamente no hay anio
     if not dats_ultimo_trimestre:
@@ -953,7 +953,7 @@ def buscar_anios_disponibles(data):
 def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
 
     # Busco el ultimo anio disponible para reutilizar
-    # la funcion de obtener_dats_ultimo_trimestre
+    # la funcion de obtener_datos_ultimo_trimestre
     """
     Calcula el porcentaje de jubilados que viven en un hogar con habitabilidad insuficiente
     por cada aglomerado del ultimo trimestre del año disponible
@@ -974,8 +974,8 @@ def porcentaje_jubilados_habitabilidad_insuficiente(data_hog, data_ind):
 
     anio_max = max(anios_comunes)
 
-    datos_proc_hog = obtener_dats_ultimo_trimestre(anio_max, data_hog)
-    datos_proc_ind = obtener_dats_ultimo_trimestre(anio_max, data_ind)
+    datos_proc_hog = obtener_datos_ultimo_trimestre(anio_max, data_hog)
+    datos_proc_ind = obtener_datos_ultimo_trimestre(anio_max, data_ind)
 
     if not datos_proc_hog or not datos_proc_ind:
         return None
