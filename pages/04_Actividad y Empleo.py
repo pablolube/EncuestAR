@@ -20,6 +20,8 @@ import altair as alt
 #Mapas
 import folium
 from streamlit_folium import st_folium
+import time
+time.sleep(0.1)
 
 
 #-----------------------------------------------------------------------------------------------------------------------------

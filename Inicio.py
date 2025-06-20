@@ -1,5 +1,10 @@
 import streamlit as st
 
+# Configuración de la página
+
+st.set_page_config(page_title='Inicio', 
+                   layout='wide')
+
 # Cargar Font Awesome desde CDN
 st.markdown("""
 <head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">

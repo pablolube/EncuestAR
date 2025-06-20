@@ -5,6 +5,11 @@ import datetime
 import streamlit.components.v1 as components
 
 # Configuración de la página
+
+st.set_page_config(page_title='Carga de datos', 
+                   layout='wide',
+                   page_icon='📤')
+
 # Forzar scroll al top
 components.html(
     """

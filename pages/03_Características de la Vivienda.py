@@ -469,7 +469,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             st.metric("Cantidad total de viviendas (ponderadas)", total_formateado)
 
     # --- 1.4.2 Tipo de vivienda ---
-    elif seleccion == "1.4.2 Tipo de vivienda (gráfico de torta)":
+    elif seleccion == "1.4.2 Tipo de vivienda":
          dist = tipo_vivienda_proporcion(df, anio_opcion)
          if dist is None or dist.empty:
              mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
