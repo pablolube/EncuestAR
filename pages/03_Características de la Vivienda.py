@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.utils.constants import AGLOMERADOS_NOMBRES
-from src.utils.streamlit import cargar_df_hogares  
+from src.utils.streamlit import cargar_df_hogares, get_nombre_aglomerado, get_nro_aglomerado
 import plotly.express as px
 import altair as alt
 
@@ -78,10 +78,11 @@ def material_piso_por_aglomerado_detallado(df_hogares, anio=None):
 
     Retorna:
         pd.DataFrame or None: DataFrame con columnas:
-            - "Aglomerado": nombre del aglomerado
+            - "AGLOMERADO": código del aglomerado
+            - "nombre_aglomerado": nombre legible del aglomerado
             - "Material": material predominante del piso
-            - "Cantidad de viviendas con el material predominante": cantidad ponderada de viviendas
-            - "Porcentaje": porcentaje sobre el total de viviendas del aglomerado (con dos decimales)
+            - "Cantidad de viviendas con el material predominante": cantidad ponderada
+            - "Porcentaje": proporción sobre el total de viviendas del aglomerado
         Devuelve None si no hay datos válidos disponibles.
     """
     if anio is not None:
@@ -102,26 +103,34 @@ def material_piso_por_aglomerado_detallado(df_hogares, anio=None):
     df_hogares["Material"] = df_hogares["IV3"].map(material_map)
 
     # Total de viviendas ponderadas por aglomerado
-    total_por_aglomerado = df_hogares.groupby("AGLOMERADO")["PONDERA"].sum().rename("Total_viviendas")
+    total_por_aglomerado = df_hogares.groupby("AGLOMERADO")["PONDERA"].sum()
 
     # Cantidad por material por aglomerado
     conteo = df_hogares.groupby(["AGLOMERADO", "Material"])["PONDERA"].sum().reset_index(name="Cantidad")
 
-    # Obtener el material predominante por aglomerado
+    # Material predominante por aglomerado
     idx_max = conteo.groupby("AGLOMERADO")["Cantidad"].idxmax()
-    resultado = conteo.loc[idx_max].set_index("AGLOMERADO")
+    resultado = conteo.loc[idx_max].copy()
 
-    # Agregar nombres de aglomerados
-    resultado["Aglomerado"] = resultado.index.map(AGLOMERADOS_NOMBRES)
+    # Agrego nombre legible del aglomerado
+    resultado["nombre_aglomerado"] = resultado["AGLOMERADO"].map(AGLOMERADOS_NOMBRES)
 
-    # Agregar total de viviendas y calcular porcentaje por aglomerado
-    resultado["Total_viviendas"] = resultado.index.map(total_por_aglomerado)
+    resultado["Total_viviendas"] = resultado["AGLOMERADO"].map(total_por_aglomerado)
     resultado["Porcentaje"] = (resultado["Cantidad"] / resultado["Total_viviendas"] * 100).round(2)
 
-    # Renombrar columna de cantidad
-    resultado = resultado.rename(columns={"Cantidad": "Cantidad de viviendas con el material predominante"})
+    # Renombro columna
+    resultado = resultado.rename(columns={
+        "Cantidad": "Cantidad de viviendas con el material predominante",
+        "Material": "Material"
+    })
 
-    return resultado[["Aglomerado", "Material", "Cantidad de viviendas con el material predominante", "Porcentaje"]]
+    return resultado[[
+        "AGLOMERADO",
+        "nombre_aglomerado",
+        "Material",
+        "Cantidad de viviendas con el material predominante",
+        "Porcentaje"
+    ]]
 
 #-----------------------------------------------------------------------------------------------------------
 
@@ -298,11 +307,6 @@ def evolucion_regimen_tenencia(df, anio, aglomerado_seleccionado, tipos_tenencia
     #st.markdown(f"#### Evolución del régimen de tenencia - Año {anio}, Aglomerado {aglomerado_seleccionado}")
     st.markdown(f"#### Evolución del régimen de tenencia - Año {anio}, {nombre_aglomerado}")
 
-    st.dataframe(resumen.rename(columns={
-        'PONDERA': 'Cantidad ponderada de viviendas',
-        'Porcentaje': 'Porcentaje (%)'
-    }))
-
     # Gráfico
     chart = alt.Chart(resumen).mark_bar().encode(
         x=alt.X('Periodo:N', title='Trimestre', sort=trimestres),
@@ -377,7 +381,7 @@ def calcular_viviendas_en_villa_por_aglomerado(df, anio=None):
 def calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio=None):
     """
     Calcula el porcentaje ponderado de viviendas por condición de habitabilidad en cada aglomerado.
-    Incluye las 4 categorías aunque no estén presentes en los datos.
+    Devuelve un DataFrame listo para visualización.
 
     Parámetros:
     -----------
@@ -389,7 +393,7 @@ def calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio=None):
 
     Retorna:
     --------
-    DataFrame con columnas: AGLOMERADO, nombre_aglomerado, CONDICION_DE_HABITABILIDAD, Porcentaje
+    DataFrame con columnas: Aglomerado, Condición de habitabilidad, Porcentaje
     """
     if anio is not None:
         df = df[df["ANO4"] == anio]
@@ -401,7 +405,7 @@ def calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio=None):
     condiciones_posibles = ["Insuficiente", "Regular", "Saludable", "Buena"]
     aglos = df["AGLOMERADO"].unique()
     combinaciones = pd.MultiIndex.from_product([aglos, condiciones_posibles], names=["AGLOMERADO", "CONDICION_DE_HABITABILIDAD"])
-    
+
     conteo = df.groupby(["AGLOMERADO", "CONDICION_DE_HABITABILIDAD"])["PONDERA"].sum()
     conteo = conteo.reindex(combinaciones, fill_value=0).reset_index(name="Cantidad")
 
@@ -409,8 +413,11 @@ def calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio=None):
     resultado = pd.merge(conteo, total, on="AGLOMERADO", how="left")
     resultado["Porcentaje"] = (resultado["Cantidad"] / resultado["Total"] * 100).round(2)
 
-    resultado["nombre_aglomerado"] = resultado["AGLOMERADO"].map(AGLOMERADOS_NOMBRES)
-    return resultado[["AGLOMERADO", "nombre_aglomerado", "CONDICION_DE_HABITABILIDAD", "Porcentaje"]]
+    resultado["Aglomerado"] = resultado["AGLOMERADO"].map(AGLOMERADOS_NOMBRES)
+    resultado["Condición de habitabilidad"] = resultado["CONDICION_DE_HABITABILIDAD"]
+
+    return resultado[["Aglomerado", "Condición de habitabilidad", "Porcentaje"]]
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -430,22 +437,20 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
     min_anio = int(df["ANO4"].min())
     max_anio = int(df["ANO4"].max())
 
-    #st.markdown("# Ingrese un año para el análisis")
-    #anio_opcion = st.number_input("Año", min_value=min_anio, max_value=max_anio, step=1)
     
     secciones = [
-        "1.4.1 Cantidad total de viviendas",
-        "1.4.2 Tipo de vivienda",
-        "1.4.3 Material del piso por aglomerado",
-        "1.4.4 Baño dentro del hogar",
-        "1.4.5 Evolución del régimen de tenencia",
-        "1.4.6 Viviendas en villa de emergencia",
-        "1.4.7 Condición de habitabilidad"
+        "Cantidad total de viviendas",
+        "Tipo de vivienda",
+        "Material del piso por aglomerado",
+        "Baño dentro del hogar",
+        "Evolución del régimen de tenencia",
+        "Viviendas en villa de emergencia",
+        "Condición de habitabilidad"
     ]
     
     seleccion = st.sidebar.radio("Seleccionar sección:", secciones)
 
-    permitir_todos_los_anios = seleccion != "1.4.5 Evolución del régimen de tenencia"
+    permitir_todos_los_anios = seleccion != "Evolución del régimen de tenencia"
 
     # Construir lista de opciones de año
     opciones_anio = sorted(df["ANO4"].unique())
@@ -455,136 +460,180 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
    # Mostrar selector
     anio_opcion_raw = st.selectbox("Seleccione un año", options=opciones_anio)
  
-
    # Convertir a int o None
     anio_opcion = None if anio_opcion_raw == "Todos los años" else int(anio_opcion_raw)
 
     # --- 1.4.1 Cantidad total de viviendas ---
-    if seleccion == "1.4.1 Cantidad total de viviendas":
+    if seleccion == "Cantidad total de viviendas":
         total = contar_viviendas_por_anio(df, anio_opcion)
         if total is None:
             st.warning(f"⚠️ No hay datos disponibles para el año {anio_opcion}.")
         else:
             total_formateado = f"{total:,.0f}".replace(",", ".")
-            st.metric("Cantidad total de viviendas (ponderadas)", total_formateado)
+            #st.metric("Cantidad total de viviendas (ponderadas)", total_formateado)
+            st.markdown(f"### 🏠 Cantidad total de viviendas: **{total_formateado}**")
 
     # --- 1.4.2 Tipo de vivienda ---
-    elif seleccion == "1.4.2 Tipo de vivienda":
+    elif seleccion == "Tipo de vivienda":
          dist = tipo_vivienda_proporcion(df, anio_opcion)
-         if dist is None or dist.empty:
-             mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
-             st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
-         else:
-              def autopct_con_coma(pct):
-                  return f"{pct:.1f}".replace('.', ',') + '%'
-
-              titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
-
-              fig, ax = plt.subplots()
-              ax.pie(dist.values, labels=dist.index, autopct=autopct_con_coma)
-              ax.set_title(f"Distribución por tipo de vivienda ({titulo_anio})")
-              st.pyplot(fig)
-
     
-    # --- 1.4.3 Material del piso por aglomerado ---
-    elif seleccion == "1.4.3 Material del piso por aglomerado":
+         if dist is None or dist.empty:
+            mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
+            st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
+         else:
+               def autopct_con_coma(pct):
+                   return f"{pct:.1f}".replace('.', ',') + '%'
+
+               titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
+
+               # Ordeno dist de mayor a menor para mejor visualización
+               dist = dist.sort_values(ascending=False)
+
+               fig, ax = plt.subplots(figsize=(2.5, 2.5))  # Tamaño ajustado
+               colors = plt.cm.Pastel1.colors  # Paleta suave
+
+               wedges, texts, autotexts = ax.pie(
+                    dist.values,
+                    labels=dist.index,
+                    autopct=autopct_con_coma,
+                    startangle=90,
+                    colors=colors,
+                    wedgeprops={'linewidth': 1, 'edgecolor': 'white'},
+                    textprops={'fontsize': 10}
+                )
+
+               ax.set_title(f"Distribución por tipo de vivienda ({titulo_anio})", fontsize=12)
+               
+               plt.subplots_adjust(top=0.75)
+               
+               ax.axis('equal')  # Asegura forma circular
+
+               st.pyplot(fig)
+
+    # 1.4.3 Material del piso por aglomerado 
+    elif seleccion == "Material del piso por aglomerado":
         if df is not None and not df.empty:
             resultado = material_piso_por_aglomerado_detallado(df, anio_opcion)
 
-            if resultado is None or resultado.empty:
-                mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
-                st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
-            else:
-                # Título con año o "Todos los años"
-                titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
-                st.markdown(f"#### Material predominante del piso por aglomerado ({titulo_anio})")
+        if resultado is None or resultado.empty:
+            mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
+            st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
+        else:
+             titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
+             st.markdown(f"#### Material predominante del piso por aglomerado ({titulo_anio})")
 
-                 # Ordenar por porcentaje descendente
-                resultado_ordenado = resultado.sort_values(by="Porcentaje", ascending=False).copy()
+             resultado_ordenado = resultado.sort_values(by="Porcentaje", ascending=False).copy()
 
-                # Formatear texto del porcentaje con coma
-                #resultado_ordenado["Texto porcentaje"] = resultado_ordenado["Porcentaje"].apply(
-                #    lambda x: f"{x:.2f}".replace(".", ",") + "%"
-                #)
+             # Formateo texto porcentaje para el gráfico
+             resultado_ordenado["Texto porcentaje"] = resultado_ordenado["Porcentaje"].apply(
+                  lambda x: f"{x:.2f}".replace(".", ",") + "%"
+            )
 
-                # Mostrar tabla
-                st.dataframe(resultado_ordenado)
+             
+             fig = px.bar(
+                 resultado_ordenado,
+                 x="Porcentaje",
+                 y="nombre_aglomerado",
+                 orientation='h',
+                 color="Material",
+                 title="Material predominante por aglomerado",
+                 labels={
+                         "Material": "Material predominante",
+                         "nombre_aglomerado": "Aglomerado",
+                         "Porcentaje": "Porcentaje"
+                },
+                color_discrete_sequence=px.colors.qualitative.Pastel
+             )
+             
+              # Calcular la coordenada x común para alinear todos los textos a la misma distancia
+             x_text = resultado_ordenado["Porcentaje"].max() + 3  # espacio fijo a la derecha
 
-                # Gráfico con porcentaje
-                fig = px.bar(
-                    resultado_ordenado,
-                    x="Porcentaje",
-                    y="Aglomerado",
-                    orientation='h',
-                    color="Material",
-                    title="Material predominante por aglomerado",
-                    labels={
-                        "Material": "Material predominante",
-                        "Aglomerado": "Aglomerado",
-                        "Porcentaje": "Porcentaje"
-                     
-                    }
-                    #text="Texto porcentaje"
-                )
+             for _, row in resultado_ordenado.iterrows():
+                  fig.add_annotation(
+                      x=x_text,  # misma posición x para todos
+                      y=row["nombre_aglomerado"],
+                      text=f"{row['Porcentaje']:.2f}%",
+                      showarrow=False,
+                      font=dict(size=12, color="black"),
+                      xanchor="left",
+                      yanchor="middle"
+                  )
 
-                fig.update_traces(textposition='outside')
 
-                fig.update_layout(
-                    height=20 * len(resultado_ordenado),
-                    xaxis_tickformat=".2f",
-                    xaxis_ticksuffix=" %",
-                )
+                   # Ajustes de diseño
+             fig.update_layout(
+                 height=20 * len(resultado_ordenado),  # alto dinámico según cantidad de barras
+                 margin=dict(l=80, r=160),             # margen derecho ampliado para textos
+                 xaxis_tickformat=".2f",               # formato de los ticks del eje x
+                 xaxis_ticksuffix=" %"                # sufijo de porcentaje
+              )
 
-                st.plotly_chart(fig, use_container_width=True)
+             # Mostrar el gráfico en Streamlit
+             st.plotly_chart(fig, use_container_width=True)
 
-            # Botón para descargar CSV
-           # csv = resultado_ordenado.to_csv(index=False).encode("utf-8")
-           # st.download_button(
-           #            label="⬇️ Descargar datos como CSV",
-           #            data=csv,
-           #            file_name=f"material_piso_aglomerado_{anio_opcion}.csv",
-           #            mime="text/csv"
-           # )
             
-    # Item 1.4.4 Baño dentro del hogar ---
+    # Item 1.4.4 Baño dentro del hogar 
     
-    elif seleccion == "1.4.4 Baño dentro del hogar":
-          resultado = calcular_proporcion_bano_por_aglomerado(df, AGLOMERADOS_NOMBRES, anio_opcion)
+    elif seleccion == "Baño dentro del hogar":
+        resultado = calcular_proporcion_bano_por_aglomerado(df, AGLOMERADOS_NOMBRES, anio_opcion)
 
-          if resultado.empty:
+        if resultado.empty:
              mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
              st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
-          else:
+        else:
              # Título con año o "Todos los años"
              titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
              st.markdown(f"#### Proporción de viviendas con baño dentro del hogar ({titulo_anio})")
 
-             # Gráfico de barras horizontales
+             resultado_ordenado = resultado.sort_values(by="proporcion", ascending=False).copy()
+             resultado_ordenado["Texto"] = resultado_ordenado["proporcion"].apply(lambda x: f"{x:.2f}")
+
              fig = px.bar(
-                 resultado.sort_values(by="proporcion", ascending=False),
+                 resultado_ordenado,
                  x="proporcion",
                  y="nombre_aglomerado",
                  orientation="h",
+                 color_discrete_sequence=["#8FD9A8"],  # un solo color pastel
                  labels={
-                     "proporcion": "Proporción",
-                     "nombre_aglomerado": "Aglomerado"
-                 },
-                 title="Proporción de viviendas con baño dentro del hogar por aglomerado"
-            )
-
-             fig.update_layout(
-                height=20 * len(resultado),
-                xaxis_tickformat=".2f",
-              #  xaxis_ticksuffix=" %",
+                      "proporcion": "Proporción",
+                      "nombre_aglomerado": "Aglomerado"
+                },
+                title="Proporción de viviendas con baño dentro del hogar por aglomerado"
              )
+             
+             # Anotaciones a la derecha de cada barra
+             for _, row in resultado_ordenado.iterrows():
+                 fig.add_annotation(
+                    x=row["proporcion"] + 0.01,
+                    y=row["nombre_aglomerado"],
+                    text=f"{row['proporcion']:.2f}",
+                    showarrow=False,
+                    font=dict(size=12, color="black"),
+                    xanchor="left",
+                    yanchor="middle"
+             )
+             
+             fig.update_layout(
+                height=20 * len(resultado_ordenado),
+                margin=dict(l=80, r=160),
+               xaxis_tickformat=".2f",
+               showlegend=False  # oculta leyenda
+               )  
 
              st.plotly_chart(fig, use_container_width=True)
 
-            
-    # Item 1.4.5 Evolución del régimen de tenencia 
-    elif seleccion == "1.4.5 Evolución del régimen de tenencia":
-        aglomerado_opcion = st.selectbox("Seleccione un aglomerado", options=sorted(df['AGLOMERADO'].unique()))
 
+    # Item 1.4.5 Evolución del régimen de tenencia 
+    
+    elif seleccion == "Evolución del régimen de tenencia":
+        # Mostrar nombres legibles de aglomerados
+        opciones_aglomerados = get_nombre_aglomerado(df["AGLOMERADO"])
+        aglomerado_nombre = st.selectbox("Seleccione un aglomerado", options=opciones_aglomerados)
+
+        # Obtener el código numérico correspondiente
+        aglomerado_opcion = get_nro_aglomerado(aglomerado_nombre)
+
+        # Diccionario de tipos de tenencia
         tipos_disponibles = {
             1: "Propietario vivienda y terreno",
             2: "Propietario solo vivienda",
@@ -597,112 +646,119 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
             9: "Otra situación"
         }
 
+        # Multiselección de tipos de tenencia
         seleccion_tenencia = st.multiselect(
-            "Seleccione el/los tipos de tenencia a mostrar:", list(tipos_disponibles.values()), default=list(tipos_disponibles.values())
+            "Seleccione el/los tipos de tenencia a mostrar:",
+          options=list(tipos_disponibles.values()),
+          default=list(tipos_disponibles.values())
         )
 
+        # Mostrar resultado con función existente
         resultado = evolucion_regimen_tenencia(df, anio_opcion, aglomerado_opcion, seleccion_tenencia)
-        
+    
     # Item 1.4.6 Viviendas en villa de emergencia por aglomerado 
     
-    elif seleccion == "1.4.6 Viviendas en villa de emergencia":
-       resultado = calcular_viviendas_en_villa_por_aglomerado(df, anio=anio_opcion)
+    elif seleccion == "Viviendas en villa de emergencia":
+         resultado = calcular_viviendas_en_villa_por_aglomerado(df, anio=anio_opcion)
 
-       if resultado.empty:
-        st.warning(f"⚠️ No hay datos disponibles para el año {anio_opcion}.")
-       else:
-         # Agregar nombres de aglomerado (si tenés el diccionario AGLOMERADOS_NOMBRES)
-         resultado["nombre_aglomerado"] = resultado["AGLOMERADO"].map(AGLOMERADOS_NOMBRES)
+         if resultado.empty:
+             mensaje_anio = f"el año {anio_opcion}" if anio_opcion is not None else "los datos seleccionados"
+             st.warning(f"⚠️ No hay datos disponibles para {mensaje_anio}.")
+         else:
+             
+             resultado["nombre_aglomerado"] = resultado["AGLOMERADO"].map(AGLOMERADOS_NOMBRES)
 
-         st.markdown(f"#### Viviendas ubicadas en villa de emergencia ({anio_opcion})")
+             # Título dinámico según el año
+             titulo_anio = f"Año {anio_opcion}" if anio_opcion is not None else "Todos los años"
+             st.markdown(f"#### Viviendas ubicadas en villa de emergencia ({titulo_anio})")
 
-         # Mostrar tabla ordenada
-         st.dataframe(
-             resultado[["nombre_aglomerado", "Viviendas en villa", "Total viviendas", "Porcentaje"]]
-             .sort_values(by="Viviendas en villa", ascending=False)
-        )
+             resultado_ordenado = resultado.sort_values(by="Viviendas en villa", ascending=True).copy()
 
-          # Gráfico de barras
-         fig = px.bar(
-            resultado.sort_values(by="Viviendas en villa", ascending=True),
-            x="Viviendas en villa",
-            y="nombre_aglomerado",
-            orientation="h",
-            labels={"Viviendas en villa": "Cantidad", "nombre_aglomerado": "Aglomerado"},
-            title="Cantidad de viviendas en villa de emergencia por aglomerado"
-        )
-         fig.update_layout(height=20 * len(resultado))
+             # Crear gráfico de barras horizontales
+             fig = px.bar(
+                 resultado_ordenado,
+                 x="Viviendas en villa",
+                 y="nombre_aglomerado",
+                 orientation="h",
+                 labels={
+                        "Viviendas en villa": "Cantidad",
+                        "nombre_aglomerado": "Aglomerado"
+                },
+                 title="Cantidad de viviendas en villa de emergencia por aglomerado",
+                 color_discrete_sequence=["#1f77b4"],  # azul uniforme
+                 hover_data=["Porcentaje"]
+             )
 
-         st.plotly_chart(fig, use_container_width=True)
-
-         # Botón para descargar CSV
-         csv = resultado.to_csv(index=False).encode("utf-8")
-         st.download_button(
-            label="⬇️ Descargar datos como CSV",
-            data=csv,
-            file_name=f"viviendas_villa_{anio_opcion}.csv",
-            mime="text/csv"
-         )
-         
+             # Ajustes de diseño
+             fig.update_layout(
+                 height=20 * len(resultado_ordenado),
+                 margin=dict(l=100, r=80, t=50, b=50)
+             )   
+             
+             st.plotly_chart(fig, use_container_width=True)
+    
     # Item 1.4.7 Condición de habitabilidad
-    elif seleccion == "1.4.7 Condición de habitabilidad":
-        resultado = calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio_opcion)
+    elif seleccion == "Condición de habitabilidad":
+         resultado = calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio_opcion)
 
-        if resultado.empty:
-            st.warning("⚠️ No hay datos disponibles.")
-        else:
-            st.markdown("#### Porcentaje ponderado de viviendas por condición de habitabilidad por aglomerado")
-        
-            # Mostrar tabla completa
-            st.dataframe(resultado)
+         if resultado.empty:
+             st.warning("⚠️ No hay datos disponibles.")
+         else:
+             st.markdown("#### Porcentaje ponderado de viviendas por condición de habitabilidad por aglomerado")
 
-            # Separar por condición
-            saludable = resultado[resultado["CONDICION_DE_HABITABILIDAD"] == "Saludable"]
-            otras = resultado[resultado["CONDICION_DE_HABITABILIDAD"] != "Saludable"]
+             # Quitar índice numérico para mostrar tabla sin numeración
+             tabla = resultado.copy()
+             tabla.index = [''] * len(tabla)
+             st.dataframe(tabla)
 
-            # Gráfico 1: Solo "Saludable"
-            st.markdown("##### Porcentaje de viviendas saludables por aglomerado")
-            fig1 = px.bar(
-                saludable,
-                x="nombre_aglomerado",
-                y="Porcentaje",
-                color_discrete_sequence=["seagreen"],
-                labels={"nombre_aglomerado": "Aglomerado", "Porcentaje": "Porcentaje (%)"},
-                title="Viviendas con condición saludable",
-            )
-            fig1.update_layout(
-                height=17 * saludable["nombre_aglomerado"].nunique(),
-                xaxis_tickangle=45,
-                xaxis=dict(tickfont=dict(size=9))
-            )
-            st.plotly_chart(fig1, use_container_width=True)
+             # Separo por condición usando el nuevo nombre de columna
+             saludable = resultado[resultado["Condición de habitabilidad"] == "Saludable"]
+             otras = resultado[resultado["Condición de habitabilidad"] != "Saludable"]
 
-            # Gráfico 2: Otras condiciones
-            st.markdown("##### Porcentaje de viviendas en otras condiciones por aglomerado")
-            fig2 = px.bar(
-                otras,
-                x="nombre_aglomerado",
-                y="Porcentaje",
-               color="CONDICION_DE_HABITABILIDAD",
-               labels={"nombre_aglomerado": "Aglomerado", "Porcentaje": "Porcentaje (%)"},
-               title="Viviendas con condición buena, regular e insuficiente",
-            )
-            fig2.update_layout(
-                height=17 * otras["nombre_aglomerado"].nunique(),
-                barmode='stack',
-                xaxis_tickangle=45,
-                xaxis=dict(tickfont=dict(size=9))
-            )
-            st.plotly_chart(fig2, use_container_width=True)
+             # Gráfico 1: Solo "Saludable"
+             st.markdown("##### Porcentaje de viviendas saludables por aglomerado")
+             fig1 = px.bar(
+                  saludable,
+                  x="Aglomerado",
+                  y="Porcentaje",
+                  color_discrete_sequence=["seagreen"],
+                  labels={"Aglomerado": "Aglomerado", "Porcentaje": "Porcentaje (%)"},
+                  title="Viviendas con condición saludable",
+                 )
+             fig1.update_layout(
+                  height=17 * saludable["Aglomerado"].nunique(),
+                  xaxis_tickangle=-45,
+                  xaxis=dict(tickfont=dict(size=9))
+             )
+             st.plotly_chart(fig1, use_container_width=True)
+
+             # Gráfico 2: Otras condiciones
+             st.markdown("##### Porcentaje de viviendas en otras condiciones por aglomerado")
+             fig2 = px.bar(
+                 otras,
+                 x="Aglomerado",
+                 y="Porcentaje",
+                 color="Condición de habitabilidad",
+                 labels={"Aglomerado": "Aglomerado", "Porcentaje": "Porcentaje (%)"},
+                 title="Viviendas con condición buena, regular e insuficiente",
+             )
+             fig2.update_layout(
+                 height=17 * otras["Aglomerado"].nunique(),
+                 barmode='stack',
+                 xaxis_tickangle=-45,
+                 xaxis=dict(tickfont=dict(size=9))
+             )
+
+             st.plotly_chart(fig2, use_container_width=True)
 
             # Botón de descarga CSV
-            csv = resultado.to_csv(index=False).encode("utf-8")
-            st.download_button(
-                label="⬇️ Descargar resultados como CSV",
-                data=csv,
-                file_name="habitabilidad_por_aglomerado.csv",
-                mime="text/csv"
-            )
+             csv = resultado.to_csv(index=False).encode("utf-8")
+             st.download_button(
+                  label="⬇️ Descargar resultados como CSV",
+                  data=csv,
+                  file_name="habitabilidad_por_aglomerado.csv",
+                  mime="text/csv"
+             )
 
 else:
     st.markdown(
