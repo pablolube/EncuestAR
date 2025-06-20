@@ -127,17 +127,17 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
 #--------------STREAMLIT-------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
 
-st.set_page_config(page_title='Ingresos', layout='centered')
+st.set_page_config(page_title='Ingresos', layout='wide')
 st.title('💰 Ingresos')
-st.markdown("📊 Análisis de Archivo - Selección de Período")
-st.markdown('---')
+
 
 # --- Verificar datos cargados ---
 if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
     df_hogares = st.session_state.get('df_hogares').copy()
     
+    st.markdown("📊 Análisis de Archivo - Selección de Período")
+    st.markdown('---')
 
-    
     opciones_disponibles = extraer_anios_trimestres_hogares(df_hogares)
     if not opciones_disponibles:
         st.warning("No se encontraron archivos válidos con información de año y trimestre.")
@@ -200,7 +200,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
         # Muestra del grafico seleccionado
         if tipo_grafico == 'Torta':
             #  gráfico de torta
-            figura, ax = plt.subplots(figsize=(6, 6))
+            figura, ax = plt.subplots(figsize=(4, 4))
             ax.pie(
                 df_hogares_pobres_indigentes['Porcentaje'], labels=df_hogares_pobres_indigentes['Categoria'], 
                 autopct='%1.1f%%', 
@@ -215,7 +215,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
                          
         elif tipo_grafico == 'Barras':
             # Barras
-            fig, ax = plt.subplots(figsize=(8, 5)) 
+            fig, ax = plt.subplots(figsize=(5, 5)) 
             
             ax.bar(
                 df_hogares_pobres_indigentes['Categoria'], 

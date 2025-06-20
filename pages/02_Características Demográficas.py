@@ -5,7 +5,8 @@ from src.utils.constants import AGLOMERADOS_NOMBRES
 from src.utils.streamlit import get_nombre_aglomerado, get_nro_aglomerado, suma_activa, suma_dependiente, get_media_ponderada, get_mediana_ponderada
 
 st.set_page_config(page_title='Características Demográficas',
-                   page_icon=':busts_in_silhouette:')
+                   page_icon=':busts_in_silhouette:',
+                   layout='wide')
 
 st.header('Características Demográficas', divider=True)
 
