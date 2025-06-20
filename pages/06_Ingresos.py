@@ -127,7 +127,7 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
 #--------------STREAMLIT-------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
 
-st.set_page_config(page_title='Ingresos', layout="wide")
+st.set_page_config(page_title='Ingresos', layout='centered')
 st.title('💰 Ingresos')
 st.markdown("📊 Análisis de Archivo - Selección de Período")
 st.markdown('---')
@@ -200,7 +200,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
         # Muestra del grafico seleccionado
         if tipo_grafico == 'Torta':
             #  gráfico de torta
-            figura, ax = plt.subplots()
+            figura, ax = plt.subplots(figsize=(6, 6))
             ax.pie(
                 df_hogares_pobres_indigentes['Porcentaje'], labels=df_hogares_pobres_indigentes['Categoria'], 
                 autopct='%1.1f%%', 
@@ -215,7 +215,7 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
                          
         elif tipo_grafico == 'Barras':
             # Barras
-            fig, ax = plt.subplots()   
+            fig, ax = plt.subplots(figsize=(8, 5)) 
             
             ax.bar(
                 df_hogares_pobres_indigentes['Categoria'], 
