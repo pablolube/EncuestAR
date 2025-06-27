@@ -208,7 +208,12 @@ def grafica_barra(df,
 
     return fig
 
-def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC', color=None):
+import altair as alt
+import streamlit as st
+import altair as alt
+import streamlit as st
+
+def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea="#000000", color=None):
     """
     Grafica la evolución temporal de una tasa usando Altair.
 
@@ -222,37 +227,65 @@ def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea='#007ACC
         color (str, optional): Columna para diferenciar líneas por grupo (ej. 'AGLOMERADO_NOMBRE').
     """
 
-    # Construcción base del gráfico
-    chart = alt.Chart(df).mark_line(point=True).encode(
+    # Tooltip base
+    tooltip = [alt.Tooltip(eje_x, title="Período"),
+               alt.Tooltip(eje_y, title="Tasa (%)", format=".2f")]
+    if color:
+        tooltip.append(alt.Tooltip(color, title="Aglomerado"))
+
+    # Base de codificación común
+    base = alt.Chart(df).encode(
         x=alt.X(f'{eje_x}:N', title='AÑO-TRIMESTRE', axis=alt.Axis(labelAngle=0)),
         y=alt.Y(f'{eje_y}:Q', title=eje_y,
                 scale=alt.Scale(domain=dominio_y) if dominio_y else alt.Undefined,
                 axis=alt.Axis(titleAnchor='end')),
-        tooltip=[eje_x, eje_y] + ([color] if color else [])
+        tooltip=tooltip
     )
 
-    # Si se especifica una columna para colorear (como aglomerado), se agrega al gráfico
     if color:
-        chart = chart.encode(color=alt.Color(f'{color}:N', title=color))
-        text = chart.mark_text(
-            align='left',
-            baseline='middle',
-            dx=5,
-            fontSize=11
-        ).encode(text=alt.Text(f'{eje_y}:Q', format='.1f'))
+        # Gráfico con agrupamiento por color
+        line = base.mark_line(strokeWidth=2).encode(color=alt.Color(f'{color}:N', title="Aglomerado"))
+        points = base.mark_point(filled=True, size=50).encode(color=alt.Color(f'{color}:N'))
+        chart = line + points
+
+        text = base.mark_text(
+            align='center',
+            baseline='bottom',
+            dy=-10,
+            fontSize=14,
+            color='black'
+        ).encode(
+            text=alt.Text(f'{eje_y}:Q', format='.1f'),
+            detail=f'{color}:N'
+        )
     else:
-        chart = chart.mark_line(point=True, color=color_linea)
+        # Gráfico simple con color fijo
+        chart = alt.Chart(df).mark_line(
+            point=alt.OverlayMarkDef(color=color_linea),
+            color=color_linea,
+            strokeWidth=2
+        ).encode(
+            x=alt.X(f'{eje_x}:N', title='AÑO-TRIMESTRE', axis=alt.Axis(labelAngle=0)),
+            y=alt.Y(f'{eje_y}:Q', title=eje_y,
+                    scale=alt.Scale(domain=dominio_y) if dominio_y else alt.Undefined,
+                    axis=alt.Axis(titleAnchor='end')),
+            tooltip=tooltip
+        )
+
         text = chart.mark_text(
             align='center',
             baseline='bottom',
             dy=-10,
-            fontSize=13,
-            color=color_linea
-        ).encode(text=alt.Text(f'{eje_y}:Q', format='.1f'))
+            fontSize=14,
+            color='black'
+        ).encode(
+            text=alt.Text(f'{eje_y}:Q', format='.1f')
+        )
 
-    # Mostrar gráfico
+    # Mostrar en Streamlit
     st.markdown(f"### {titulo}")
     st.altair_chart(chart + text, use_container_width=True)
+
 
 
 def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector en Aglomerados"):
@@ -529,7 +562,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         with col1:
             st.markdown("##### 🔹 Promedio por aglomerados")
             graficar_tasa(df_desemp_total, 'Fecha', 'Tasa de Desempleo',
-                        'Tasa de Desempleo (Promedio)', color_linea="#1f77b4") 
+                        'Tasa de Desempleo (Promedio)', color_linea="#b41f1f") 
 
         with col2:
             st.markdown("##### 🔸 Detallada Por aglomerado")
@@ -549,7 +582,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         with col1:
             st.markdown("##### 🔹 Promedio por aglomerados")
             graficar_tasa(df_ocupados_total, 'Fecha', 'Tasa de Empleo',
-                        'Tasa de Empleo (Promedio)', dominio_y=(90, 100),color_linea="#d62728")  
+                        'Tasa de Empleo (Promedio)', dominio_y=(90, 100),color_linea="#279710")  
 
         with col2:
             st.markdown("##### 🔸 Detallada Por Aglomerado")
