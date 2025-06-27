@@ -73,7 +73,6 @@ with col1:
 with col2:
     st.button("🗑️ Eliminar los archivos actuales", key="b_eliminar", on_click=eliminar_archivos)
 
-
 # Mensaje de eliminación
 if "mensaje_eliminacion" in st.session_state:
     tipo, texto = st.session_state["mensaje_eliminacion"]
@@ -94,7 +93,6 @@ st.markdown("""
         <i class="fas fa-link" style="color:#E67E22;"></i> Ver Información del Dataset </a> y qué archivos cargaste en: <a href=#5541d523 style="text-decoration: none; font-weight: bold; color:#E67E22;">
         <i class="fas fa-link" style="color:#E67E22;"></i> Ver Archivos en sistema </a> </p>
 """, unsafe_allow_html=True)
-
 
 # Separador
 st.markdown('<hr style="border: 1px solid #dddddd;">', unsafe_allow_html=True)

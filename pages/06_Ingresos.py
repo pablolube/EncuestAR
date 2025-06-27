@@ -120,7 +120,6 @@ def cantidad_porcentaje_pobreza_indigencia(df_hogares, anio, trimestre, promedio
     ])
     
     return df_resultado
-
     
 #--------------STREAMLIT-------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------------------------
@@ -231,7 +230,6 @@ if 'df_hogares' in st.session_state and not st.session_state.df_hogares.empty:
 
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
-
 
 #--------Si no existen datos cargados------------------------------------------------------------------
 else:

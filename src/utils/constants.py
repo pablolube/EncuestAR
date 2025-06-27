@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 # Dirección del proyecto
 PROJECT_ROOT = Path(__file__).parent.parent.parent.resolve()
 
@@ -18,9 +17,7 @@ HOGARES_PROCESSED_DIR = DATA_PROCESSED_DIR / FILENAME_HOGARES_PROCESSED
 INDIVIDUOS_PROCESSED_DIR = DATA_PROCESSED_DIR / FILENAME_INDIVIDUOS_PROCESSED
 
 #Archivo JSON MAPA
-
 COORDENADAS_AGLOMERADOS=PROJECT_ROOT/"data" / "Extras"/"aglomerados_coordenadas.json"
-
 
 # Este diccionario contiene los nombres de los aglomerados según su número
 AGLOMERADOS_NOMBRES = {

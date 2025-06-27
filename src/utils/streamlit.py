@@ -9,10 +9,7 @@ import pandas as pd
 # -------------------------------------------------------------------------------
 # STREAMLIT
 # -------------------------------------------------------------------------------
-
 # ACTUALIZAR
-
-
 def actualizar():
     """
     Procesa y guarda archivos de hogares e individuos. Pensado para ser usado en una app de Streamlit.
@@ -207,7 +204,6 @@ def eliminar_archivos():
         st.session_state["mensaje_eliminacion"] = (
             "error", f"❌ Error al eliminar archivos: {e}")
 
-
 def cargar_df():
     """
     Carga en el sesion state un dataframe con ciertas columnas del dataset de individuos procesados
@@ -243,8 +239,6 @@ def cargar_df_hogares():
     finally:
         return df_hogar
 
-
-
 def get_nombre_aglomerado(id_aglomerados):
     """
     Devuelve una lista de nombres unicos de algomerados 
@@ -253,7 +247,6 @@ def get_nombre_aglomerado(id_aglomerados):
         id_aglomerados: serie de nros de aglomerados
     """
     return sorted([AGLOMERADOS_NOMBRES[nro] for nro in id_aglomerados.unique()])
-
 
 def get_nro_aglomerado(aglomerado):
     """
@@ -264,20 +257,17 @@ def get_nro_aglomerado(aglomerado):
     """
     return next((k for k, v in AGLOMERADOS_NOMBRES.items() if v == aglomerado), None)
 
-
 def suma_dependiente(grupo):
     """
     Devuelve la suma de las personas dependientes, consideradas entre 0 y 14 años y mayor o igual a 65 años.
     """
     return grupo.loc[(grupo['CH06'].between(0, 14) | (grupo['CH06'] >= 65)), 'PONDERA'].sum()
 
-
 def suma_activa(grupo):
     """
     Devuelve la suma de las personas activas, consideradas entre 15 y 64 años.
     """
     return grupo.loc[grupo['CH06'].between(15, 64), 'PONDERA'].sum()
-
 
 def get_mediana_ponderada(x):
     """
@@ -287,7 +277,6 @@ def get_mediana_ponderada(x):
     acumulado = ordenado['PONDERA'].cumsum()
     total = ordenado['PONDERA'].sum()
     return ordenado.loc[acumulado >= total / 2, 'CH06'].iloc[0]
-
 
 def get_media_ponderada(x):
     """
