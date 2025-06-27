@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.utils.constants import AGLOMERADOS_NOMBRES
-from src.utils.streamlit import cargar_df_hogares, get_nombre_aglomerado, get_nro_aglomerado
+from src.utils.streamlit import  get_nombre_aglomerado, get_nro_aglomerado
 import plotly.express as px
 import altair as alt
 

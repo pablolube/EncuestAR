@@ -1,10 +1,8 @@
 import streamlit as st  
 import pandas as pd
 import matplotlib.pyplot as plt
-from pathlib import Path
-from datetime import datetime
-from src.utils.streamlit import cargar_df_hogares 
-from src.utils.constants import DATA_SOURCE_DIR, TRIMESTRES, RUTA_ARCHIVO_CANASTA
+
+from src.utils.constants import  TRIMESTRES, RUTA_ARCHIVO_CANASTA
 
 # Funciones Auxiliares
 

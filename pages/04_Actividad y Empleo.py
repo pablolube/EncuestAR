@@ -8,9 +8,9 @@ from src.utils.constants import AGLOMERADOS_NOMBRES,COORDENADAS_AGLOMERADOS
 import pandas as pd
 
 #Graficos
-import matplotlib.pyplot as plt
+
 import plotly.express as px
-import plotly.graph_objects as go
+
 
 #Visualizacion Streamlit 
 import streamlit as st
@@ -20,7 +20,6 @@ import altair as alt
 #Mapas
 import folium
 from streamlit_folium import st_folium
-
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
@@ -208,10 +207,6 @@ def grafica_barra(df,
 
     return fig
 
-import altair as alt
-import streamlit as st
-import altair as alt
-import streamlit as st
 
 def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea="#000000", color=None):
     """
