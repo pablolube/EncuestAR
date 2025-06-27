@@ -510,7 +510,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             calcular_tasa_emp_desemp(df_activos, condicion='Ocupado',
                                     agrupacion=['ANO4', 'TRIMESTRE', 'AGLOMERADO_NOMBRE'])
         )
-
         # ========================================================================================
         # VISUALIZACIÓN CON STREAMLIT
         # ========================================================================================
@@ -530,7 +529,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         with col1:
             st.markdown("##### 🔹 Promedio por aglomerados")
             graficar_tasa(df_desemp_total, 'Fecha', 'Tasa de Desempleo',
-                        'Tasa de Desempleo (Promedio)', color_linea="#1f77b4")  # azul
+                        'Tasa de Desempleo (Promedio)', color_linea="#1f77b4") 
 
         with col2:
             st.markdown("##### 🔸 Detallada Por aglomerado")
@@ -544,15 +543,18 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         st.info("Explorá cómo evoluciona la tasa de empleo por cada aglomerado  seleccionado.")
 
         col1, col2 = st.columns(2)
+        
+        #Hago que ajuste mejor el grafico
+
         with col1:
             st.markdown("##### 🔹 Promedio por aglomerados")
             graficar_tasa(df_ocupados_total, 'Fecha', 'Tasa de Empleo',
-                        'Tasa de Empleo (Promedio)', color_linea="#d62728")  
+                        'Tasa de Empleo (Promedio)', dominio_y=(90, 100),color_linea="#d62728")  
 
         with col2:
             st.markdown("##### 🔸 Detallada Por Aglomerado")
             graficar_tasa(df_ocupados_aglomerado, 'Fecha', 'Tasa de Empleo',
-                        'Tasa de Empleo por Aglomerado', color='AGLOMERADO_NOMBRE')
+                        'Tasa de Empleo por Aglomerado',dominio_y=(90, 100), color='AGLOMERADO_NOMBRE')
 
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
