@@ -11,7 +11,6 @@ import pandas as pd
 
 import plotly.express as px
 
-
 #Visualizacion Streamlit 
 import streamlit as st
 import altair as alt
@@ -20,11 +19,9 @@ import altair as alt
 #Mapas
 import folium
 from streamlit_folium import st_folium
-
 #-----------------------------------------------------------------------------------------------------------------------------
 # FUNCIONES
 #-----------------------------------------------------------------------------------------------------------------------------
-
 
 #Funciones
 def mapear_nombres_aglomerados(df) :
@@ -207,7 +204,6 @@ def grafica_barra(df,
 
     return fig
 
-
 def graficar_tasa(df, eje_x, eje_y, titulo, dominio_y=None, color_linea="#000000", color=None):
     """
     Grafica la evolución temporal de una tasa usando Altair.
@@ -305,9 +301,6 @@ def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector e
                                           para visualizarse en Streamlit o cualquier frontend.
     """
 
-
-
-
     # Calcula dinámicamente la altura del gráfico según la cantidad de filas
     alto = max(400, min(40 * len(df) + 100, 800))
 
@@ -368,8 +361,6 @@ def graficar_empleo_por_sector(df, titulo="Distribución del Empleo por Sector e
     # Devuelve la figura lista para mostrarse en Streamlit o en cualquier interfaz Plotly
     return fig
 
-
-
 #-----------------------------------------------------------------------------------------------------------------------------
 # STREAMLIT APP: ACTIVIDAD Y EMPLEO
 #-----------------------------------------------------------------------------------------------------------------------------
@@ -386,7 +377,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
     #-----------------------------------------------------------------------------------------------------------------------------
     # ARMADO DATASET
     #-----------------------------------------------------------------------------------------------------------------------------
-
     # Filtro el Dataset con las variables que voy a utilizar
     df_empleo = st.session_state.df_ind[['AGLOMERADO', 'ANO4', 'TRIMESTRE', 'NIVEL_ED_str', 'CONDICION_LABORAL', 'PONDERA', 'PP04A']].copy()
 
@@ -395,9 +385,7 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
                                    
     # Listados
     anio_trim = df_empleo.groupby('ANO4')['TRIMESTRE'].unique().apply(list).to_dict() #Listado año_trimestre
-           
-        
-     
+          
     #-----------------------------------------------------------------------------------------------------------------------------
     # Barra lateral (Sidebar)
     #-----------------------------------------------------------------------------------------------------------------------------
@@ -417,7 +405,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             seleccionados = st.multiselect("🗺️ Seleccioná uno o más aglomerados",options=aglomerados,default=aglomerados,key="desempleo_aglomerados")
             if not seleccionados:
                 seleccionados = aglomerados
-
 
     #-----------------------------------------------------------------------------------------------------------------------------
     # Sección 1: Educación y Desempleo
@@ -469,10 +456,8 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         #-----------------------------------------------------------------------------------------------------------------------------
         # Steamlit
         #-----------------------------------------------------------------------------------------------------------------------------
-
         st.header("🎓 Educación y Desempleo")
         st.info(f"""Para el **año {anio} y trimestre {trimestre}**, se presenta la distribución estimada de personas **desocupadas** según el nivel educativo alcanzado, con base en la Encuesta Permanente de Hogares (EPH).""")
-
 
         # KPIS
         col1, col2 = st.columns(2)
@@ -504,14 +489,10 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
-
-
-      
+     
     # ========================================================================================================================================================================================================================
     # Sección 2 y 3: Evolución del empleo y desempleo
     # ========================================================================================================================================================================================================================
-
-
     if tab == secciones_emp[1]:
 
         # ========================================================================================
@@ -615,7 +596,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         tabla['% Otro tipo'] = round((tabla['Otro tipo'] / tabla['Total_ocupados']) * 100, 2)
         df_ocupados_aglomerado = tabla[['Total_ocupados', '% Estatal', '% Privado', '% Otro tipo']].reset_index()
 
-   
 
         # ========================================================================================
         # PRESENTACION STREAMLIT
@@ -635,14 +615,10 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
             
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
-      
-
     
     # ----------------------------------------
     # 5. Mapa comparativo - PROCESAMIENTO
     # ----------------------------------------
-   
-    
     if tab == secciones_emp[3]:
         # Aplico función de tasa de empleo y desempleo
         df_emp_des = calcular_tasa_emp_desemp(df_empleo, condicion=None, agrupacion=['AGLOMERADO_NOMBRE', 'ANO4', 'TRIMESTRE'])
@@ -682,7 +658,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         # ----------------------------------------
         # 5. Mapa comparativo - STREAMLIT
         # ----------------------------------------
-
         opcion = st.segmented_control(
             label="Seleccioná Tasa",
             options=["Tasa de Empleo", "Tasa de Desempleo"],
@@ -726,7 +701,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
                 Variación: <span style="color:{color}; font-weight:bold;">{variacion:.2f}%</span>
             </div>
             """
-
             folium.CircleMarker(
                 location=[lat, lon],
                 radius=radio,
@@ -740,8 +714,6 @@ if 'df_ind' in st.session_state and not st.session_state.df_ind.empty:
         st_folium(mapa, width=700, height=500)
         st.markdown("---")
         st.caption("📊 Fuente: Encuesta Permanente de Hogares (EPH) - INDEC")
-
-
 else:
     st.markdown(
         '**Sin datos para mostrar**. Por favor cargue las fuentes en la pestaña:')

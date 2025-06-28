@@ -418,8 +418,6 @@ def calcular_porcentaje_habitabilidad_larga(df, AGLOMERADOS_NOMBRES, anio=None):
 
     return resultado[["Aglomerado", "Condición de habitabilidad", "Porcentaje"]]
 
-
-
 #-----------------------------------------------------------------------------------------------------------------------------
 # STREAMLIT : Características de la Vivienda
 #-----------------------------------------------------------------------------------------------------------------------------

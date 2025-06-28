@@ -4,8 +4,6 @@ from pathlib import Path
 # -------------------------------------------------------------------------------
 # LEER  ARCHIVOS
 # -------------------------------------------------------------------------------
-
-
 def read_file(file_path):
     """
     Lee un archivo txt que tiene formato csv separado por punto y coma (;) y lo convierte en una lista de filas.
@@ -24,7 +22,6 @@ def read_file(file_path):
         print(f"❌ Error: El archivo {file_path} no existe.")
         return []
 
-
 def read_file_dic(file_path):
     """
     Lee un archivo CSV y devuelve el encabezado y los datos como una lista de diccionarios.
@@ -40,13 +37,9 @@ def read_file_dic(file_path):
     except FileNotFoundError:
         print(f"❌ Error: El archivo {file_path} no existe.")
         return [], []
-
-
-
 # -------------------------------------------------------------------------------
 # PROCESAR ARCHIVOS
 # -------------------------------------------------------------------------------
-
 
 def process_file(source_path, category="hogar"):
     """
@@ -77,13 +70,9 @@ def process_file(source_path, category="hogar"):
     unified_data = [{key: row.get(key, None) for key in all_headers} for row in raw_rows]
 
     return all_headers, unified_data
-
-
 # -------------------------------------------------------------------------------
 # GUARDAR ARCHIVOS
-
 # -------------------------------------------------------------------------------
-
 
 def save_to_file(file_path, file_name, header, data, separator=";"):
     """
@@ -116,11 +105,9 @@ def save_to_file(file_path, file_name, header, data, separator=";"):
 
     print(f"✅ Archivo guardado en: {file_path}")
 
-
 # -------------------------------------------------------------------------------
 # CALCULOS MAXIMOS Y MINIMOS FECHA
 # -------------------------------------------------------------------------------
-
 
 def extraer_fecha(row):
     """

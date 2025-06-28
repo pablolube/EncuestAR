@@ -5,7 +5,6 @@
 
 from src.utils.helpers import extraer_fecha, actualizarmaxmin_fechas
 
-
 def get_gender(gender_num):
     """
     Devuelve la clasificación Masculino/Femenino
@@ -19,8 +18,6 @@ def get_gender(gender_num):
 
     gender_map = {'1': 'Masculino', '2': 'Femenino'}
     return gender_map.get(gender_num, 'S/D')
-
-
 
 def get_ed_level(ed_level):
     """
@@ -45,8 +42,6 @@ def get_ed_level(ed_level):
         case _:
             return 'S/D'
 
-
-
 def get_work_cond(state,category):
     """
     Devuelve la clasificación de condición laboral 
@@ -67,7 +62,6 @@ def get_work_cond(state,category):
     else:
         return "Fuera de categoría/sin información"
 
-
 def get_university_level(age,ed_level,ed_level_completed):
     """
     Devuelve la clasificación de nivel universitario.
@@ -83,7 +77,6 @@ def get_university_level(age,ed_level,ed_level_completed):
         return 2
 
     return 1 if ed_level == '8' or (ed_level == '7' and ed_level_completed == '1') else 0
-
 
 # -------------------------------------------------------------------------------
 # PROCESAMIENTO DE INDIVIDUOS
