@@ -186,11 +186,11 @@ def clasificar_hogar_habitabilidad(agua, origen_agua, banio, ubi_banio, tipo_ban
         return "Saludable"
     
 
-    elif contador["buena"] >= 4 and contador["insuficiente"] == 0 and contador["regular"] == 0:
+    elif contador["buena"] >= 4:
         return "buena"
     
     else:
-        return "saludable"
+        return "buena"
 
 from src.utils.helpers import extraer_fecha,actualizarmaxmin_fechas
 # -------------------------------------------------------------------------------
